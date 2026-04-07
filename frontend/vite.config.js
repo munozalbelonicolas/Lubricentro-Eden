@@ -2,13 +2,33 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-export default defineConfig({
-  plugins: [react()],
+import fs from 'fs';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    {
+      name: 'copy-index-to-404',
+      closeBundle() {
+        if (fs.existsSync(path.resolve(__dirname, 'dist/index.html'))) {
+          fs.copyFileSync(
+            path.resolve(__dirname, 'dist/index.html'),
+            path.resolve(__dirname, 'dist/404.html')
+          );
+        }
+      }
+    }
+  ],
+
+  // 🔴 CLAVE para GitHub Pages
+  base: mode === 'production' ? '/lubricentro-eden/' : '/',
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
+
   server: {
     port: 5173,
     proxy: {
@@ -22,6 +42,7 @@ export default defineConfig({
       },
     },
   },
+
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -34,4 +55,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
