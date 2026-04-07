@@ -43,14 +43,11 @@ export default function Navbar() {
       <div className={`container ${styles.inner}`}>
         {/* Logo */}
         <Link to="/" className={styles.logo}>
-          {tenant?.config?.logo ? (
-            <img src={getImageUrl(tenant.config.logo)} alt={tenant.name} className={styles.logoImg} />
-          ) : (
-            <span className={styles.logoText}>
-              <span className={styles.logoAccent}>🔧</span>
-              {tenant?.name || 'Lubricentro Eden'}
-            </span>
-          )}
+          <img 
+            src={getImageUrl(tenant?.config?.logo || '/uploads/logos/logo-eden.png')} 
+            alt={tenant?.name || 'Lubricentro Eden'} 
+            className={styles.logoImg} 
+          />
         </Link>
 
         {/* Nav links — desktop */}

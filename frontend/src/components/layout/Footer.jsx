@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTenant } from '../../hooks/useTenant';
 import { FiInstagram, FiFacebook, FiPhone, FiMapPin, FiMail } from 'react-icons/fi';
+import { getImageUrl } from '../../utils/formatters';
 import styles from './Footer.module.css';
 
 export default function Footer() {
@@ -13,7 +14,10 @@ export default function Footer() {
       <div className={`container ${styles.grid}`}>
         {/* Marca */}
         <div className={styles.brand}>
-          <p className={styles.brandName}>🔧 {tenant?.name || 'Lubricentro Eden'}</p>
+          <div className={styles.footerLogo}>
+            <img src={getImageUrl(tenant?.config?.logo || '/uploads/logos/logo-eden.png')} alt={tenant?.name} style={{ height: '40px', marginBottom: '1rem' }} />
+          </div>
+          <p className={styles.brandName}>{tenant?.name || 'Lubricentro Eden'}</p>
           <p className={styles.brandDesc}>
             {cfg.description || 'Tu lubricentro de confianza. Aceites, filtros y repuestos automotor de primera calidad.'}
           </p>

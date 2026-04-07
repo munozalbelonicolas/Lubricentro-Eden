@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { getImageUrl } from '../utils/formatters';
 import styles from './AuthPage.module.css';
 
 export default function RegisterPage() {
@@ -47,7 +48,9 @@ export default function RegisterPage() {
     <div className={styles.page}>
       <div className={`${styles.card} ${styles.cardWide}`}>
         <div className={styles.header}>
-          <div className={styles.logo}>🔧</div>
+          <div className={styles.logo}>
+            <img src={getImageUrl('/uploads/logos/logo-eden.png')} alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
+          </div>
           <h1 className={styles.title}>Creá tu cuenta</h1>
           <p className={styles.subtitle}>Unite a nuestra comunidad y comprá más rápido</p>
         </div>

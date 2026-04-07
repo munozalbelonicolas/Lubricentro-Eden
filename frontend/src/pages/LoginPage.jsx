@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { getImageUrl } from '../utils/formatters';
 import styles from './AuthPage.module.css';
 
 export default function LoginPage() {
@@ -36,7 +37,9 @@ export default function LoginPage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.logo}>🔧</div>
+          <div className={styles.logo}>
+            <img src={getImageUrl('/uploads/logos/logo-eden.png')} alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
+          </div>
           <h1 className={styles.title}>Iniciar Sesión</h1>
           <p className={styles.subtitle}>Accedé a tu cuenta para gestionar tus pedidos</p>
         </div>
