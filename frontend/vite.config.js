@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
   ],
 
   // 🔴 CLAVE para GitHub Pages
-  base: mode === 'production' ? '/lubricentro-eden/' : '/',
+  base: mode === 'production' ? '/Lubricentro-Eden/' : '/',
 
   resolve: {
     alias: {
