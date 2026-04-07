@@ -1,0 +1,5 @@
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.controls { display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.searchBar { position: relative; flex: 1; min-width: 200px; }
+.searchIcon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-3); }
+.searchInput { padding-left: 2.5rem; }
