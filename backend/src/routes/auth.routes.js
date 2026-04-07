@@ -6,8 +6,8 @@ const { register, login, getMe, updatePassword } = require('../controllers/auth.
 const { protect } = require('../middlewares/auth.middleware');
 const tenantMiddleware = require('../middlewares/tenant.middleware');
 
-// El registro NO requiere tenant previo (crea uno nuevo)
-router.post('/register', register);
+// Registro (usa tenantMiddleware para detectar si es registro de cliente en tienda existente)
+router.post('/register', tenantMiddleware, register);
 
 // Login SÍ requiere X-Tenant-ID para encontrar la tienda
 router.post('/login', tenantMiddleware, login);

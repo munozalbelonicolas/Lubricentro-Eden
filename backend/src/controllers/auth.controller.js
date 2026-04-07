@@ -47,9 +47,37 @@ const createSendToken = (user, tenant, statusCode, res) => {
  */
 const register = catchAsync(async (req, res, next) => {
   const { name, email, password, storeName } = req.body;
+  const tenantId = req.tenantId; // Inyectado por el middleware si se proveyó el header
 
-  if (!name || !email || !password || !storeName) {
-    return next(new AppError('Todos los campos son obligatorios: name, email, password, storeName.', 400));
+  // Validaciones base
+  if (!name || !email || !password) {
+    return next(new AppError('Los campos name, email y password son obligatorios.', 400));
+  }
+
+  // 1. REGISTRO DE CLIENTE (MODO MONOTENANT)
+  // Si tenemos un tenantId activo (por header), registramos a un cliente en esa tienda.
+  if (tenantId) {
+    // Verificar si ya existe el usuario en esta tienda
+    const existingUser = await User.findOne({ email: email.toLowerCase(), tenantId });
+    if (existingUser) {
+      return next(new AppError('Este email ya está registrado en este lubricentro.', 400));
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: 'customer',
+      tenantId
+    });
+
+    const tenant = await Tenant.findById(tenantId);
+    return createSendToken(user, tenant, 201, res);
+  }
+
+  // 2. REGISTRO DE TENANT (MODO SAAS)
+  if (!storeName) {
+    return next(new AppError('Para registrar un nuevo lubricentro, el campo storeName es obligatorio.', 400));
   }
 
   // Generar slug único para el tenant

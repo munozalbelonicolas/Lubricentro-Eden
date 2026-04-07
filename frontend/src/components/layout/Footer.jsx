@@ -72,7 +72,6 @@ export default function Footer() {
       <div className={styles.bottom}>
         <div className="container">
           <p>© {year} {tenant?.name || 'Lubricentro Eden'} — Todos los derechos reservados.</p>
-          <p>Powered by <span className={styles.powered}>Lubricentro Eden SaaS</span></p>
         </div>
       </div>
     </footer>

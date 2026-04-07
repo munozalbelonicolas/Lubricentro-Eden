@@ -12,13 +12,14 @@
   --color-surface-2:   #2A2A2A;
   --color-border:      #333333;
 
-  --color-primary:     #FF6B00;
-  --color-primary-dark:#E05500;
-  --color-primary-glow:rgba(255, 107, 0, 0.25);
-  --color-accent:      #FFB347;
+  --color-primary:     #CB1A20;
+  --color-primary-dark:#9A1318;
+  --color-primary-glow:rgba(203, 26, 32, 0.25);
+  --color-secondary:    #B5B9BC;
+  --color-accent:       #E52E35;
 
   --color-text:        #F0F0F0;
-  --color-text-2:      #B0B0B0;
+  --color-text-2:      #B5B9BC;
   --color-text-3:      #707070;
   --color-white:       #FFFFFF;
 

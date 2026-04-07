@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
-import { FiUser, FiMail, FiLock, FiTruck, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import styles from './AuthPage.module.css';
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate     = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', storeName: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
@@ -16,9 +16,9 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { name, email, password, confirm, storeName } = form;
+    const { name, email, password, confirm } = form;
 
-    if (!name || !email || !password || !storeName) {
+    if (!name || !email || !password) {
       toast.error('Completá todos los campos.');
       return;
     }
@@ -33,9 +33,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register({ name, email, password, storeName });
-      toast.success('¡Lubricentro creado! Bienvenido 🎉');
-      navigate('/dashboard');
+      await register({ name, email, password });
+      toast.success('¡Cuenta creada! Bienvenido 🎉');
+      navigate('/');
     } catch (err) {
       toast.error(err.message || 'Error al registrarse.');
     } finally {
@@ -48,44 +48,25 @@ export default function RegisterPage() {
       <div className={`${styles.card} ${styles.cardWide}`}>
         <div className={styles.header}>
           <div className={styles.logo}>🔧</div>
-          <h1 className={styles.title}>Creá tu Lubricentro</h1>
-          <p className={styles.subtitle}>Plan FREE para siempre — sin tarjeta de crédito</p>
+          <h1 className={styles.title}>Creá tu cuenta</h1>
+          <p className={styles.subtitle}>Unite a nuestra comunidad y comprá más rápido</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.twoCol}>
-            <div className="input-group">
-              <label className="input-label" htmlFor="reg-name">Tu nombre</label>
-              <div className={styles.inputWrapper}>
-                <FiUser className={styles.inputIcon} size={16} />
-                <input
-                  id="reg-name"
-                  className={`input ${styles.inputWithIcon}`}
-                  type="text"
-                  name="name"
-                  placeholder="Juan García"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="input-group">
-              <label className="input-label" htmlFor="reg-store">Nombre del lubricentro</label>
-              <div className={styles.inputWrapper}>
-                <FiTruck className={styles.inputIcon} size={16} />
-                <input
-                  id="reg-store"
-                  className={`input ${styles.inputWithIcon}`}
-                  type="text"
-                  name="storeName"
-                  placeholder="Lubricentro San Martín"
-                  value={form.storeName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+          <div className="input-group">
+            <label className="input-label" htmlFor="reg-name">Nombre completo</label>
+            <div className={styles.inputWrapper}>
+              <FiUser className={styles.inputIcon} size={16} />
+              <input
+                id="reg-name"
+                className={`input ${styles.inputWithIcon}`}
+                type="text"
+                name="name"
+                placeholder="Ej: Juan García"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
             </div>
           </div>
 
@@ -146,14 +127,12 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className={styles.planBadge}>
-            ✅ Plan FREE incluido — Hasta 20 productos y 100 órdenes mensuales
-          </div>
+          {/* Eliminado badge de plan SaaS */}
 
           <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading}>
             {loading
               ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} />
-              : '🚀 Crear mi lubricentro'}
+              : '🚀 Registrarme'}
           </button>
         </form>
 

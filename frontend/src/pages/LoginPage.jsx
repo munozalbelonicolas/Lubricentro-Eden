@@ -38,7 +38,7 @@ export default function LoginPage() {
         <div className={styles.header}>
           <div className={styles.logo}>🔧</div>
           <h1 className={styles.title}>Iniciar Sesión</h1>
-          <p className={styles.subtitle}>Accedé a tu cuenta de lubricentro</p>
+          <p className={styles.subtitle}>Accedé a tu cuenta para gestionar tus pedidos</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -93,7 +93,7 @@ export default function LoginPage() {
 
         <p className={styles.footer}>
           ¿No tenés cuenta?{' '}
-          <Link to="/register" className={styles.link}>Registrá tu lubricentro</Link>
+          <Link to="/register" className={styles.link}>Crear una cuenta</Link>
         </p>
       </div>
     </div>

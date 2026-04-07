@@ -22,7 +22,8 @@ const tenantMiddleware = catchAsync(async (req, res, next) => {
   }
 
   if (!tenantHeader && !tenantSlug) {
-    return next(new AppError('Tenant no especificado. Incluye el header X-Tenant-ID.', 400));
+    // Si no hay tenant, procedemos sin él (el controlador decidirá qué hacer)
+    return next();
   }
 
   let tenant;
