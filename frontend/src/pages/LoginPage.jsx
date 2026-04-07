@@ -38,7 +38,7 @@ export default function LoginPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src={getImageUrl('/uploads/logos/logo-eden.png')} alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
+            <img src="/logo-eden.png" alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
           </div>
           <h1 className={styles.title}>Iniciar Sesión</h1>
           <p className={styles.subtitle}>Accedé a tu cuenta para gestionar tus pedidos</p>

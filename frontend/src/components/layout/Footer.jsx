@@ -15,7 +15,7 @@ export default function Footer() {
         {/* Marca */}
         <div className={styles.brand}>
           <div className={styles.footerLogo}>
-            <img src={getImageUrl(tenant?.config?.logo || '/uploads/logos/logo-eden.png')} alt={tenant?.name} style={{ height: '40px', marginBottom: '1rem' }} />
+            <img src={tenant?.config?.logo ? getImageUrl(tenant.config.logo) : '/logo-eden.png'} alt={tenant?.name} style={{ height: '40px', marginBottom: '1rem' }} />
           </div>
           <p className={styles.brandName}>{tenant?.name || 'Lubricentro Eden'}</p>
           <p className={styles.brandDesc}>
