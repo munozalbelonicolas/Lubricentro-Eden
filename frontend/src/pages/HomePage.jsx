@@ -75,7 +75,7 @@ export default function HomePage() {
           </div>
           <div className={styles.heroVisual}>
             <div className={styles.heroCard}>
-              <img src={`${import.meta.env.VITE_API_URL?.replace('/api', '')}/uploads/aceite-premium.jpg`} alt="Aceites Premium Sintéticos" className={styles.heroCardImg} />
+              <img src="/aceite-premium.jpg" alt="Aceites Premium Sintéticos" className={styles.heroCardImg} />
               <div className={styles.heroCardInner}>
                 <p className={styles.heroCardTitle}>Aceites Premium</p>
                 <p className={styles.heroCardSub}>Sintéticos y semi-sintéticos</p>
