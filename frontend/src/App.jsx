@@ -3,7 +3,7 @@ import { useAuth } from './hooks/useAuth';
 
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
-import BeepyChat from './components/chat/BeepyChat';
+import YorChat from './components/chat/YorChat';
 
 import HomePage        from './pages/HomePage';
 import StorePage       from './pages/StorePage';
@@ -69,7 +69,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      <BeepyChat />
+      <YorChat />
     </>
   );
 }
