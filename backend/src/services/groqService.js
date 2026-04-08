@@ -1,8 +1,8 @@
 // src/services/groqService.js
-const GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 const MAX_RETRIES = 2;
-const TIMEOUT_MS  = 12000;
+const TIMEOUT_MS = 12000;
 
 /**
  * Llamada base a Groq con reintentos automáticos y timeout.
@@ -13,9 +13,9 @@ const callGroq = async (messages, options = {}) => {
   const { maxTokens = 600, temperature = 0.4, jsonMode = false } = options;
 
   const body = {
-    model:       GROQ_MODEL,
+    model: GROQ_MODEL,
     messages,
-    max_tokens:  maxTokens,
+    max_tokens: maxTokens,
     temperature,
     ...(jsonMode && { response_format: { type: "json_object" } }),
   };
@@ -27,12 +27,12 @@ const callGroq = async (messages, options = {}) => {
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
       const res = await fetch(GROQ_URL, {
-        method:  "POST",
+        method: "POST",
         headers: {
-          "Content-Type":  "application/json",
-          Authorization:   `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
-        body:   JSON.stringify(body),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
 
@@ -112,20 +112,28 @@ Si no conocés el modelo: {"conocido":false}`,
 const recommendOil = async (vehiculo, motor) => {
   const raw = await callGroq([{
     role: "user",
-    content: `Experto automotriz. Aceite de fábrica para ${vehiculo} con motor ${motor}.
+    content: `Sos un experto automotriz con conocimiento de especificaciones de fábrica.
+Para el ${vehiculo} con motor ${motor}, indicá el aceite que recomienda el FABRICANTE DEL VEHÍCULO en su manual oficial.
+
+REGLAS CRÍTICAS:
+- "marca_fabrica" debe ser la marca que el fabricante del auto especifica o aprueba en su manual (ejemplos reales: Ford especifica Motorcraft, Fiat/PSA especifica Petronas o Tutela, VW especifica Castrol o Liqui Moly, Toyota especifica Toyota Genuine o Mobil, Renault especifica Elf, Chevrolet especifica ACDelco o Mobil). NO pongas siempre Castrol por defecto.
+- Si el fabricante aprueba varias marcas, elegí la principal que figura en el manual para Argentina.
+- "especificacion" debe ser la norma API/ACEA/OEM real (ej: FIAT 9.55535-S1, VW 502.00, MB 229.5).
+- "intervalo_km" debe ser el intervalo oficial del fabricante para Argentina, no genérico.
+
 Respondé SOLO con JSON válido:
 {
   "motor":"${motor}",
   "viscosidad":"5W-30",
   "tipo":"sintetico",
-  "marca_fabrica":"Castrol",
-  "especificacion":"API SN / ACEA A3",
-  "intervalo_km":10000,
+  "marca_fabrica":"Petronas",
+  "especificacion":"FIAT 9.55535-S1 / API SN",
+  "intervalo_km":15000,
   "intervalo_meses":12,
-  "nota":"Razón técnica breve"
+  "nota":"Razón técnica breve basada en el manual del fabricante"
 }
 Tipos válidos: sintetico, semisintetico, mineral, diesel, moto`,
-  }], { maxTokens: 350, jsonMode: true });
+  }], { maxTokens: 400, jsonMode: true });
 
   return parseJSON(raw);
 };
@@ -134,8 +142,14 @@ Tipos válidos: sintetico, semisintetico, mineral, diesel, moto`,
  * Responde preguntas generales sobre aceites (conversación libre).
  */
 const SYSTEM_PROMPT = `Sos Yor, asistente técnico de Lubricentro Edén.
-Especialidad: aceites y lubricantes. Respondés preguntas técnicas sobre viscosidades, intervalos de cambio, tipos de aceite, señales de cambio, etc.
-Estilo: amigable, directo, rioplatense. Máximo 4-5 oraciones. Emojis con moderación.`;
+Especialidad: aceites y lubricantes. Respondés preguntas técnicas sobre viscosidades, intervalos de cambio, tipos de aceite, señales de cambio, diferencias entre marcas y más.
+
+TONO Y ESTILO — seguí estas reglas siempre:
+- Usá español rioplatense (vos, tenés, usás) pero de forma profesional.
+- PROHIBIDO usar la palabra "che". Nunca, bajo ningún contexto.
+- Sin muletillas ni frases de relleno ("claro que sí", "por supuesto", "¡genial!").
+- Directo al punto. Máximo 4-5 oraciones salvo que se pida explicación detallada.
+- Emojis con moderación: máximo 1-2 por mensaje, solo cuando aporten.`;
 
 const generalChat = async (history) => {
   return await callGroq(
