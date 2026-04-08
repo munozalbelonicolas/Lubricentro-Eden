@@ -1,7 +1,7 @@
 // src/controllers/chatController.js
-const { v4: uuidv4 }       = require("uuid");
-const ChatSession           = require("../models/ChatSession");
-const VehicleCache          = require("../models/VehicleCache");
+const { v4: uuidv4 } = require("uuid");
+const ChatSession = require("../models/ChatSession");
+const VehicleCache = require("../models/VehicleCache");
 const {
   detectVehicle,
   fetchMotorizations,
@@ -63,11 +63,11 @@ exports.sendMessage = async (req, res) => {
         await session.save();
 
         return res.json({
-          sessionId:  session.sessionId,
-          type:       "motor_pick",
-          message:    replyText,
-          vehiculo:   cached.vehiculo,
-          motores:    cached.motores.map(m => m.nombre),
+          sessionId: session.sessionId,
+          type: "motor_pick",
+          message: replyText,
+          vehiculo: cached.vehiculo,
+          motores: cached.motores.map(m => m.nombre),
         });
       }
 
@@ -79,8 +79,9 @@ exports.sendMessage = async (req, res) => {
     }
 
     // ── Flujo B: pregunta general → chat libre ──
+    // Pasamos el vehículo activo en sesión como contexto para evitar respuestas genéricas
     const history = session.getTrimmedHistory();
-    const reply   = await generalChat(history);
+    const reply = await generalChat(history, session.vehiculo || null);
     const replyText = reply || "No pude procesar tu consulta. Intentá de nuevo.";
 
     session.messages.push({ role: "assistant", content: replyText });
@@ -115,7 +116,7 @@ exports.selectMotor = async (req, res) => {
 
     // Intentar desde caché (el motor ya puede tener datos completos)
     const cacheKey = VehicleCache.buildKey(...vehiculo.split(" "));
-    const cached   = await VehicleCache.findOne({ cacheKey });
+    const cached = await VehicleCache.findOne({ cacheKey });
     const motorCached = cached?.motores?.find(
       m => m.nombre.toLowerCase() === motor.toLowerCase()
     );
@@ -133,15 +134,17 @@ exports.selectMotor = async (req, res) => {
       if (reco && cached) {
         await VehicleCache.updateOne(
           { cacheKey, "motores.nombre": motor },
-          { $set: {
-            "motores.$.viscosidad":      reco.viscosidad,
-            "motores.$.tipo":            reco.tipo,
-            "motores.$.marca_fabrica":   reco.marca_fabrica,
-            "motores.$.especificacion":  reco.especificacion,
-            "motores.$.intervalo_km":    reco.intervalo_km,
-            "motores.$.intervalo_meses": reco.intervalo_meses,
-            "motores.$.nota":            reco.nota,
-          }}
+          {
+            $set: {
+              "motores.$.viscosidad": reco.viscosidad,
+              "motores.$.tipo": reco.tipo,
+              "motores.$.marca_fabrica": reco.marca_fabrica,
+              "motores.$.especificacion": reco.especificacion,
+              "motores.$.intervalo_km": reco.intervalo_km,
+              "motores.$.intervalo_meses": reco.intervalo_meses,
+              "motores.$.nota": reco.nota,
+            }
+          }
         );
       }
     }
@@ -155,13 +158,13 @@ exports.selectMotor = async (req, res) => {
     }
 
     const replyText = `Para el **${vehiculo}** con motor **${motor}** esto es lo que especifica fábrica 👇`;
-    session.messages.push({ role: "user",      content: motor });
+    session.messages.push({ role: "user", content: motor });
     session.messages.push({ role: "assistant", content: replyText });
     await session.save();
 
     return res.json({
       sessionId,
-      type:    "recommendation",
+      type: "recommendation",
       message: replyText,
       vehiculo,
       reco,

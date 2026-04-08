@@ -112,28 +112,40 @@ Si no conocés el modelo: {"conocido":false}`,
 const recommendOil = async (vehiculo, motor) => {
   const raw = await callGroq([{
     role: "user",
-    content: `Sos un experto automotriz con conocimiento de especificaciones de fábrica.
-Para el ${vehiculo} con motor ${motor}, indicá el aceite que recomienda el FABRICANTE DEL VEHÍCULO en su manual oficial.
+    content: `Sos un experto automotriz especializado en especificaciones técnicas de fábrica.
+Tu tarea: indicar el aceite EXACTO que especifica el fabricante en el manual oficial del ${vehiculo} con motor ${motor}.
 
-REGLAS CRÍTICAS:
-- "marca_fabrica" debe ser la marca que el fabricante del auto especifica o aprueba en su manual (ejemplos reales: Ford especifica Motorcraft, Fiat/PSA especifica Petronas o Tutela, VW especifica Castrol o Liqui Moly, Toyota especifica Toyota Genuine o Mobil, Renault especifica Elf, Chevrolet especifica ACDelco o Mobil). NO pongas siempre Castrol por defecto.
-- Si el fabricante aprueba varias marcas, elegí la principal que figura en el manual para Argentina.
-- "especificacion" debe ser la norma API/ACEA/OEM real (ej: FIAT 9.55535-S1, VW 502.00, MB 229.5).
-- "intervalo_km" debe ser el intervalo oficial del fabricante para Argentina, no genérico.
+REGLAS — seguí esto al pie de la letra:
 
-Respondé SOLO con JSON válido:
+1. VISCOSIDAD: usá la viscosidad REAL del manual, no genérica.
+   Ejemplos reales por motor:
+   - Fiat 1.4 Fire (pre-2010): 15W-40 mineral o 10W-40 semisintético
+   - Fiat 1.4 Fire Evo (post-2010): 5W-40
+   - Fiat 1.6 E.torQ: 5W-30
+   - VW 1.6 MSI: 5W-40
+   - Ford 1.0 EcoBoost: 5W-20 o 5W-30
+   - Toyota 2.7 gasolina: 5W-30
+   - Chevrolet 1.4 Turbo: 5W-30 dexos1
+   NUNCA pongas 5W-30 si el motor usa otra viscosidad. Investigá cuál es la correcta.
+
+2. MARCA: la que aprueba el fabricante (Ford→Motorcraft, Fiat→Petronas/Tutela, VW→Castrol/Liqui Moly, Toyota→Toyota Genuine/Mobil, Renault→Elf, Chevrolet→ACDelco). NO defaultees a Castrol.
+
+3. ESPECIFICACIÓN: norma OEM real (FIAT 9.55535-GH, VW 502.00, dexos1 Gen2, MB 229.5, etc.)
+
+4. INTERVALO: el oficial del fabricante para Argentina (no uses 10.000 km como genérico).
+
+Respondé SOLO con este JSON válido, con los valores reales del manual (NO copies el ejemplo):
 {
-  "motor":"${motor}",
-  "viscosidad":"5W-30",
-  "tipo":"sintetico",
-  "marca_fabrica":"Petronas",
-  "especificacion":"FIAT 9.55535-S1 / API SN",
-  "intervalo_km":15000,
-  "intervalo_meses":12,
-  "nota":"Razón técnica breve basada en el manual del fabricante"
-}
-Tipos válidos: sintetico, semisintetico, mineral, diesel, moto`,
-  }], { maxTokens: 400, jsonMode: true });
+  "motor": "nombre real del motor",
+  "viscosidad": "viscosidad real según manual",
+  "tipo": "tipo real (sintetico/semisintetico/mineral/diesel/moto)",
+  "marca_fabrica": "marca real aprobada por el fabricante",
+  "especificacion": "norma OEM real",
+  "intervalo_km": numero_real,
+  "intervalo_meses": numero_real,
+  "nota": "explicación técnica basada en el manual, mencionando por qué esa viscosidad"
+}`,
+  }], { maxTokens: 500, temperature: 0.2, jsonMode: true });
 
   return parseJSON(raw);
 };
@@ -151,9 +163,15 @@ TONO Y ESTILO — seguí estas reglas siempre:
 - Directo al punto. Máximo 4-5 oraciones salvo que se pida explicación detallada.
 - Emojis con moderación: máximo 1-2 por mensaje, solo cuando aporten.`;
 
-const generalChat = async (history) => {
+const generalChat = async (history, vehiculoContext = null) => {
+  // Si hay contexto de vehículo activo en la sesión, lo inyectamos en el system prompt
+  // para que Yor no invente recomendaciones genéricas cuando el cliente hace preguntas de seguimiento
+  const contextExtra = vehiculoContext
+    ? `\n\nCONTEXTO ACTIVO DE SESIÓN: El cliente está consultando sobre el ${vehiculoContext}. Si hace preguntas de seguimiento como "alguna recomendación", "qué me conviene" o similares, respondé en base a ese vehículo específico. NUNCA inventes viscosidades genéricas ni recomiendes marcas al azar.`
+    : "";
+
   return await callGroq(
-    [{ role: "system", content: SYSTEM_PROMPT }, ...history],
+    [{ role: "system", content: SYSTEM_PROMPT + contextExtra }, ...history],
     { maxTokens: 500, temperature: 0.7 }
   );
 };
