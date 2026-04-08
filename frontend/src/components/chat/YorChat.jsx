@@ -155,10 +155,13 @@ const S = {
   },
   botAvatar: {
     width:"38px", height:"38px", borderRadius:"50%",
-    background:"linear-gradient(135deg,#CB1A20,#2a2a2a)",
+    background:"#000",
     border:"1.5px solid #CB1A20",
-    display:"flex", alignItems:"center", justifyContent:"center",
-    fontSize:"18px", flexShrink:0,
+    overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center",
+    flexShrink:0,
+  },
+  botLogo: {
+    width:"100%", height:"100%", objectFit:"contain", padding:"4px",
   },
   headerInfo: { flex:1 },
   headerTitle: { color:"#f0ede8", fontWeight:"600", fontSize:"14px", lineHeight:1.2 },
@@ -502,7 +505,9 @@ Si estás en **GitHub/Render**, asegurate de haber configurado el Secret y selec
           {/* Header */}
           <div style={S.header}>
             <div style={S.headerLine}/>
-            <div style={S.botAvatar}>⚙️</div>
+            <div style={S.botAvatar}>
+              <img src="/logos/Logo-Eden.png" alt="Yor" style={S.botLogo} />
+            </div>
             <div style={S.headerInfo}>
               <div style={S.headerTitle}>Yor — Asesor Técnico</div>
               <div style={S.headerSub}>{LUBRICENTRO.nombre}</div>

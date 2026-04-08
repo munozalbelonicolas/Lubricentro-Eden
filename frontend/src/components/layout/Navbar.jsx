@@ -44,7 +44,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/" className={styles.logo}>
           <img 
-            src={tenant?.config?.logo ? getImageUrl(tenant.config.logo) : '/logo-eden.png'} 
+            src={tenant?.config?.logo ? getImageUrl(tenant.config.logo) : '/logos/Logo-Eden.png'} 
             alt={tenant?.name || 'Lubricentro Eden'} 
             className={styles.logoImg} 
           />
