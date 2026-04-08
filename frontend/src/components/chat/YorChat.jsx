@@ -5,18 +5,13 @@ import { useState, useRef, useEffect } from "react";
 // ============================================================
 const LUBRICENTRO = {
   nombre: "Lubricentro Edén",
-  marcas: ["Castrol", "Mobil", "Shell", "YPF", "Total", "Elf"],
-  servicios: ["Cambio de aceite y filtros", "Lubricación general", "Revisión de fluidos"],
   tienda_url: "https://lubricentro-eden.com.ar/store",
 };
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-const GROQ_URL     = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL   = "llama-3.3-70b-versatile";
+// URL de nuestra propia API (Backend)
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://lubricentro-eden.onrender.com/api";
 
-// ============================================================
-//  CATEGORÍAS DE ACEITE
-// ============================================================
+// Categorías para links de tienda
 const CATEGORIAS = {
   sintetico:     { label: "Sintético",      emoji: "🔬", url_param: "sintetico" },
   semisintetico: { label: "Semi-sintético", emoji: "⚙️", url_param: "semisintetico" },
@@ -29,98 +24,6 @@ const urlTienda = (cat) => {
   const c = CATEGORIAS[cat];
   return `${LUBRICENTRO.tienda_url}?category=aceite${c ? `&subcategory=${c.url_param}` : ""}`;
 };
-
-// ============================================================
-//  GROQ — llamada base (seguridad integrada)
-// ============================================================
-const groq = async (messages, maxTokens = 600) => {
-  if (!GROQ_API_KEY) throw new Error("API_KEY_MISSING");
-  
-  const res = await fetch(GROQ_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_API_KEY}` },
-    body: JSON.stringify({ model: GROQ_MODEL, messages, max_tokens: maxTokens, temperature: 0.4 }),
-  });
-
-  if (res.status === 401) throw new Error("API_KEY_INVALID");
-  
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || "";
-};
-
-// ============================================================
-//  PASO 1 — Detección de vehículo
-// ============================================================
-const detectarVehiculo = async (msg) => {
-  const raw = await groq([{ role:"user", content:
-    `Analizá este mensaje y respondé SOLO con JSON válido, sin texto extra ni backticks.
-Mensaje: "${msg}"
-Si menciona un vehículo con marca y modelo respondé: {"es_vehiculo":true,"marca":"...","modelo":"...","anio":"..."}
-Si no hay año poné anio:"". Si NO es un vehículo: {"es_vehiculo":false}`
-  }], 120);
-  try { return JSON.parse(raw.replace(/```json|```/g,"").trim()); }
-  catch { return { es_vehiculo:false }; }
-};
-
-// ============================================================
-//  PASO 2 — Traer motorizaciones (solo nombres)
-// ============================================================
-const traerMotorizaciones = async (marca, modelo, anio) => {
-  const anioT = anio ? ` ${anio}` : "";
-  const raw = await groq([{ role:"user", content:
-    `Sos un experto automotriz. Listá TODAS las motorizaciones disponibles para el ${marca} ${modelo}${anioT} en Argentina.
-Respondé SOLO con JSON válido, sin texto extra ni backticks:
-{"vehiculo":"${marca} ${modelo}${anioT}","motores":["1.6 8v","1.9 TDI Turbo"],"conocido":true}
-Si no conocés el modelo: {"conocido":false}
-Solo los nombres de los motores, nada más.`
-  }], 300);
-  try { return JSON.parse(raw.replace(/```json|```/g,"").trim()); }
-  catch { return { conocido:false }; }
-};
-
-// ============================================================
-//  PASO 3 — Recomendación final para UN motor
-// ============================================================
-const recomendarAceite = async (vehiculo, motor) => {
-  const raw = await groq([{ role:"user", content:
-    `Sos un experto automotriz. Para el ${vehiculo} con motor ${motor}:
-Indicá el aceite recomendado de fábrica, la marca recomendada por el fabricante y el intervalo de cambio.
-Respondé SOLO con JSON válido, sin texto extra ni backticks:
-{
-  "motor": "${motor}",
-  "viscosidad": "5W-30",
-  "tipo": "sintetico",
-  "marca_fabrica": "Castrol",
-  "especificacion": "API SN Plus / ACEA A3",
-  "intervalo_km": 10000,
-  "intervalo_meses": 12,
-  "nota": "Fábrica exige sintético por ser motor con tolerancias finas."
-}
-Los tipos válidos son: sintetico, semisintetico, mineral, diesel, moto`
-  }], 350);
-  try { return JSON.parse(raw.replace(/```json|```/g,"").trim()); }
-  catch { return null; }
-};
-
-// ============================================================
-//  SYSTEM PROMPT — Yor (Redirección estricta)
-// ============================================================
-const SYSTEM_PROMPT = `Sos Yor, el asistente técnico de ${LUBRICENTRO.nombre}.
-Tu especialidad es asesorar sobre aceites y lubricantes.
-Respondés preguntas técnicas: tipos de aceite, viscosidades, intervalos de cambio, señales de aceite viejo, etc.
-Marcas que manejamos: ${LUBRICENTRO.marcas.join(", ")}.
-
-REGLA CRÍTICA: NO AGENDÉS TURNOS NI VISITAS.
-Si el cliente quiere cambiar el aceite o pide un turno, explicale que DEBE realizar la compra del aceite en nuestra tienda online y que, al momento de pagar, podrá seleccionar la opción "Cambio de aceite y filtros en el taller" y elegir el día y horario de su visita.
-
-Estilo: amigable, directo, rioplatense (usá voseo: "contame", "tenés"). Máximo 3-4 oraciones. Emojis con moderación.`;
-
-const SUGGESTIONS = [
-  "Fiat Argo 2020",
-  "Toyota Hilux diesel 2019",
-  "Honda CB 190 moto",
-  "¿Cada cuánto se cambia el aceite?",
-];
 
 // ============================================================
 //  ESTILOS (Rojo Edén Theme)
@@ -186,7 +89,6 @@ const S = {
     border:u?"1px solid #4a1a1d":"1px solid #222",
   }),
 
-  // ── Tarjeta de motores (botones para elegir) ──
   motorPickCard: {
     marginTop:"8px", background:"#151515",
     border:"1px solid #2a2a2a", borderRadius:"14px", overflow:"hidden",
@@ -217,7 +119,6 @@ const S = {
     fontFamily:"inherit",
   },
 
-  // ── Tarjeta de recomendación final ──
   recoCard: {
     marginTop:"8px", background:"#131313",
     border:"1px solid #CB1A20", borderRadius:"14px", overflow:"hidden",
@@ -305,30 +206,22 @@ const fmt = (t) => t
   .replace(/\*\*(.*?)\*\*/g,"<strong style='color:#CB1A20'>$1</strong>")
   .replace(/\n/g,"<br/>");
 
-// ── Tarjeta de selección de motor ─────────────────────────────────────────
+// ── Componentes de UI ─────────────────────────────────────────────────────
 const MotorPickCard = ({ vehiculo, motores, onSelect }) => (
   <div style={S.motorPickCard}>
-    <div style={S.motorPickHeader}>
-      🚗 {vehiculo.toUpperCase()} — ¿Cuál es tu motor?
-    </div>
+    <div style={S.motorPickHeader}>🚗 {vehiculo.toUpperCase()} — ¿Cuál es tu motor?</div>
     <div style={S.motorBtnWrap}>
       {motores.map((m, i) => (
-        <button
-          key={i}
-          className="yor-motor-btn"
-          style={i === motores.length - 1 ? S.motorBtnLast : S.motorBtn}
-          onClick={() => onSelect(m)}
-        >
-          <span style={{ color:"#CB1A20", fontSize:"10px" }}>▶</span>
-          {m}
+        <button key={i} className="yor-motor-btn" onClick={() => onSelect(m)}
+                style={i === motores.length - 1 ? S.motorBtnLast : S.motorBtn}>
+          <span style={{ color:"#CB1A20", fontSize:"10px" }}>▶</span> {m}
         </button>
       ))}
     </div>
   </div>
 );
 
-// ── Tarjeta de recomendación final ────────────────────────────────────────
-const RecoCard = ({ reco, vehiculo }) => {
+const RecoCard = ({ reco }) => {
   if (!reco) return null;
   const cat = CATEGORIAS[reco.tipo];
   return (
@@ -338,41 +231,13 @@ const RecoCard = ({ reco, vehiculo }) => {
         <span style={S.recoHeaderTitle}>{reco.motor.toUpperCase()} — Recomendación técnica</span>
       </div>
       <div style={S.recoBody}>
-        <div style={S.recoRow}>
-          <span style={S.recoLabel}>Viscosidad</span>
-          <span style={S.recoHighlight}>{reco.viscosidad}</span>
-        </div>
-        <div style={S.divider}/>
-        <div style={S.recoRow}>
-          <span style={S.recoLabel}>Tipo base</span>
-          <span style={S.recoValue}>{cat?.label || reco.tipo}</span>
-        </div>
-        <div style={S.divider}/>
-        <div style={S.recoRow}>
-          <span style={S.recoLabel}>Marca de fábrica</span>
-          <div style={{ textAlign:"right" }}>
-            <div style={S.recoMarca}>{reco.marca_fabrica}</div>
-            {reco.especificacion && <div style={S.recoSpec}>{reco.especificacion}</div>}
-          </div>
-        </div>
-        <div style={S.divider}/>
-        <div style={S.recoRow}>
-          <span style={S.recoLabel}>Intervalo</span>
-          <span style={S.recoValue}>
-            {reco.intervalo_km?.toLocaleString()} km
-            {reco.intervalo_meses ? ` o ${reco.intervalo_meses}m` : ""}
-          </span>
-        </div>
+        <div style={S.recoRow}><span style={S.recoLabel}>Viscosidad</span><span style={S.recoHighlight}>{reco.viscosidad}</span></div>
+        <div style={S.divider}/><div style={S.recoRow}><span style={S.recoLabel}>Tipo base</span><span style={S.recoValue}>{cat?.label || reco.tipo}</span></div>
+        <div style={S.divider}/><div style={S.recoRow}><span style={S.recoLabel}>Marca de fábrica</span><div style={{ textAlign:"right" }}><div style={S.recoMarca}>{reco.marca_fabrica}</div>{reco.especificacion && <div style={S.recoSpec}>{reco.especificacion}</div>}</div></div>
+        <div style={S.divider}/><div style={S.recoRow}><span style={S.recoLabel}>Intervalo</span><span style={S.recoValue}>{reco.intervalo_km?.toLocaleString()} km{reco.intervalo_meses ? ` o ${reco.intervalo_meses}m` : ""}</span></div>
         {reco.nota && <div style={S.recoNota}>💡 {reco.nota}</div>}
       </div>
-      <a href={urlTienda(reco.tipo)} target="_blank" rel="noopener noreferrer" style={S.recoBtn}
-         onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
-         onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff">
-          <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-9.8-3.2L3.4 4H1V2h3.6l.8 2H21l-3 9H8.2z"/>
-        </svg>
-        Comprar en la tienda →
-      </a>
+      <a href={urlTienda(reco.tipo)} target="_blank" rel="noopener noreferrer" style={S.recoBtn}>Comprar en la tienda →</a>
     </div>
   );
 };
@@ -385,21 +250,26 @@ export default function YorChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const [showSugs, setShowSugs] = useState(true);
-
-  // Estado del flujo de vehículo
-  const [pendingVehiculo, setPendingVehiculo] = useState(null); 
+  const [sessionId, setSessionId] = useState(localStorage.getItem("yor_session_id") || null);
 
   const chatRef = useRef(null);
 
   useEffect(() => { injectKF(); }, []);
 
+  // Cargar historial al abrir si hay sesión
   useEffect(() => {
     if (open && messages.length === 0) {
-      setMessages([{
-        role:"assistant", content:"¡Hola! Soy **Yor** 🛢️, tu asesor técnico de Lubricentro Edén. Contame el vehículo y el año para asesorarte con su aceite ideal.",
-        extra:null,
-      }]);
+      if (sessionId) {
+        fetch(`${API_BASE_URL}/chat/session/${sessionId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.messages) setMessages(data.messages);
+            else pushWelcome();
+          })
+          .catch(() => pushWelcome());
+      } else {
+        pushWelcome();
+      }
     }
   }, [open]);
 
@@ -407,90 +277,72 @@ export default function YorChat() {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [messages, loading]);
 
+  const pushWelcome = () => {
+    setMessages([{
+      role:"assistant", content:"¡Hola! Soy **Yor** 🛢️, tu asesor técnico de Lubricentro Edén. Contame el vehículo y el año para asesorarte con su aceite ideal.",
+      extra:null,
+    }]);
+  };
+
   const pushMsg = (role, content, extra = null) =>
     setMessages(prev => [...prev, { role, content, extra }]);
 
-  // ── El cliente elige una motorización ─────────────────────────────────
-  const handleSelectMotor = async (motorNombre) => {
-    if (!pendingVehiculo) return;
-    const { vehiculo } = pendingVehiculo;
-    setPendingVehiculo(null);
-
-    pushMsg("user", motorNombre);
-    setLoading(true);
-
-    try {
-      const reco = await recomendarAceite(vehiculo, motorNombre);
-      if (reco) {
-        pushMsg(
-          "assistant",
-          `Entendido, para el **${vehiculo}** motor **${motorNombre}** esto es lo que especifica fábrica:`,
-          { type:"reco", reco, vehiculo }
-        );
-      } else {
-        pushMsg("assistant", "No pude obtener la recomendación automática. ¿Es nafta, diesel o GNC?");
-      }
-    } catch {
-      pushMsg("assistant", "❌ Error de conexión al consultar el motor.");
-    }
-
-    setLoading(false);
-  };
-
-  // ── Envío de mensaje principal ─────────────────────────────────────────
+  // ── Acciones de API ─────────────────────────────────────────────────────
   const sendMessage = async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
 
-    // Validación de clave API
-    if (!GROQ_API_KEY || GROQ_API_KEY === 'undefined' || GROQ_API_KEY === '') {
-      pushMsg("user", msg);
-      pushMsg("assistant", `⚠️ **Error de configuración**: No se detectó la clave de API. 
-
-Si estás en **GitHub/Render**, asegurate de haber configurado el Secret y seleccioná **"Clear Cache and Deploy"**.`);
-      setInput("");
-      setShowSugs(false);
-      return;
-    }
-
     setInput("");
-    setShowSugs(false);
-
     pushMsg("user", msg);
     setLoading(true);
 
     try {
-      const vehiculo = await detectarVehiculo(msg);
+      const res = await fetch(`${API_BASE_URL}/chat/message`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, sessionId }),
+      });
+      const data = await res.json();
 
-      if (vehiculo.es_vehiculo) {
-        setMessages(prev => [...prev, { role: "assistant", content: `Entendido. Buscando las motorizaciones del **${vehiculo.marca} ${vehiculo.modelo}**...`, extra: null }]);
-        const datos = await traerMotorizaciones(vehiculo.marca, vehiculo.modelo, vehiculo.anio);
+      if (data.error) throw new Error(data.error);
 
-        if (datos.conocido && datos.motores?.length) {
-          setPendingVehiculo({ vehiculo: datos.vehiculo, motores: datos.motores });
-          pushMsg(
-            "assistant",
-            `Encontré estas opciones para el **${datos.vehiculo}**. ¿Cuál es el tuyo? 👇`,
-            { type:"motorPick", vehiculo: datos.vehiculo, motores: datos.motores }
-          );
-        } else {
-          pushMsg("assistant", `No encontré ese modelo específico en el catálogo. ¿Me confirmás el motor y el año?`);
-        }
-
-      } else {
-        const historial = messages.map(({ role, content }) => ({ role, content }));
-        const reply = await groq([{ role:"system", content:SYSTEM_PROMPT }, ...historial, { role:"user", content:msg }]);
-        pushMsg("assistant", reply || "No pude procesar tu consulta.");
+      // Guardar sesión si es nueva
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+        localStorage.setItem("yor_session_id", data.sessionId);
       }
 
+      if (data.type === "motor_pick") {
+        pushMsg("assistant", data.message, { type: "motor_pick", vehiculo: data.vehiculo, motores: data.motores });
+      } else {
+        pushMsg("assistant", data.message);
+      }
     } catch (err) {
-      const errorMsg = err.message === 'API_KEY_INVALID' 
-        ? "❌ Error: La clave de API de Groq no es válida." 
-        : "❌ Error de conexión. Reintentá en un momento.";
-      pushMsg("assistant", errorMsg);
+      pushMsg("assistant", "❌ " + (err.message || "Error de conexión."));
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const handleSelectMotor = async (motor) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat/select-motor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, motor }),
+      });
+      const data = await res.json();
+
+      if (data.error) throw new Error(data.error);
+
+      pushMsg("user", motor);
+      pushMsg("assistant", data.message, { type: "reco", reco: data.reco });
+    } catch (err) {
+      pushMsg("assistant", "❌ Error al consultar motor.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleKey = (e) => {
@@ -501,104 +353,40 @@ Si estás en **GitHub/Render**, asegurate de haber configurado el Secret y selec
     <>
       {open && (
         <div style={{...S.panel, animation:"yorSlideIn 0.3s ease"}}>
-
-          {/* Header */}
           <div style={S.header}>
-            <div style={S.headerLine}/>
-            <div style={S.botAvatar}>
-              <img src="/logos/Logo-Eden.png" alt="Yor" style={S.botLogo} />
-            </div>
-            <div style={S.headerInfo}>
-              <div style={S.headerTitle}>Yor — Asesor Técnico</div>
-              <div style={S.headerSub}>{LUBRICENTRO.nombre}</div>
-            </div>
-            <div style={S.onlineDot}/>
-            <button style={S.closeBtn} onClick={()=>setOpen(false)}>✕</button>
+            <div style={S.headerLine}/><div style={S.botAvatar}><img src="/logos/Logo-Eden.png" alt="Yor" style={S.botLogo}/></div>
+            <div style={S.headerInfo}><div style={S.headerTitle}>Yor — Asesor Técnico</div><div style={S.headerSub}>Lubricentro Edén</div></div>
+            <div style={S.onlineDot}/><button style={S.closeBtn} onClick={()=>setOpen(false)}>✕</button>
           </div>
 
-          {/* Mensajes */}
           <div id="yor-chat-area" ref={chatRef} style={S.chatArea}>
             {messages.map((m, i) => (
               <div key={i} style={{animation:"yorFadeUp 0.25s ease"}}>
                 <div style={S.msgRow(m.role==="user")}>
                   <div style={S.msgAvatar}>{m.role==="user"?"👤":"🤖"}</div>
                   <div style={{maxWidth:"85%", display:"flex", flexDirection:"column"}}>
-                    <div style={S.bubble(m.role==="user")}
-                      dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
-
-                    {/* Fases interactivas */}
-                    {m.extra?.type==="motorPick" && (
-                      <MotorPickCard
-                        vehiculo={m.extra.vehiculo}
-                        motores={m.extra.motores}
-                        onSelect={handleSelectMotor}
-                      />
-                    )}
-
-                    {m.extra?.type==="reco" && (
-                      <RecoCard reco={m.extra.reco} vehiculo={m.extra.vehiculo}/>
-                    )}
+                    <div style={S.bubble(m.role==="user")} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
+                    {m.extra?.type==="motor_pick" && <MotorPickCard vehiculo={m.extra.vehiculo} motores={m.extra.motores} onSelect={handleSelectMotor}/>}
+                    {m.extra?.type==="reco" && <RecoCard reco={m.extra.reco}/>}
                   </div>
                 </div>
               </div>
             ))}
-
-            {showSugs && messages.length===1 && (
-              <div style={S.suggestionsWrap}>
-                {SUGGESTIONS.map((s,i)=>(
-                  <button key={i} style={S.sugBtn}
-                    onClick={()=>sendMessage(s)}
-                    onMouseEnter={e=>{e.target.style.borderColor="#CB1A20";e.target.style.color="#CB1A20"}}
-                    onMouseLeave={e=>{e.target.style.borderColor="#2a2a2a";e.target.style.color="#6a6560"}}
-                  >{s}</button>
-                ))}
-              </div>
-            )}
-
-            {loading && (
-              <div style={S.msgRow(false)}>
-                <div style={S.msgAvatar}>🤖</div>
-                <div style={{...S.bubble(false), padding:"12px 16px"}}>
-                  <div style={S.typing}>
-                    {[0,1,2].map(i=><div key={i} style={S.typingDot(i)}/>)}
-                  </div>
-                </div>
-              </div>
-            )}
+            {loading && <div style={S.msgRow(false)}><div style={S.msgAvatar}>🤖</div><div style={{...S.bubble(false), padding:"12px 16px"}}><div style={S.typing}>{[0,1,2].map(i=><div key={i} style={S.typingDot(i)}/>)}</div></div></div>}
           </div>
 
-          {/* Input */}
           <div style={S.inputArea}>
-            <textarea style={S.textarea} value={input}
-              onChange={e=>setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder="Ej: VW Gol Trend 2015, Hilux diesel..."
-              rows={1}
-            />
-            <button style={S.sendBtn(loading||!input.trim())}
-              onClick={()=>sendMessage()}
-              disabled={loading||!input.trim()}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill={loading?"#555":"#fff"}>
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-              </svg>
+            <textarea style={S.textarea} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={handleKey} placeholder="Ej: VW Gol Trend 2015..." rows={1}/>
+            <button style={S.sendBtn(loading||!input.trim())} onClick={()=>sendMessage()} disabled={loading||!input.trim()}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={loading?"#555":"#fff"}><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
           </div>
-
         </div>
       )}
 
-      {/* Botón flotante */}
-      <button
-        style={{...S.fab, animation:open?"none":"yorPulse 2.5s infinite"}}
-        onClick={()=>setOpen(!open)}
-        onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"}
-        onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}
-        title="Hablar con Yor"
-      >
-        {open
-          ? <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          : <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-        }
+      <button style={{...S.fab, animation:open?"none":"yorPulse 2.5s infinite"}} onClick={()=>setOpen(!open)} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+        {open ? <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+              : <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>}
       </button>
     </>
   );

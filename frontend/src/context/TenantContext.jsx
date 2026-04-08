@@ -14,9 +14,10 @@ export function TenantProvider({ children }) {
     const applyConfig = (tenantData) => {
       if (!tenantData?.config) return;
       const root = document.documentElement;
-      if (tenantData.config.primaryColor) {
-        root.style.setProperty('--color-primary', tenantData.config.primaryColor);
-      }
+      const primary = (tenantData.config.primaryColor === '#FF6B00' || !tenantData.config.primaryColor) 
+        ? '#CB1A20' 
+        : tenantData.config.primaryColor;
+      root.style.setProperty('--color-primary', primary);
       if (tenantData.config.secondaryColor) {
         root.style.setProperty('--color-secondary', tenantData.config.secondaryColor);
         // También podemos usar el secundario para reemplazar algunos grises/negros si queremos
@@ -50,9 +51,10 @@ export function TenantProvider({ children }) {
       setTenant(data.data.tenant);
       
       const root = document.documentElement;
-      if (data.data.tenant?.config?.primaryColor) {
-        root.style.setProperty('--color-primary', data.data.tenant.config.primaryColor);
-      }
+      const primary = (data.data.tenant?.config?.primaryColor === '#FF6B00' || !data.data.tenant?.config?.primaryColor) 
+        ? '#CB1A20' 
+        : data.data.tenant.config.primaryColor;
+      root.style.setProperty('--color-primary', primary);
     } catch { /* ignorar */ }
   };
 

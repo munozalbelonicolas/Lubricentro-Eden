@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const tenantConfigSchema = new mongoose.Schema(
   {
     logo: { type: String, default: '' },
-    primaryColor: { type: String, default: '#FF6B00' },
+    primaryColor: { type: String, default: '#CB1A20' },
     secondaryColor: { type: String, default: '#0D0D0D' },
     address: { type: String, default: '' },
     phone: { type: String, default: '' },
