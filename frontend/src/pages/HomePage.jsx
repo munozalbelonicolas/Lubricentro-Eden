@@ -43,7 +43,7 @@ export default function HomePage() {
   }, []);
 
   const heroTitle = tenant?.name || 'Tu Lubricentro Online';
-  const primaryColor = tenant?.config?.primaryColor || '#FF6B00';
+  const primaryColor = tenant?.config?.primaryColor || '#CB1A20';
 
   return (
     <div className={styles.home}>

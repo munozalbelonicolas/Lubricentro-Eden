@@ -10,7 +10,7 @@ export default function TenantConfig() {
   const [form, setForm]     = useState({
     name: '', address: '', phone: '', email: '', description: '',
     businessHours: '', instagram: '', facebook: '', whatsapp: '',
-    primaryColor: '#FF6B00', secondaryColor: '#0D0D0D',
+    primaryColor: '#CB1A20', secondaryColor: '#0D0D0D',
   });
   const [saving, setSaving] = useState(false);
   const fileRef = useRef();
@@ -28,7 +28,7 @@ export default function TenantConfig() {
         instagram:     cfg.socialLinks?.instagram || '',
         facebook:      cfg.socialLinks?.facebook || '',
         whatsapp:      cfg.socialLinks?.whatsapp || '',
-        primaryColor:  cfg.primaryColor || '#FF6B00',
+        primaryColor:  cfg.primaryColor || '#CB1A20',
         secondaryColor:cfg.secondaryColor || '#0D0D0D',
       });
     }

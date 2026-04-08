@@ -40,7 +40,7 @@ export default function DashboardPage() {
     { icon: <FiDollarSign size={22} />, label: 'Ingresos Aprobados', value: stats ? formatPrice(stats.totalRevenue) : '-', color: '#22C55E' },
     { icon: <FiClock size={22} />,      label: 'Órdenes Pendientes', value: stats?.pendingOrders  ?? '-', color: '#FBBF24' },
     { icon: <FiTool size={22} />,       label: 'Turnos Taller',     value: stats?.workshopOrders ?? '-', color: '#F59E0B' },
-    { icon: <FiShoppingBag size={22}/>, label: 'Productos',         value: `${prodCount} / ${planLimit}`,  color: '#FF6B00' },
+    { icon: <FiShoppingBag size={22}/>, label: 'Productos',         value: `${prodCount} / ${planLimit}`,  color: '#CB1A20' },
   ];
 
   return (
