@@ -47,6 +47,17 @@ const taskSchema = new mongoose.Schema(
       enum: ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'],
       default: '08:00-10:00',
     },
+    plate: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    currentKm: {
+      type: Number,
+    },
+    nextChangeKm: {
+      type: Number,
+    },
   },
   { timestamps: true }
 );

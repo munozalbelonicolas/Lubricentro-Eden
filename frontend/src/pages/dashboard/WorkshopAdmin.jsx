@@ -5,8 +5,10 @@ import toast from 'react-hot-toast';
 import {
   FiRefreshCw, FiCalendar, FiClock, FiTool,
   FiChevronLeft, FiChevronRight, FiUser, FiCheckCircle,
-  FiAlertCircle, FiList, FiPlus, FiX, FiTrash2
+  FiAlertCircle, FiList, FiPlus, FiX, FiTrash2, FiPrinter
 } from 'react-icons/fi';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 /* ─── Constantes ─────────────────────────────────────────── */
 const TIME_SLOTS = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'];
@@ -146,6 +148,63 @@ export default function WorkshopAdmin() {
   const nextWeek = () => { const d = new Date(anchor); d.setDate(d.getDate()+7); setAnchor(d); };
   const goToday  = () => { setAnchor(new Date()); setSelectedDay(todayKey); };
 
+  /* 📄 Generación de PDF */
+  const generateTaskPDF = (task) => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFillColor(203, 26, 32); // Rojo Eden
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LUBRICENTRO EDÉN', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Comprobante de Servicio Técnico', 105, 30, { align: 'center' });
+
+    // Info del Cliente/Vehículo
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${task.date}`, 14, 55);
+    doc.text(`Patente: ${task.plate || 'N/A'}`, 14, 65);
+    
+    autoTable(doc, {
+      startY: 75,
+      head: [['Concepto', 'Detalle']],
+      body: [
+        ['Vehículo/Tarea', task.title],
+        ['Kilometraje Actual', task.currentKm ? `${task.currentKm.toLocaleString()} KM` : 'No registrado'],
+        ['Descripción', task.description || 'Sin descripción adicional'],
+        ['Prioridad', task.priority === 'high' ? 'ALTA' : task.priority === 'medium' ? 'Media' : 'Baja'],
+      ],
+      theme: 'striped',
+      headStyles: { fillStyle: [203, 26, 32] }
+    });
+
+    // Destacado Próximo Cambio
+    const finalY = doc.lastAutoTable.finalY + 20;
+    doc.setFillColor(243, 244, 246);
+    doc.rect(14, finalY, 182, 30, 'F');
+    
+    doc.setFontSize(14);
+    doc.setTextColor(203, 26, 32);
+    doc.text('PRÓXIMO CAMBIO RECOMENDADO', 105, finalY + 12, { align: 'center' });
+    
+    doc.setFontSize(24);
+    doc.text(task.nextChangeKm ? `${task.nextChangeKm.toLocaleString()} KM` : 'Consultar', 105, finalY + 24, { align: 'center' });
+
+    // Footer
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Gracias por confiar en Lubricentro Edén.', 105, 280, { align: 'center' });
+    doc.text('Santa Fe, Argentina', 105, 285, { align: 'center' });
+
+    doc.save(`Servicio_${task.plate || 'Eden'}_${task.date}.pdf`);
+  };
+
   /* ─── Render ─────────────────────────────────────────── */
   return (
     <div className="page">
@@ -258,6 +317,7 @@ export default function WorkshopAdmin() {
             todayKey={todayKey}
             onStatusChange={handleStatusChange}
             onDeleteTask={handleDeleteTask}
+            onPrint={generateTaskPDF}
           />
         ) : (
           <WeekView
@@ -287,7 +347,7 @@ export default function WorkshopAdmin() {
 /* ═══════════════════════════════════════════════════════════
    Vista del día
 ═══════════════════════════════════════════════════════════ */
-function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, onDeleteTask }) {
+function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, onDeleteTask, onPrint }) {
   const isToday = selectedDay === todayKey;
 
   if (loading) return <div className="flex-center" style={{ padding:'3rem' }}><div className="spinner"/></div>;
@@ -332,7 +392,13 @@ function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, on
 
             <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
               {slotEvents.map((ev) => (
-                <EventCard key={ev._id} event={ev} onStatusChange={onStatusChange} onDeleteTask={onDeleteTask} />
+                <EventCard 
+                  key={ev._id} 
+                  event={ev} 
+                  onStatusChange={onStatusChange} 
+                  onDeleteTask={onDeleteTask} 
+                  onPrint={onPrint}
+                />
               ))}
             </div>
           </div>
@@ -343,7 +409,7 @@ function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, on
 }
 
 /* ─── Tarjeta de Evento (Pedido o Tarea) ────────────────── */
-function EventCard({ event, onStatusChange, onDeleteTask }) {
+function EventCard({ event, onStatusChange, onDeleteTask, onPrint }) {
   const isOrder = event._type === 'order';
   const status = event.status || 'pending';
   const chip   = STATUS_CHIP[status] || { bg:'#e2e8f0', color:'#475569', text: status };
@@ -391,7 +457,15 @@ function EventCard({ event, onStatusChange, onDeleteTask }) {
               </div>
             </>
           ) : (
-            <p style={{ fontSize:'0.9rem', color:'var(--color-text-2)' }}>{event.description}</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:'0.4rem' }}>
+              <p style={{ fontSize:'0.9rem', color:'var(--color-text-2)' }}>{event.description}</p>
+              {(event.plate || event.currentKm) && (
+                <div style={{ display:'flex', gap:'0.75rem', marginTop:'0.25rem' }}>
+                  {event.plate && <span style={{ fontSize:'0.78rem', background:'var(--color-surface-2)', padding:'0.1rem 0.4rem', borderRadius:'4px' }}>📌 {event.plate}</span>}
+                  {event.currentKm && <span style={{ fontSize:'0.78rem', background:'var(--color-surface-2)', padding:'0.1rem 0.4rem', borderRadius:'4px' }}>🛣️ {event.currentKm.toLocaleString()} KM</span>}
+                </div>
+              )}
+            </div>
           )}
 
           {event.notes && <p style={{ fontSize:'0.8rem', fontStyle:'italic', marginTop:'0.5rem', opacity:0.7 }}>💬 {event.notes}</p>}
@@ -412,9 +486,14 @@ function EventCard({ event, onStatusChange, onDeleteTask }) {
           
           <div style={{ display:'flex', gap:'0.4rem' }}>
             {!isOrder && (
-              <button className="btn btn-ghost btn-sm" onClick={() => onDeleteTask(event._id)} title="Eliminar tarea">
-                <FiTrash2 size={14} color="#ef4444"/>
-              </button>
+              <>
+                <button className="btn btn-ghost btn-sm" onClick={() => onPrint(event)} title="Imprimir Comprobante">
+                  <FiPrinter size={14} color="var(--color-primary)"/>
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => onDeleteTask(event._id)} title="Eliminar tarea">
+                  <FiTrash2 size={14} color="#ef4444"/>
+                </button>
+              </>
             )}
             {!isDone && status !== 'cancelled' && (
               <button
@@ -501,6 +580,9 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
   const [form, setForm] = useState({
     title: '',
     description: '',
+    plate: '',
+    currentKm: '',
+    nextChangeKm: '',
     date: selectedDay,
     timeSlot: '08:00-10:00',
     priority: 'medium',
@@ -545,6 +627,24 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
               className="input textarea" placeholder="Detalles del trabajo..."
               value={form.description} onChange={e => setForm({...form, description: e.target.value})}
             />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Identificación del Vehículo</label>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.75rem' }}>
+              <input 
+                className="input" placeholder="Patente"
+                value={form.plate} onChange={e => setForm({...form, plate: e.target.value})}
+              />
+              <input 
+                type="number" className="input" placeholder="KM Actual"
+                value={form.currentKm} onChange={e => setForm({...form, currentKm: e.target.value})}
+              />
+              <input 
+                type="number" className="input" placeholder="Próximo KM"
+                value={form.nextChangeKm} onChange={e => setForm({...form, nextChangeKm: e.target.value})}
+              />
+            </div>
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
