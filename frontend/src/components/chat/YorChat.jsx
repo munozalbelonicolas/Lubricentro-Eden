@@ -256,10 +256,10 @@ export default function YorChat() {
 
   useEffect(() => { injectKF(); }, []);
 
-  // Cargar historial al abrir si hay sesión
+  // Cargar historial al abrir si hay sesión válida
   useEffect(() => {
     if (open && messages.length === 0) {
-      if (sessionId) {
+      if (sessionId && sessionId !== "null" && sessionId !== "undefined") {
         fetch(`${API_BASE_URL}/chat/session/${sessionId}`)
           .then(res => res.json())
           .then(data => {
@@ -297,14 +297,26 @@ export default function YorChat() {
     setLoading(true);
 
     try {
+      // Solo enviamos sessionId si es un valor real
+      const sId = (sessionId && sessionId !== "null" && sessionId !== "undefined") ? sessionId : undefined;
+
       const res = await fetch(`${API_BASE_URL}/chat/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, sessionId }),
+        body: JSON.stringify({ message: msg, sessionId: sId }),
       });
       const data = await res.json();
 
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        // Si el servidor dice que la sesión es inválida, la limpiamos y reintentamos sin sesión
+        if (data.error.includes("sessionId")) {
+          localStorage.removeItem("yor_session_id");
+          setSessionId(null);
+          // Opcional: podrías re-ejecutar la llamada aquí, por ahora informamos
+          throw new Error("Sesión expirada. Por favor, preguntá de nuevo.");
+        }
+        throw new Error(data.error);
+      }
 
       // Guardar sesión si es nueva
       if (data.sessionId && data.sessionId !== sessionId) {

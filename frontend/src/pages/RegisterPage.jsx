@@ -49,7 +49,7 @@ export default function RegisterPage() {
       <div className={`${styles.card} ${styles.cardWide}`}>
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="/logo-eden.png" alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
+            <img src="/logos/Logo-Eden.png" alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
           </div>
           <h1 className={styles.title}>Creá tu cuenta</h1>
           <p className={styles.subtitle}>Unite a nuestra comunidad y comprá más rápido</p>
