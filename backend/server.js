@@ -37,10 +37,24 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Configurar CORS ANTES del rate-limit para no bloquear headers en errores
+// Configurar orígenes permitidos
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://lubricentro-eden.com.ar',
+  'https://munozalbelonicolas.github.io'
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+      // allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.github.io')) {
+        callback(null, true);
+      } else {
+        callback(new Error('No permitido por CORS'));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID'],
