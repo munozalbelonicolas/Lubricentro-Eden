@@ -300,6 +300,19 @@ export default function BeepyChat() {
   const sendMessage = async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
+
+    if (!GROQ_API_KEY || GROQ_API_KEY === 'undefined' || GROQ_API_KEY === '') {
+      setMessages(prev => [...prev, { role: 'user', content: msg }, { 
+        role: "assistant", 
+        content: `⚠️ **Error de configuración**: No se detectó la clave de API (VITE_GROQ_API_KEY). 
+
+Si estás en **Render**, por favor usá la opción **"Clear Cache and Deploy"** en la pestaña de Deploys para asegurar que se inyecte la clave.` 
+      }]);
+      setInput("");
+      setShowSuggestions(false);
+      return;
+    }
+
     setInput("");
     setShowSuggestions(false);
 
