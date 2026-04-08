@@ -173,7 +173,7 @@ export default function WorkshopAdmin() {
         {/* ── Resumen del día seleccionado ── */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px,1fr))', gap:'0.75rem', marginBottom:'1.5rem' }}>
           {[
-            { label:'Turnos totales', value: dayOrders.length,    color:'#3b82f6', icon:<FiCalendar size={20}/> },
+            { label:'Turnos totales', value: dayEvents.length,    color:'#3b82f6', icon:<FiCalendar size={20}/> },
             { label:'Pendientes',     value: pendingToday.length,  color:'#f59e0b', icon:<FiAlertCircle size={20}/> },
             { label:'Completados',    value: doneToday.length,     color:'#22c55e', icon:<FiCheckCircle size={20}/> },
           ].map(({ label, value, color, icon }) => (
