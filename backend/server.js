@@ -41,15 +41,21 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:5173',
   'https://lubricentro-eden.com.ar',
+  'http://lubricentro-eden.com.ar',
   'https://munozalbelonicolas.github.io'
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps or curl requests)
+      // Permitir si no hay origen (como apps móviles o curl)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.github.io')) {
+      
+      const isDomainAllowed = allowedOrigins.indexOf(origin) !== -1 || 
+                             origin.includes('lubricentro-eden.com.ar') ||
+                             origin.endsWith('.github.io');
+
+      if (isDomainAllowed) {
         callback(null, true);
       } else {
         callback(new Error('No permitido por CORS'));
