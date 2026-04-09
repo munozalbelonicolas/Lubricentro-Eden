@@ -9,7 +9,7 @@ const AppError = require('../utils/AppError');
 /**
  * Obtener balance general y estadísticas financieras
  */
-exports.getFinanceStats = catchAsync(async (req, res) => {
+exports.getFinanceStats = catchAsync(async (req, res, next) => {
   const tenantId = req.user.tenantId;
 
   const [incomeOrders, incomeTasks, totalExpenses] = await Promise.all([
@@ -43,7 +43,7 @@ exports.getFinanceStats = catchAsync(async (req, res) => {
 /**
  * Obtener listado unificado de transacciones (Libro Diario)
  */
-exports.getTransactions = catchAsync(async (req, res) => {
+exports.getTransactions = catchAsync(async (req, res, next) => {
   const tenantId = req.user.tenantId;
   const { startDate, endDate } = req.query;
 
@@ -97,7 +97,7 @@ exports.getTransactions = catchAsync(async (req, res) => {
 /**
  * CRUD Egresos
  */
-exports.createExpense = catchAsync(async (req, res) => {
+exports.createExpense = catchAsync(async (req, res, next) => {
   req.body.tenantId = req.user.tenantId;
   req.body.createdBy = req.user._id;
 

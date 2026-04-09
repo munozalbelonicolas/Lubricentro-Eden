@@ -21,7 +21,6 @@ const productRoutes = require('./src/routes/product.routes');
 const orderRoutes = require('./src/routes/order.routes');
 const paymentRoutes = require('./src/routes/payment.routes');
 const financeRoutes = require('./src/routes/finance.routes');
-const searchRoutes = require('./src/routes/search.routes');
 const subscriptionRoutes = require('./src/routes/subscription.routes');
 const chatRoutes = require('./src/routes/chatRoutes');
 const taskRoutes = require('./src/routes/task.routes');
