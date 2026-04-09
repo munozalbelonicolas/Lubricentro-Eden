@@ -4,8 +4,16 @@ export const authService = {
   /**
    * Registro: crea tenant + usuario admin en un solo paso.
    */
-  register: async ({ name, email, password, storeName }) => {
-    const { data } = await api.post('/auth/register', { name, email, password, storeName });
+  register: async (userData) => {
+    const { data } = await api.post('/auth/register', userData);
+    return data;
+  },
+
+  /**
+   * Verificar cuenta por email
+   */
+  verifyEmail: async (token) => {
+    const { data } = await api.get(`/auth/verify-email?token=${token}`);
     return data;
   },
 

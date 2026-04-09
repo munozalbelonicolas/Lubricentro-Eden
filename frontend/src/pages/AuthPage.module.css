@@ -46,19 +46,23 @@
 }
 
 .inputWrapper { position: relative; }
+.inputWithIcon { padding-left: 3rem !important; }
+.inputWithEnd  { padding-right: 3rem !important; }
 .inputIcon {
   position: absolute;
-  left: 0.85rem; top: 50%; transform: translateY(-50%);
+  left: 1rem; top: 50%; transform: translateY(-50%);
   color: var(--color-text-3);
   pointer-events: none;
+  z-index: 2;
 }
-.inputWithIcon { padding-left: 2.5rem; }
-.inputWithEnd  { padding-right: 2.75rem; }
 .togglePass {
   position: absolute;
-  right: 0.75rem; top: 50%; transform: translateY(-50%);
+  right: 1rem; top: 50%; transform: translateY(-50%);
   color: var(--color-text-3);
   transition: var(--transition);
+  z-index: 2;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center;
 }
 .togglePass:hover { color: var(--color-text); }
 

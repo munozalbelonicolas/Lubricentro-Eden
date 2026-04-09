@@ -5,11 +5,15 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
       required: [true, 'El nombre es obligatorio.'],
       trim: true,
-      maxlength: [80, 'El nombre no puede superar 80 caracteres.'],
+    },
+    lastName: {
+      type: String,
+      required: [true, 'El apellido es obligatorio.'],
+      trim: true,
     },
     email: {
       type: String,
@@ -24,6 +28,28 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'La contraseña debe tener al menos 6 caracteres.'],
       select: false,
     },
+    document: {
+      type: String,
+      required: [true, 'El documento es obligatorio.'],
+      match: [/^\d+$/, 'El documento debe ser solo numérico.'],
+    },
+    birthDate: {
+      type: Date,
+      required: [true, 'La fecha de nacimiento es obligatoria.'],
+    },
+    phone: {
+      type: String,
+      required: [true, 'El celular es obligatorio.'],
+    },
+    address: {
+      street: { type: String, required: [true, 'La calle es obligatoria.'] },
+      number: { type: String, required: [true, 'El número es obligatorio.'] },
+      floor: { type: String },
+      apartment: { type: String },
+      city: { type: String, required: [true, 'La localidad es obligatoria.'] },
+      province: { type: String, required: [true, 'La provincia es obligatoria.'] },
+      zipCode: { type: String, required: [true, 'El código postal es obligatorio.'] },
+    },
     role: {
       type: String,
       enum: ['admin', 'user'],
@@ -34,6 +60,11 @@ const userSchema = new mongoose.Schema(
       ref: 'Tenant',
       index: true,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: String,
     isActive: {
       type: Boolean,
       default: true,

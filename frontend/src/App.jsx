@@ -51,6 +51,7 @@ export default function App() {
           <Route path="/store/:slug" element={<ProductPage />} />
           <Route path="/login"       element={<LoginPage />} />
           <Route path="/register"    element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
 
           {/* Usuario autenticado */}
           <Route path="/cart"     element={<PrivateRoute><CartPage /></PrivateRoute>} />
