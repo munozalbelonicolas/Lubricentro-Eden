@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "SaaS Multi-Tenant Frontend para Lubricentros",
   "type": "module",
-  "homepage": "https://munozalbelonicolas.github.io/lubricentro-eden",
+  "homepage": "https://lubricentro-eden.com.ar",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

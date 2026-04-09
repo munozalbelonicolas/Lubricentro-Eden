@@ -19,14 +19,14 @@ export default defineConfig(({ mode }) => ({
       }
     },
     Sitemap({
-      hostname: 'https://munozalbelonicolas.github.io',
+      hostname: 'https://lubricentro-eden.com.ar/',
       exclude: ['/404'],
       dynamicRoutes: [
-        '/lubricentro-eden/',
-        '/lubricentro-eden/store',
-        '/lubricentro-eden/login',
-        '/lubricentro-eden/register',
-        '/lubricentro-eden/workshop-agenda'
+        '/',
+        '/store',
+        '/login',
+        '/register',
+        '/workshop-agenda'
       ],
       robots: [{ userAgent: '*', allow: '/', disallow: '/dashboard' }]
     })

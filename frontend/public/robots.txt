@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 
-Sitemap: https://munozalbelonicolas.github.io/lubricentro-eden/sitemap.xml
+Sitemap: https://lubricentro-eden.com.ar/sitemap.xml
