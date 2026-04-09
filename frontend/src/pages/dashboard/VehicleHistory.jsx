@@ -121,19 +121,19 @@ export default function VehicleHistory() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '1.5rem' }}>
                   {/* Ficha Técnica */}
-                  <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px' }}>
+                  <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', height: 'fit-content' }}>
                     <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--color-text-1)' }}>
                       <FiFileText /> Ficha de Fluidos
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <p style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <p style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
                         <span style={{ color: 'var(--color-text-2)' }}>Aceite:</span>
                         <span style={{ fontWeight: 600 }}>{service.serviceData?.oilBrand || '-'} / {service.serviceData?.oilType || '-'}</span>
                       </p>
                       <hr style={{ border: 0, borderTop: '1px solid #e2e8f0' }} />
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.85rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: service.serviceData?.filterOil ? 1 : 0.4 }}>
                           <FiCheckCircle style={{ color: service.serviceData?.filterOil ? 'var(--color-success)' : 'inherit' }} /> F. Aceite
                         </div>
@@ -148,12 +148,11 @@ export default function VehicleHistory() {
                         </div>
                       </div>
                     </div>
-                    </div>
                   </div>
 
                   {/* Insumos Consumidos */}
                   {service.items?.length > 0 && (
-                    <div style={{ background: 'rgba(34,197,94,0.05)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(34,197,94,0.1)' }}>
+                    <div style={{ background: 'rgba(34,197,94,0.05)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(34,197,94,0.1)', height: 'fit-content' }}>
                       <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#16a34a' }}>
                         <FiPackage /> Insumos del Stock
                       </h4>
@@ -171,27 +170,27 @@ export default function VehicleHistory() {
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Notas y Fotos */}
-                  <div>
-                    <h4 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>Observaciones del Servicio</h4>
-                    <p style={{ color: 'var(--color-text-2)', fontStyle: 'italic', marginBottom: '1.5rem' }}>
-                      "{service.serviceData?.observations || 'Sin observaciones registradas.'}"
-                    </p>
-                    
-                    {service.serviceData?.photos?.length > 0 && (
-                      <div>
-                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1rem' }}>
-                          <FiCamera /> Fotos de Respaldo
-                        </h4>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          {service.serviceData.photos.map((photo, i) => (
-                            <img key={i} src={photo} alt="Service" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
-                          ))}
-                        </div>
+                {/* Notas y Fotos */}
+                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '1.5rem' }}>
+                  <h4 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>Observaciones del Servicio</h4>
+                  <p style={{ color: 'var(--color-text-2)', fontStyle: 'italic', marginBottom: '1.5rem' }}>
+                    "{service.serviceData?.observations || 'Sin observaciones registradas.'}"
+                  </p>
+                  
+                  {service.serviceData?.photos?.length > 0 && (
+                    <div>
+                      <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '1rem' }}>
+                        <FiCamera /> Fotos de Respaldo
+                      </h4>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {service.serviceData.photos.map((photo, i) => (
+                          <img key={i} src={photo} alt="Service" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
