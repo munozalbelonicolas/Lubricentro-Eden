@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  getProducts, getProduct, createProduct, updateProduct,
+  getProducts, getProduct, getProductBySlug, createProduct, updateProduct,
   deleteProduct, deleteProductImage, getBrands,
 } = require('../controllers/product.controller');
 const { protect, restrictTo } = require('../middlewares/auth.middleware');
@@ -17,6 +17,7 @@ router.use(tenantMiddleware);
 // Públicas (catálogo)
 router.get('/', getProducts);
 router.get('/brands', getBrands);
+router.get('/slug/:slug', getProductBySlug);
 router.get('/:id', getProduct);
 
 // Admin

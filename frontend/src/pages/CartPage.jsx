@@ -58,7 +58,7 @@ export default function CartPage() {
                   )}
                 </div>
                 <div className={styles.itemInfo}>
-                  <Link to={`/products/${item._id}`} className={styles.itemName}>{item.name}</Link>
+                  <Link to={`/store/${item.slug}`} className={styles.itemName}>{item.name}</Link>
                   {item.brand && <p className={styles.itemBrand}>{item.brand}</p>}
                   {item.viscosity && <p className={styles.itemViscosity}>{item.viscosity}</p>}
                 </div>

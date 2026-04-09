@@ -13,7 +13,7 @@ export default function ProductCard({ product }) {
   return (
     <article className={styles.card}>
       {/* Imagen */}
-      <Link to={`/products/${product._id}`} className={styles.imgWrapper}>
+      <Link to={`/store/${product.slug}`} className={styles.imgWrapper}>
         {img ? (
           <img
             src={getImageUrl(img)}
@@ -50,7 +50,7 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Nombre */}
-        <Link to={`/products/${product._id}`} className={styles.name}>
+        <Link to={`/store/${product.slug}`} className={styles.name}>
           {product.name}
         </Link>
 

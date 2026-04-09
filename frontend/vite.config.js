@@ -2,8 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
-import Sitemap from 'vite-plugin-sitemap';
-
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
@@ -17,19 +15,7 @@ export default defineConfig(({ mode }) => ({
           );
         }
       }
-    },
-    Sitemap({
-      hostname: 'https://lubricentro-eden.com.ar/',
-      exclude: ['/404'],
-      dynamicRoutes: [
-        '/',
-        '/store',
-        '/login',
-        '/register',
-        '/workshop-agenda'
-      ],
-      robots: [{ userAgent: '*', allow: '/', disallow: '/dashboard' }]
-    })
+    }
   ],
 
   // 🔴 CLAVE para GitHub Pages o Dominio Propio

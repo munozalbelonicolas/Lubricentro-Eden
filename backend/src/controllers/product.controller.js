@@ -176,9 +176,19 @@ const getBrands = catchAsync(async (req, res, next) => {
   sendSuccess(res, { brands: brands.filter(Boolean).sort() });
 });
 
+/**
+ * GET /api/products/slug/:slug
+ */
+const getProductBySlug = catchAsync(async (req, res, next) => {
+  const product = await Product.findOne({ slug: req.params.slug, tenantId: req.tenantId });
+  if (!product) return next(new AppError('Producto no encontrado.', 404));
+  sendSuccess(res, { product });
+});
+
 module.exports = {
   getProducts,
   getProduct,
+  getProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct,

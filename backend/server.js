@@ -39,24 +39,27 @@ app.use(helmet({
 }));
 
 // Configurar orígenes permitidos
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://lubricentro-eden.com.ar',
-  'http://lubricentro-eden.com.ar',
-  'https://munozalbelonicolas.github.io'
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) 
+  : [
+      'http://localhost:5173',
+      'https://lubricentro-eden.com.ar',
+      'http://lubricentro-eden.com.ar',
+      'https://munozalbelonicolas.github.io'
+    ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permitir si no hay origen (como apps móviles o curl)
       if (!origin) return callback(null, true);
       
-      const isDomainAllowed = allowedOrigins.indexOf(origin) !== -1 || 
-                             origin.includes('lubricentro-eden.com.ar') ||
-                             origin.endsWith('.github.io');
+      const isDomainAllowed = allowedOrigins.some(ao => 
+        origin === ao || 
+        (ao.startsWith('.') && origin.endsWith(ao)) ||
+        origin.includes('lubricentro-eden.com.ar')
+      );
 
-      if (isDomainAllowed) {
+      if (isDomainAllowed || process.env.NODE_ENV === 'development') {
         callback(null, true);
       } else {
         callback(new Error('No permitido por CORS'));

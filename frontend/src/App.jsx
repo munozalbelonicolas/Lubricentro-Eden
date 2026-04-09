@@ -47,7 +47,7 @@ export default function App() {
           {/* Públicas */}
           <Route path="/"            element={<HomePage />} />
           <Route path="/store"       element={<StorePage />} />
-          <Route path="/products/:id" element={<ProductPage />} />
+          <Route path="/store/:slug" element={<ProductPage />} />
           <Route path="/login"       element={<LoginPage />} />
           <Route path="/register"    element={<RegisterPage />} />
 

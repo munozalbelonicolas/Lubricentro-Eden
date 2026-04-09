@@ -7,7 +7,7 @@ import { FiShoppingCart, FiArrowLeft, FiTag, FiPackage, FiDroplet } from 'react-
 import styles from './ProductPage.module.css';
 
 export default function ProductPage() {
-  const { id }   = useParams();
+  const { slug } = useParams();
   const { addItem } = useCart();
   const navigate = useNavigate();
   const [product, setProduct]   = useState(null);
@@ -16,11 +16,11 @@ export default function ProductPage() {
   const [mainImg, setMainImg]   = useState(0);
 
   useEffect(() => {
-    productService.getById(id)
+    productService.getBySlug(slug)
       .then((data) => setProduct(data.data.product))
       .catch(() => navigate('/store'))
       .finally(() => setLoading(false));
-  }, [id, navigate]);
+  }, [slug, navigate]);
 
   if (loading) return (
     <div className="flex-center" style={{ minHeight: '60vh' }}>

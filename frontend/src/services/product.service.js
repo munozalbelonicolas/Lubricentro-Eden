@@ -11,6 +11,11 @@ export const productService = {
     return data;
   },
 
+  getBySlug: async (slug) => {
+    const { data } = await api.get(`/products/slug/${slug}`);
+    return data;
+  },
+
   getBrands: async () => {
     const { data } = await api.get('/products/brands');
     return data;

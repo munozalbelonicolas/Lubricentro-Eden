@@ -47,6 +47,11 @@ const productSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    slug: {
+      type: String,
+      trim: true,
+      index: true,
+    },
     // Específico para aceites y lubricantes
     viscosity: {
       type: String,
@@ -79,7 +84,28 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const slugify = require('slugify');
+
+productSchema.pre('save', async function (next) {
+  if (!this.slug || this.isModified('name')) {
+    let baseSlug = slugify(this.name, { lower: true, strict: true });
+    let newSlug = baseSlug;
+    let counter = 1;
+
+    // Verificar colisión de slugs dentro del mismo tenant
+    let existing = await mongoose.models.Product.findOne({ tenantId: this.tenantId, slug: newSlug });
+    while (existing && existing._id.toString() !== this._id.toString()) {
+      newSlug = `${baseSlug}-${counter}`;
+      existing = await mongoose.models.Product.findOne({ tenantId: this.tenantId, slug: newSlug });
+      counter++;
+    }
+    this.slug = newSlug;
+  }
+  next();
+});
+
 // Índices compuestos para búsquedas eficientes
+productSchema.index({ tenantId: 1, slug: 1 }, { unique: true });
 productSchema.index({ tenantId: 1, category: 1 });
 productSchema.index({ tenantId: 1, brand: 1 });
 productSchema.index({ tenantId: 1, isActive: 1 });
