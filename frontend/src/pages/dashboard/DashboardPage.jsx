@@ -50,7 +50,7 @@ export default function DashboardPage() {
         <div className={styles.header}>
           <div>
             <h1 className={styles.greeting}>
-              Hola, {user?.name?.split(' ')[0]} 👋
+              Hola, {(user?.firstName || user?.name || 'Usuario').split(' ')[0]} 👋
             </h1>
             <p className={styles.storeName}>{tenant?.name}</p>
           </div>

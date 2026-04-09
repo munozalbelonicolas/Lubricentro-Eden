@@ -82,16 +82,16 @@ export default function Navbar() {
             >
               <button className={styles.userBtn} aria-label="Menú de usuario">
                 <div className={styles.userAvatar}>
-                  {user.name?.charAt(0)?.toUpperCase()}
+                  {(user.firstName || user.name || 'U').charAt(0).toUpperCase()}
                 </div>
-                <span className={styles.userName}>{user.name?.split(' ')[0]}</span>
+                <span className={styles.userName}>{(user.firstName || user.name || 'Usuario').split(' ')[0]}</span>
                 <FiChevronDown size={14} className={`${styles.chevron} ${userOpen ? styles.open : ''}`} />
               </button>
 
               {userOpen && (
                 <div className={styles.dropdown}>
                   <div className={styles.dropdownHeader}>
-                    <p className={styles.dropdownName}>{user.name}</p>
+                    <p className={styles.dropdownName}>{user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.name}</p>
                     <p className={styles.dropdownEmail}>{user.email}</p>
                   </div>
                   <div className={styles.dropdownDivider} />
