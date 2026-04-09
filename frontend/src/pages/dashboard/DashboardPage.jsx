@@ -8,7 +8,7 @@ import { useTenant } from '../../hooks/useTenant';
 import { formatPrice, formatDateTime } from '../../utils/formatters';
 import {
   FiPackage, FiDollarSign, FiClock, FiTrendingUp,
-  FiSettings, FiShoppingBag, FiGrid, FiStar, FiTool, FiActivity
+  FiSettings, FiShoppingBag, FiGrid, FiStar, FiTool, FiActivity, FiUser
 } from 'react-icons/fi';
 import styles from './DashboardPage.module.css';
 
