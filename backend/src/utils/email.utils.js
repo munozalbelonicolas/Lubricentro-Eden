@@ -114,3 +114,60 @@ exports.sendVerificationEmail = async (user, token) => {
 
   return transporter.sendMail(mailOptions);
 };
+/**
+ * Enviar email de bienvenida para usuario creado por Admin
+ */
+exports.sendAdminCreatedUserEmail = async (user, tempPassword) => {
+  const loginUrl = `${process.env.FRONTEND_URL}/login`;
+  const logoUrl = `${process.env.FRONTEND_URL}/logos/Logo-Eden.png`;
+
+  const mailOptions = {
+    from: `"Lubricentro Eden" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: '¡Tu cuenta ha sido creada! - Lubricentro Eden 🛠️',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: sans-serif; max-width: 600px; margin: auto; background: #fff; border-radius: 12px; overflow: hidden; color: #333; border: 1px solid #eee; }
+          .header { background: #1a1a1a; padding: 30px; text-align: center; }
+          .body { padding: 40px; }
+          .highlight { color: #ff6b00; font-weight: bold; }
+          .cred-box { background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee; }
+          .btn { background: #ff6b00; color: #fff !important; padding: 14px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; }
+          .footer { background: #f4f4f4; padding: 20px; text-align: center; font-size: 12px; color: #888; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="${logoUrl}" alt="Logo" style="height: 60px;">
+          </div>
+          <div class="body">
+            <h2 style="margin-top: 0;">¡Hola ${user.firstName}!</h2>
+            <p>El administrador de <strong>Lubricentro Eden</strong> ha creado una cuenta para vos. Ahora podés acceder a tu historial de servicios, realizar compras y agendar turnos de forma más simple.</p>
+            
+            <p>Tus credenciales de acceso son:</p>
+            <div class="cred-box">
+              <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
+              <p style="margin: 5px 0;"><strong>Contraseña Temporal:</strong> <span class="highlight">${tempPassword}</span></p>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">⚠️ Te recomendamos cambiar esta contraseña desde tu perfil una vez que inicies sesión.</p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${loginUrl}" class="btn">INICIAR SESIÓN</a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>Lubricentro Eden - Servicio Integral Automotor</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+};

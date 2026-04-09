@@ -24,6 +24,7 @@ const financeRoutes = require('./src/routes/finance.routes');
 const subscriptionRoutes = require('./src/routes/subscription.routes');
 const chatRoutes = require('./src/routes/chatRoutes');
 const taskRoutes = require('./src/routes/task.routes');
+const userRoutes = require('./src/routes/user.routes');
 
 const app = express();
 app.set('trust proxy', 1); // Confiar en el proxy de Render para detectar HTTPS correctamente
@@ -112,6 +113,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

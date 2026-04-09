@@ -112,6 +112,11 @@ export default function DashboardPage() {
             <p className={styles.quickTitle} style={{ color: '#3b82f6' }}>Historial Clínico</p>
             <p className={styles.quickDesc}>Consulta por patente</p>
           </Link>
+          <Link to="/dashboard/users" className={styles.quickCard} style={{ borderColor: 'rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.06)' }}>
+            <FiUser size={28} style={{ color: '#a855f7' }} />
+            <p className={styles.quickTitle} style={{ color: '#a855f7' }}>Usuarios</p>
+            <p className={styles.quickDesc}>Clientes y accesos</p>
+          </Link>
           <Link to="/dashboard/subscription" className={styles.quickCard}>
             <FiStar size={28} />
             <p className={styles.quickTitle}>Suscripción</p>
