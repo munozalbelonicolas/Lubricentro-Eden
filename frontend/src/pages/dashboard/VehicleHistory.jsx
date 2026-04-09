@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { taskService } from '../../services/index';
 import { formatDate, formatPrice } from '../../utils/formatters';
-import { FiSearch, FiFileText, FiCamera, FiCheckCircle, FiInfo, FiHash, FiActivity } from 'react-icons/fi';
+import { FiSearch, FiFileText, FiCamera, FiCheckCircle, FiInfo, FiHash, FiActivity, FiClock, FiPackage } from 'react-icons/fi';
 import styles from './DashboardPage.module.css'; // Reutilizamos estilos base
 // Reutilización de estilos simplificada para producción
 
@@ -108,7 +108,20 @@ export default function VehicleHistory() {
               <div key={service._id} className="card" style={{ padding: '2rem', borderLeft: '4px solid var(--color-primary)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.3rem', fontWeight: 700 }}>{service.title || 'Servicio de Taller'}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                      <h3 style={{ fontSize: '1.3rem', fontWeight: 700 }}>{service.title || 'Servicio de Taller'}</h3>
+                      <span style={{ 
+                        fontSize: '0.7rem', 
+                        padding: '0.2rem 0.5rem', 
+                        borderRadius: '4px', 
+                        textTransform: 'uppercase',
+                        fontWeight: 700,
+                        background: service._type === 'task' ? 'rgba(59,130,246,0.1)' : 'rgba(139,92,246,0.1)',
+                        color: service._type === 'task' ? '#3b82f6' : '#8b5cf6'
+                      }}>
+                        {service._type === 'task' ? 'Taller' : 'Tienda Web'}
+                      </span>
+                    </div>
                     <p style={{ color: 'var(--color-text-2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <FiClock /> Realizado el {formatDate(service.date)}
                     </p>

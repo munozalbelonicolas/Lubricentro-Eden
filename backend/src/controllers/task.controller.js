@@ -89,31 +89,73 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getVehicleHistory = catchAsync(async (req, res, next) => {
+/**
+ * Obtener historial clínico unificado de un vehículo
+ * Busca tanto en Tareas (taller) como en Órdenes (tienda)
+ */
+exports.getVehicleHistory = catchAsync(async (req, res) => {
   const { plate, startDate, endDate } = req.query;
+  const tenantId = req.user.tenantId;
 
-  const query = {
-    tenantId: req.user.tenantId,
-    status: 'done'
-  };
+  // Cargar modelos necesarios
+  const Order = require('../models/Order.model');
+
+  // Filtros base
+  const taskQuery = { tenantId, status: 'done' };
+  const orderQuery = { tenantId, status: { $in: ['delivered', 'confirmed', 'processing', 'ready_pickup'] } };
 
   if (plate) {
-    // Escapar caracteres especiales y crear regex que ignore espacios y sea insensible a mayúsculas
     const cleanPlate = plate.replace(/\s+/g, '').split('').join('\\s*');
-    query.plate = { $regex: new RegExp(`^\\s*${cleanPlate}\\s*$`, 'i') };
+    const plateRegex = { $regex: new RegExp(`${cleanPlate}`, 'i') }; // Búsqueda parcial más flexible
+    
+    taskQuery.plate = plateRegex;
+    orderQuery['workshopAppointment.vehicle'] = plateRegex;
   }
 
   if (startDate || endDate) {
-    query.date = {};
-    if (startDate) query.date.$gte = startDate;
-    if (endDate)   query.date.$lte = endDate;
+    const dateRange = {};
+    if (startDate) dateRange.$gte = new Date(startDate);
+    if (endDate)   dateRange.$lte = new Date(endDate);
+    
+    taskQuery.date = dateRange;
+    orderQuery.createdAt = dateRange;
   }
 
-  // Si no hay filtros, podríamos limitar a los últimos 30 días para no saturar
-  // Pero por ahora traemos todo lo que pida
-  const history = await Task.find(query)
-    .populate('items.productId', 'name brand category')
-    .sort({ date: -1 });
+  // Buscar en ambas colecciones
+  const [tasks, orders] = await Promise.all([
+    Task.find(taskQuery).lean(),
+    Order.find(orderQuery).lean()
+  ]);
+
+  // Normalizar Órdenes para que se parezcan a Tareas en el listado
+  const normalizedOrders = orders.map(o => ({
+    _id: o._id,
+    title: `Pedido Web #${o.orderNumber?.slice(-6) || o._id.toString().slice(-6)}`,
+    date: o.createdAt,
+    currentKm: o.workshopAppointment?.km || 0,
+    items: (o.items || []).map(i => ({
+      name: i.name,
+      quantity: i.quantity,
+      price: i.price
+    })),
+    totalValue: o.total,
+    serviceData: {
+      observations: `Pedido vía web (${o.deliveryType === 'workshop' ? 'Turno Taller' : 'Envio/Retiro'}).`,
+      oilBrand: (o.items || []).find(i => i.name.toLowerCase().includes('aceite'))?.name || 'N/A'
+    },
+    _type: 'order'
+  }));
+
+  const normalizedTasks = tasks.map(t => ({ 
+    ...t, 
+    _type: 'task',
+    date: t.date // Aseguramos que tenga date
+  }));
+
+  // Combinar y ordenar cronológicamente descendente
+  const history = [...normalizedTasks, ...normalizedOrders].sort((a, b) => 
+    new Date(b.date) - new Date(a.date)
+  );
 
   res.status(200).json({
     status: 'success',
