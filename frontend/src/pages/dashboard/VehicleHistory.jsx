@@ -108,7 +108,7 @@ export default function VehicleHistory() {
               <div key={service._id} className="card" style={{ padding: '2rem', borderLeft: '4px solid var(--color-primary)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.3rem', fontWeight: 700 }}>{service.title}</h3>
+                    <h3 style={{ fontSize: '1.3rem', fontWeight: 700 }}>{service.title || 'Servicio de Taller'}</h3>
                     <p style={{ color: 'var(--color-text-2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <FiClock /> Realizado el {formatDate(service.date)}
                     </p>
@@ -157,15 +157,15 @@ export default function VehicleHistory() {
                         <FiPackage /> Insumos del Stock
                       </h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        {service.items.map((item, idx) => (
+                        {(service.items || []).map((item, idx) => (
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                            <span>{item.name} <span style={{ opacity: 0.6 }}>x{item.quantity}</span></span>
-                            <span style={{ fontWeight: 600 }}>{formatPrice(item.price * item.quantity)}</span>
+                            <span>{item?.name || 'Producto'} <span style={{ opacity: 0.6 }}>x{item?.quantity || 1}</span></span>
+                            <span style={{ fontWeight: 600 }}>{formatPrice((item?.price || 0) * (item?.quantity || 1))}</span>
                           </div>
                         ))}
                         <div style={{ borderTop: '1px solid rgba(0,0,0,0.05)', marginTop: '0.4rem', paddingTop: '0.4rem', display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ fontWeight: 700 }}>Total Insumos</span>
-                          <span style={{ fontWeight: 800, color: '#16a34a' }}>{formatPrice(service.totalValue)}</span>
+                          <span style={{ fontWeight: 800, color: '#16a34a' }}>{formatPrice(service.totalValue || 0)}</span>
                         </div>
                       </div>
                     </div>

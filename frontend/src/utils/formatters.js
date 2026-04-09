@@ -1,20 +1,30 @@
 /**
  * Formatea un número como moneda argentina (ARS).
  */
-export const formatPrice = (amount) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(amount);
+export const formatPrice = (amount) => {
+  if (amount === undefined || amount === null || isNaN(amount)) return '$ 0';
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(amount);
+};
 
 /**
  * Formatea una fecha en español.
  */
-export const formatDate = (date) =>
-  new Date(date).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+export const formatDate = (date) => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'Fecha inválida';
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
 /**
  * Formatea fecha y hora.
  */
-export const formatDateTime = (date) =>
-  new Date(date).toLocaleString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+export const formatDateTime = (date) => {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return 'Fecha inválida';
+  return d.toLocaleString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
 
 /**
  * Trunca texto a N caracteres.

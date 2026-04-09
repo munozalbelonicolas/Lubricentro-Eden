@@ -98,7 +98,9 @@ exports.getVehicleHistory = catchAsync(async (req, res, next) => {
   };
 
   if (plate) {
-    query.plate = plate.toUpperCase().trim();
+    // Escapar caracteres especiales y crear regex que ignore espacios y sea insensible a mayúsculas
+    const cleanPlate = plate.replace(/\s+/g, '').split('').join('\\s*');
+    query.plate = { $regex: new RegExp(`^\\s*${cleanPlate}\\s*$`, 'i') };
   }
 
   if (startDate || endDate) {
