@@ -55,6 +55,10 @@ export function TenantProvider({ children }) {
     }
   };
 
+  useEffect(() => {
+    const tenantId = localStorage.getItem('tenantId') || import.meta.env.VITE_TENANT_ID;
+    if (!tenantId) { setLoading(false); return; }
+
     // 1. Detectar si hay sesión para elegir endpoint
     const token = localStorage.getItem('token');
     
@@ -97,6 +101,7 @@ export function TenantProvider({ children }) {
 
     fetchTenantData();
   }, []);
+
 
   const refreshTenant = async () => {
     try {
