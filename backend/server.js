@@ -25,6 +25,7 @@ const chatRoutes = require('./src/routes/chatRoutes');
 const taskRoutes = require('./src/routes/task.routes');
 
 const app = express();
+app.set('trust proxy', 1); // Confiar en el proxy de Render para detectar HTTPS correctamente
 
 // ──────────────────────────────────────────────
 // Conexión a MongoDB

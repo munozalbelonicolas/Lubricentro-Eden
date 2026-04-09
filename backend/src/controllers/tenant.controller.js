@@ -14,11 +14,9 @@ const getMyTenant = catchAsync(async (req, res, next) => {
   const tenant = await Tenant.findById(req.tenantId);
   if (!tenant) return next(new AppError('Tienda no encontrada.', 404));
 
-  // Absolutizar logo si existe
-  if (tenant.config?.logo && tenant.config.logo.startsWith('/uploads')) {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    tenant.config.logo = `${baseUrl}${tenant.config.logo}`;
-  }
+  // Dejar que el frontend maneje la construcción de la URL
+  // Anteriormente aquí se absolutizaba con req.protocol, lo que causaba problemas de HTTPS/HTTP
+
 
   sendSuccess(res, { tenant });
 });
@@ -43,11 +41,8 @@ const updateMyTenant = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
 
-  // Absolutizar logo si existe
-  if (tenant.config?.logo && tenant.config.logo.startsWith('/uploads')) {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    tenant.config.logo = `${baseUrl}${tenant.config.logo}`;
-  }
+  // Dejar que el frontend maneje la construcción de la URL
+
 
   sendSuccess(res, { tenant });
 });
@@ -66,10 +61,6 @@ const uploadLogo = catchAsync(async (req, res, next) => {
     { new: true }
   );
 
-  // Enviar URL absoluta al frontend
-  const baseUrl = `${req.protocol}://${req.get('host')}`;
-  logoUrl = `${baseUrl}${logoUrl}`;
-  
   if (tenant.config) {
     tenant.config.logo = logoUrl;
   }
@@ -95,11 +86,8 @@ const getPublicTenant = catchAsync(async (req, res, next) => {
   );
   if (!tenant) return next(new AppError('Tienda no encontrada.', 404));
 
-  // Absolutizar logo si existe
-  if (tenant.config?.logo && tenant.config.logo.startsWith('/uploads')) {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    tenant.config.logo = `${baseUrl}${tenant.config.logo}`;
-  }
+  // Dejar que el frontend maneje la construcción de la URL
+
 
   sendSuccess(res, { tenant });
 });
