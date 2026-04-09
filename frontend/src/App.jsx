@@ -23,6 +23,7 @@ import SubscriptionPage from './pages/dashboard/SubscriptionPage';
 import WorkshopAdmin   from './pages/dashboard/WorkshopAdmin';
 import VehicleHistory  from './pages/dashboard/VehicleHistory';
 import FinancePage     from './pages/dashboard/FinancePage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 
 // Rutas protegidas
 const PrivateRoute = ({ children }) => {
