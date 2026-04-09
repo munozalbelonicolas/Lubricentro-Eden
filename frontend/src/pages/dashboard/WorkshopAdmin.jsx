@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   FiRefreshCw, FiCalendar, FiClock, FiTool,
   FiChevronLeft, FiChevronRight, FiUser, FiCheckCircle,
-  FiAlertCircle, FiList, FiPlus, FiX, FiTrash2, FiPrinter
+  FiAlertCircle, FiList, FiPlus, FiX, FiTrash2, FiPrinter, FiPackage
 } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -603,6 +603,9 @@ function WeekView({ weekDays, orders, tasks, todayKey, onSelect }) {
 ═══════════════════════════════════════════════════════════ */
 function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
   const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [fetchingProducts, setFetchingProducts] = useState(false);
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -612,8 +615,48 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
     date: selectedDay,
     timeSlot: '08:00-10:00',
     priority: 'medium',
-    status: 'pending'
+    status: 'pending',
+    items: [],
+    totalValue: 0
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setFetchingProducts(true);
+      productService.getAll({ category: ['aceite', 'filtro'], limit: 100 })
+        .then(res => setProducts(res.data.products || []))
+        .catch(err => console.error('Error cargando productos:', err))
+        .finally(() => setFetchingProducts(false));
+    }
+  }, [isOpen]);
+
+  const addItem = (prod) => {
+    const existing = form.items.find(i => i.productId === prod._id);
+    if (existing) {
+      const newItems = form.items.map(i => 
+        i.productId === prod._id ? { ...i, quantity: i.quantity + 1 } : i
+      );
+      updateItems(newItems);
+    } else {
+      const newItems = [...form.items, {
+        productId: prod._id,
+        name: prod.name,
+        price: prod.price,
+        quantity: 1
+      }];
+      updateItems(newItems);
+    }
+  };
+
+  const removeItem = (prodId) => {
+    const newItems = form.items.filter(i => i.productId !== prodId);
+    updateItems(newItems);
+  };
+
+  const updateItems = (newItems) => {
+    const total = newItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+    setForm(prev => ({ ...prev, items: newItems, totalValue: total }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -632,7 +675,7 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth:'450px' }}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth:'550px' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' }}>
           <h2 style={{ fontSize:'1.25rem', fontWeight:800 }}>Agendar Tarea Manual</h2>
           <button onClick={onClose} style={{ color:'var(--color-text-3)' }}><FiX size={24}/></button>
@@ -652,23 +695,23 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
             <textarea 
               className="input textarea" placeholder="Detalles del trabajo..."
               value={form.description} onChange={e => setForm({...form, description: e.target.value})}
+              style={{ minHeight: '60px' }}
             />
           </div>
 
-          <div className="input-group">
-            <label className="input-label">Identificación del Vehículo</label>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'0.75rem' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+            <div className="input-group">
+              <label className="input-label">Identificación (Patente)</label>
               <input 
-                className="input" placeholder="Patente"
+                className="input" placeholder="ABC 123"
                 value={form.plate} onChange={e => setForm({...form, plate: e.target.value})}
               />
+            </div>
+            <div className="input-group">
+              <label className="input-label">KM Actual</label>
               <input 
-                type="number" className="input" placeholder="KM Actual"
+                type="number" className="input" placeholder="Kilometraje"
                 value={form.currentKm} onChange={e => setForm({...form, currentKm: e.target.value})}
-              />
-              <input 
-                type="number" className="input" placeholder="Próximo KM"
-                value={form.nextChangeKm} onChange={e => setForm({...form, nextChangeKm: e.target.value})}
               />
             </div>
           </div>
@@ -694,16 +737,53 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
             </div>
           </div>
 
-          <div className="input-group">
-            <label className="input-label">Prioridad</label>
-            <select 
-              className="select" value={form.priority}
-              onChange={e => setForm({...form, priority: e.target.value})}
-            >
-              <option value="low">Baja</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-            </select>
+          {/* Insumos del Stock */}
+          <div style={{ background:'rgba(203,26,32,0.05)', border:'1px dashed var(--color-primary-glow)', padding:'1.2rem', borderRadius:'12px' }}>
+            <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem', color:'var(--color-primary)', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+              <FiPackage size={16}/> Selección de Insumos (Opcional)
+            </h3>
+            
+            <div style={{ marginBottom:'1rem' }}>
+              <select 
+                className="select" 
+                style={{ fontSize:'0.85rem' }}
+                onChange={(e) => {
+                  const p = products.find(x => x._id === e.target.value);
+                  if (p) addItem(p);
+                  e.target.value = "";
+                }}
+                disabled={fetchingProducts}
+              >
+                <option value="">{fetchingProducts ? 'Cargando stock...' : '++ Seleccionar Aceite o Filtro'}</option>
+                {products.filter(p => !form.items.some(i => i.productId === p._id)).map(p => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} ({formatPrice(p.price)})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {form.items.length > 0 ? (
+              <div style={{ display:'flex', flexDirection:'column', gap:'0.4rem' }}>
+                {form.items.map(item => (
+                  <div key={item.productId} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', fontSize:'0.85rem', background:'rgba(255,255,255,0.03)', padding:'0.4rem 0.6rem', borderRadius:'8px' }}>
+                    <span>{item.name} <span style={{ opacity:0.6 }}>x{item.quantity}</span></span>
+                    <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                      <span style={{ fontWeight:700 }}>{formatPrice(item.price * item.quantity)}</span>
+                      <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444' }}>
+                        <FiTrash2 size={14}/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ borderTop:'1px solid rgba(203,26,32,0.1)', marginTop:'0.5rem', paddingTop:'0.5rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontWeight:600 }}>Presupuesto Estimado:</span>
+                  <span style={{ fontSize:'1.1rem', fontWeight:800, color:'var(--color-primary)' }}>{formatPrice(form.totalValue)}</span>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize:'0.75rem', color:'var(--color-text-3)', textAlign:'center' }}>Sin productos seleccionados todavía.</p>
+            )}
           </div>
 
           <div style={{ display:'flex', gap:'0.75rem', marginTop:'0.5rem' }}>
