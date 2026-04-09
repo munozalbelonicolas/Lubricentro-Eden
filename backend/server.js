@@ -35,7 +35,8 @@ connectDB();
 // Seguridad y middlewares globales
 // ──────────────────────────────────────────────
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Desactivar CSP temporalmente si causa problemas de "Sitio no seguro"
 }));
 
 // Configurar orígenes permitidos

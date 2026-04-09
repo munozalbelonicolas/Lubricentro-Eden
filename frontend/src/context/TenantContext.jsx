@@ -29,9 +29,17 @@ export function TenantProvider({ children }) {
       }
 
       // 🖼️ Logo y Favicon Dinámico
-      const faviconLink = document.getElementById('favicon');
-      if (faviconLink) {
-        faviconLink.href = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+      try {
+        const faviconLink = document.getElementById('favicon');
+        if (faviconLink) {
+          const newFavicon = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+          // Solo actualizar si el href es diferente para evitar parpadeo innecesario
+          if (faviconLink.getAttribute('href') !== newFavicon) {
+            faviconLink.href = newFavicon;
+          }
+        }
+      } catch (err) {
+        console.error('Error updating favicon:', err);
       }
 
       // 🏷️ Título del documento
@@ -77,9 +85,16 @@ export function TenantProvider({ children }) {
       
       root.style.setProperty('--color-primary', primary);
 
-      const faviconLink = document.getElementById('favicon');
-      if (faviconLink) {
-        faviconLink.href = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+      try {
+        const faviconLink = document.getElementById('favicon');
+        if (faviconLink) {
+          const newFavicon = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+          if (faviconLink.getAttribute('href') !== newFavicon) {
+            faviconLink.href = newFavicon;
+          }
+        }
+      } catch (err) {
+        console.error('Error refreshing favicon:', err);
       }
     } catch { /* ignorar */ }
   };

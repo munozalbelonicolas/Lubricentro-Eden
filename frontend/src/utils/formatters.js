@@ -27,8 +27,14 @@ export const truncate = (str, n = 80) =>
  */
 export const getImageUrl = (path) => {
   if (!path) return '/placeholder-product.png';
-  if (path.startsWith('http')) return path;
-  const base = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
+  if (path.startsWith('http')) return path.replace('http://', 'https://');
+  
+  let base = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
+  // Forzar https en el base si no es localhost
+  if (base.startsWith('http://') && !base.includes('localhost')) {
+    base = base.replace('http://', 'https://');
+  }
+  
   return `${base}${path}`;
 };
 
