@@ -24,7 +24,7 @@
 
 /* Logo */
 .logo { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
-.logoImg { height: 80px; width: auto; object-fit: contain; }
+.logoImg { height: 100px; width: auto; object-fit: contain; }
 .logoText {
   font-family: var(--font-heading);
   font-size: 1.3rem;
