@@ -3,7 +3,7 @@ import { taskService } from '../../services/index';
 import { formatDate, formatPrice } from '../../utils/formatters';
 import { FiSearch, FiFileText, FiCamera, FiCheckCircle, FiInfo, FiHash, FiActivity } from 'react-icons/fi';
 import styles from './DashboardPage.module.css'; // Reutilizamos estilos base
-import localStyles from './WorkshopAdmin.module.css'; // Reutilizamos algunos estilos de taller
+// Reutilización de estilos simplificada para producción
 
 export default function VehicleHistory() {
   const [plate, setPlate] = useState('');
