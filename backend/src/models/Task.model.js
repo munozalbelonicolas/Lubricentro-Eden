@@ -58,6 +58,17 @@ const taskSchema = new mongoose.Schema(
     nextChangeKm: {
       type: Number,
     },
+    // Ficha técnica para el historial
+    serviceData: {
+      oilBrand: { type: String, trim: true },
+      oilType:  { type: String, trim: true },
+      filterOil:  { type: Boolean, default: false },
+      filterAir:  { type: Boolean, default: false },
+      filterFuel: { type: Boolean, default: false },
+      filterCabin: { type: Boolean, default: false },
+      observations: { type: String, trim: true },
+      photos: [{ type: String }], // Array de URLs
+    }
   },
   { timestamps: true }
 );

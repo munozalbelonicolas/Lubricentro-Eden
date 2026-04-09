@@ -15,6 +15,8 @@ router
   .get(taskController.getAllTasks)
   .post(taskController.createTask);
 
+router.get('/history/:plate', taskController.getVehicleHistory);
+
 router
   .route('/:id')
   .patch(taskController.updateTask)

@@ -69,6 +69,8 @@ export default function WorkshopAdmin() {
   const [selectedDay, setSelectedDay] = useState(toLocalDate(new Date()));
   const [tab,        setTab]        = useState('day'); // 'day' | 'week'
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState(null);
 
   const weekDays = useMemo(() => getWeekDays(anchor), [anchor]);
   const todayKey = toLocalDate(new Date());
@@ -94,6 +96,16 @@ export default function WorkshopAdmin() {
   useEffect(() => { load(); }, []);
 
   const handleStatusChange = async (id, status, type) => {
+    // Si se marca como completado y es una tarea, abrimos el modal de servicio técnico
+    if (status === 'done' && type === 'task') {
+      const task = tasks.find(t => t._id === id);
+      if (task) {
+        setTaskToComplete(task);
+        setIsServiceModalOpen(true);
+        return;
+      }
+    }
+
     try {
       if (type === 'order') {
         await orderService.updateStatus(id, status);
@@ -335,6 +347,19 @@ export default function WorkshopAdmin() {
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
             selectedDay={selectedDay}
+            onSuccess={load}
+          />
+        )}
+
+        {/* ── Modal Servicio Técnico (Historial) ── */}
+        {isServiceModalOpen && (
+          <ServiceModal
+            isOpen={isServiceModalOpen}
+            onClose={() => {
+              setIsServiceModalOpen(false);
+              setTaskToComplete(null);
+            }}
+            task={taskToComplete}
             onSuccess={load}
           />
         )}
@@ -684,6 +709,143 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
             <button type="button" className="btn btn-ghost btn-full" onClick={onClose}>Cancelar</button>
             <button type="submit" className="btn btn-primary btn-full" disabled={loading}>
               {loading ? 'Agendando...' : 'Confirmar Agenda'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Modal de Servicio Técnico (Historial)
+   Aquí se capturan los datos finales del trabajo realizado.
+═══════════════════════════════════════════════════════════ */
+function ServiceModal({ isOpen, onClose, task, onSuccess }) {
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    status: 'done',
+    currentKm: task?.currentKm || '',
+    nextChangeKm: task?.nextChangeKm || '',
+    serviceData: {
+      oilBrand: task?.serviceData?.oilBrand || '',
+      oilType:  task?.serviceData?.oilType || '',
+      filterOil:  task?.serviceData?.filterOil || false,
+      filterAir:  task?.serviceData?.filterAir || false,
+      filterFuel: task?.serviceData?.filterFuel || false,
+      filterCabin: task?.serviceData?.filterCabin || false,
+      observations: task?.serviceData?.observations || '',
+      photos: task?.serviceData?.photos || []
+    }
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await taskService.update(task._id, form);
+      toast.success('Servicio completado e historial guardado.');
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar servicio');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth:'550px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' }}>
+          <div>
+            <h2 style={{ fontSize:'1.25rem', fontWeight:800 }}>Ficha Técnica de Servicio</h2>
+            <p style={{ fontSize:'0.85rem', color:'var(--color-text-3)' }}>Patente: {task?.plate || 'S/P'}</p>
+          </div>
+          <button onClick={onClose} style={{ color:'var(--color-text-3)' }}><FiX size={24}/></button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.5rem' }}>
+          
+          {/* Kilometraje */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
+            <div className="input-group">
+              <label className="input-label">KM Actual</label>
+              <input 
+                type="number" className="input" required
+                value={form.currentKm} onChange={e => setForm({...form, currentKm: e.target.value})}
+              />
+            </div>
+            <div className="input-group">
+              <label className="input-label">Próximo Cambio (KM)</label>
+              <input 
+                type="number" className="input"
+                value={form.nextChangeKm} onChange={e => setForm({...form, nextChangeKm: e.target.value})}
+              />
+            </div>
+          </div>
+
+          {/* Fluidos */}
+          <div style={{ background:'var(--color-surface-2)', padding:'1rem', borderRadius:'8px' }}>
+            <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem', color:'var(--color-primary)' }}>Lubricante utilizado</h3>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
+              <div className="input-group">
+                <label className="input-label">Marca Aceite</label>
+                <input 
+                  className="input" placeholder="Ej: Shell, Mobil..."
+                  value={form.serviceData.oilBrand} 
+                  onChange={e => setForm({...form, serviceData: {...form.serviceData, oilBrand: e.target.value}})}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label">Tipo / Viscosidad</label>
+                <input 
+                  className="input" placeholder="Ej: 10W40, 5W30..."
+                  value={form.serviceData.oilType} 
+                  onChange={e => setForm({...form, serviceData: {...form.serviceData, oilType: e.target.value}})}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Filtros */}
+          <div>
+            <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem' }}>Filtros reemplazados</h3>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                <input type="checkbox" checked={form.serviceData.filterOil} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterOil: e.target.checked}})} />
+                Filtro de Aceite
+              </label>
+              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                <input type="checkbox" checked={form.serviceData.filterAir} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterAir: e.target.checked}})} />
+                Filtro de Aire
+              </label>
+              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                <input type="checkbox" checked={form.serviceData.filterFuel} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterFuel: e.target.checked}})} />
+                Filtro Combustible
+              </label>
+              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                <input type="checkbox" checked={form.serviceData.filterCabin} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterCabin: e.target.checked}})} />
+                Filtro Habitáculo
+              </label>
+            </div>
+          </div>
+
+          {/* Observaciones */}
+          <div className="input-group">
+            <label className="input-label">Observaciones y Detalles Técnicos</label>
+            <textarea 
+              className="input textarea" placeholder="Escribe notas relevantes para el próximo service..."
+              value={form.serviceData.observations} 
+              onChange={e => setForm({...form, serviceData: {...form.serviceData, observations: e.target.value}})}
+              style={{ minHeight:'80px' }}
+            />
+          </div>
+
+          <div style={{ display:'flex', gap:'0.75rem', marginTop:'0.5rem' }}>
+            <button type="button" className="btn btn-ghost btn-full" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ background:'var(--color-success)' }}>
+              {loading ? 'Guardando...' : 'Finalizar y Guardar Historial'}
             </button>
           </div>
         </form>

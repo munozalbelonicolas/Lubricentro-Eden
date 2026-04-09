@@ -59,3 +59,24 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
     data: null
   });
 });
+
+exports.getVehicleHistory = catchAsync(async (req, res, next) => {
+  const { plate } = req.params;
+
+  if (!plate) {
+    return next(new AppError('Debes proporcionar una patente.', 400));
+  }
+
+  // Buscar todas las tareas hechas para esta patente en este tenant
+  const history = await Task.find({
+    tenantId: req.user.tenantId,
+    plate: plate.toUpperCase().trim(),
+    status: 'done'
+  }).sort({ date: -1 });
+
+  res.status(200).json({
+    status: 'success',
+    results: history.length,
+    data: { history }
+  });
+});

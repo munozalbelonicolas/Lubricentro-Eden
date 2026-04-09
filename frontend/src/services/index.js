@@ -103,4 +103,8 @@ export const taskService = {
     const { data } = await api.delete(`/tasks/${id}`);
     return data;
   },
+  getHistory: async (plate) => {
+    const { data } = await api.get(`/tasks/history/${plate}`);
+    return data;
+  },
 };
