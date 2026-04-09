@@ -10,35 +10,24 @@ const catchAsync = require('../utils/catchAsync');
  * Inyecta req.tenantId y req.tenant en el request.
  */
 const tenantMiddleware = catchAsync(async (req, res, next) => {
-  // Estrategia 1: Header X-Tenant-ID (ObjectId o slug)
+  // Estrategia: Header X-Tenant-ID (ObjectId o slug)
   const tenantHeader = req.headers['x-tenant-id'];
+  const defaultTenantId = process.env.VITE_TENANT_ID;
 
-  // Estrategia 2: Subdominio (ej: mitienda.lubricentro-eden.com)
-  let tenantSlug = null;
-  const host = req.headers.host || '';
-  const parts = host.split('.');
-  if (parts.length >= 3) {
-    tenantSlug = parts[0];
-  }
-
-  if (!tenantHeader && !tenantSlug) {
-    // Si no hay tenant, procedemos sin él (el controlador decidirá qué hacer)
+  if (!tenantHeader && !defaultTenantId) {
     return next();
   }
 
   let tenant;
+  const identifier = tenantHeader || defaultTenantId;
 
   // Buscar por ObjectId o slug
-  if (tenantHeader) {
-    // Intentar por slug primero, luego por id
-    if (tenantHeader.match(/^[a-f\d]{24}$/i)) {
-      tenant = await Tenant.findById(tenantHeader);
-    } else {
-      tenant = await Tenant.findOne({ slug: tenantHeader.toLowerCase() });
-    }
-  } else if (tenantSlug) {
-    tenant = await Tenant.findOne({ slug: tenantSlug.toLowerCase() });
+  if (identifier.match(/^[a-f\d]{24}$/i)) {
+    tenant = await Tenant.findById(identifier);
+  } else {
+    tenant = await Tenant.findOne({ slug: identifier.toLowerCase() });
   }
+
 
   if (!tenant) {
     return next(new AppError('Tienda no encontrada o inactiva.', 404));

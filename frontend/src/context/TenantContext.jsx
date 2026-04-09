@@ -5,48 +5,55 @@ import { getImageUrl } from '../utils/formatters';
 export const TenantContext = createContext(null);
 
 export function TenantProvider({ children }) {
-  const [tenant, setTenant]   = useState(null);
-  const [loading, setLoading] = useState(true);
+  // ⚡ Hidratación inmediata desde el caché para evitar parpadeo
+  const [tenant, setTenant] = useState(() => {
+    const cached = localStorage.getItem('tenant_config');
+    return cached ? JSON.parse(cached) : null;
+  });
+  const [loading, setLoading] = useState(!tenant);
 
+  // 1. Aplicar configuración inicial del caché (si existe) inmediatamente
   useEffect(() => {
-    const tenantId = localStorage.getItem('tenantId') || import.meta.env.VITE_TENANT_ID;
-    if (!tenantId) { setLoading(false); return; }
+    if (tenant) applyConfig(tenant);
+  }, []);
 
-    const applyConfig = (tenantData) => {
-      if (!tenantData?.config) return;
-      
-      const root = document.documentElement;
-      const { config, name } = tenantData;
+  const applyConfig = (tenantData) => {
+    if (!tenantData?.config) return;
+    
+    const root = document.documentElement;
+    const { config, name } = tenantData;
 
-      // 🎨 Colores
-      const primary = (config.primaryColor === '#FF6B00' || !config.primaryColor) 
-        ? '#CB1A20' 
-        : config.primaryColor;
-      
-      root.style.setProperty('--color-primary', primary);
-      if (config.secondaryColor) {
-        root.style.setProperty('--color-secondary', config.secondaryColor);
-      }
+    // Actualizar caché para la siguiente carga
+    localStorage.setItem('tenant_config', JSON.stringify(tenantData));
 
-      // 🖼️ Logo y Favicon Dinámico
-      try {
-        const faviconLink = document.getElementById('favicon');
-        if (faviconLink) {
-          const newFavicon = config.logo ? getImageUrl(config.logo) : '/favicon.png';
-          // Solo actualizar si el href es diferente para evitar parpadeo innecesario
-          if (faviconLink.getAttribute('href') !== newFavicon) {
-            faviconLink.href = newFavicon;
-          }
+    // 🎨 Colores
+    const primary = (config.primaryColor === '#FF6B00' || !config.primaryColor) 
+      ? '#CB1A20' 
+      : config.primaryColor;
+    
+    root.style.setProperty('--color-primary', primary);
+    if (config.secondaryColor) {
+      root.style.setProperty('--color-secondary', config.secondaryColor);
+    }
+
+    // 🖼️ Logo y Favicon Dinámico
+    try {
+      const faviconLink = document.getElementById('favicon');
+      if (faviconLink) {
+        const newFavicon = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+        if (faviconLink.getAttribute('href') !== newFavicon) {
+          faviconLink.href = newFavicon;
         }
-      } catch (err) {
-        console.error('Error updating favicon:', err);
       }
+    } catch (err) {
+      console.error('Error updating favicon:', err);
+    }
 
-      // 🏷️ Título del documento
-      if (name) {
-        document.title = `${name} — Lubricentro Pro`;
-      }
-    };
+    // 🏷️ Título del documento
+    if (name) {
+      document.title = `${name} — Lubricentro Pro`;
+    }
+  };
 
     // 1. Detectar si hay sesión para elegir endpoint
     const token = localStorage.getItem('token');
@@ -56,6 +63,7 @@ export function TenantProvider({ children }) {
       setTenant(tenantData);
       applyConfig(tenantData);
     };
+
 
     // 2. Fetch de datos según estado de sesión
     const fetchTenantData = async () => {
