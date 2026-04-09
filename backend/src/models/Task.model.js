@@ -68,6 +68,17 @@ const taskSchema = new mongoose.Schema(
       filterCabin: { type: Boolean, default: false },
       observations: { type: String, trim: true },
       photos: [{ type: String }], // Array de URLs
+    },
+    // Desglose de productos del stock utilizados
+    items: [{
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      quantity: { type: Number, required: true, default: 1 }
+    }],
+    totalValue: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }

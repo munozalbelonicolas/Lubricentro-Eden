@@ -38,6 +38,35 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     return next(new AppError('No se encontró la tarea o no tenés permiso.', 404));
   }
 
+  // --- Lógica de Stock e Ingresos ---
+  // Si la tarea se marca como 'done' y tiene ítems, descontamos stock
+  if (req.body.status === 'done' && req.body.items && req.body.items.length > 0) {
+    const Product = require('../models/Product.model');
+    let totalValue = 0;
+
+    for (const item of req.body.items) {
+      if (!item.productId) continue;
+      
+      const product = await Product.findOneAndUpdate(
+        { _id: item.productId, tenantId: req.user.tenantId, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+
+      if (!product) {
+        console.warn(`No se pudo descontar stock para producto ${item.productId}. Stock insuficiente o no encontrado.`);
+        continue;
+      }
+      totalValue += item.price * item.quantity;
+    }
+
+    // Actualizar el totalValue en la tarea si no se envió uno manualmente
+    if (!req.body.totalValue) {
+      task.totalValue = totalValue;
+      await task.save();
+    }
+  }
+
   res.status(200).json({
     status: 'success',
     data: { task }
@@ -61,18 +90,28 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
 });
 
 exports.getVehicleHistory = catchAsync(async (req, res, next) => {
-  const { plate } = req.params;
+  const { plate, startDate, endDate } = req.query;
 
-  if (!plate) {
-    return next(new AppError('Debes proporcionar una patente.', 400));
+  const query = {
+    tenantId: req.user.tenantId,
+    status: 'done'
+  };
+
+  if (plate) {
+    query.plate = plate.toUpperCase().trim();
   }
 
-  // Buscar todas las tareas hechas para esta patente en este tenant
-  const history = await Task.find({
-    tenantId: req.user.tenantId,
-    plate: plate.toUpperCase().trim(),
-    status: 'done'
-  }).sort({ date: -1 });
+  if (startDate || endDate) {
+    query.date = {};
+    if (startDate) query.date.$gte = startDate;
+    if (endDate)   query.date.$lte = endDate;
+  }
+
+  // Si no hay filtros, podríamos limitar a los últimos 30 días para no saturar
+  // Pero por ahora traemos todo lo que pida
+  const history = await Task.find(query)
+    .populate('items.productId', 'name brand category')
+    .sort({ date: -1 });
 
   res.status(200).json({
     status: 'success',

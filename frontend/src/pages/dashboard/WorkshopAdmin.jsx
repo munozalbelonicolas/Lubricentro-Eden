@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { orderService, taskService } from '../../services/index';
-import { orderStatusLabel } from '../../utils/formatters';
+import { taskService, orderService } from '../../services/index';
+import { productService } from '../../services/product.service';
+import { orderStatusLabel, formatPrice } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import {
   FiRefreshCw, FiCalendar, FiClock, FiTool,
@@ -19,7 +20,7 @@ const SLOT_LABEL = {
   '16:00-18:00': 'Turno 4 · Tarde',
 };
 const DONE_STATUSES = ['delivered', 'confirmed', 'done'];
-const ORDER_STATUSES = ['pending','confirmed','processing','delivered','cancelled'];
+const ORDER_STATUSES = ['pending','confirmed','processing','ready_pickup','delivered','cancelled'];
 
 const toLocalDate = (d) => {
   const y  = d.getFullYear();
@@ -736,8 +737,51 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
       filterCabin: task?.serviceData?.filterCabin || false,
       observations: task?.serviceData?.observations || '',
       photos: task?.serviceData?.photos || []
-    }
+    },
+    items: task?.items || [],
+    totalValue: task?.totalValue || 0
   });
+
+  const [products, setProducts] = useState([]);
+  const [fetchingProducts, setFetchingProducts] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFetchingProducts(true);
+      productService.getAll({ category: ['aceite', 'filtro'], limit: 100 })
+        .then(res => setProducts(res.data.products || []))
+        .catch(err => console.error('Error cargando productos:', err))
+        .finally(() => setFetchingProducts(false));
+    }
+  }, [isOpen]);
+
+  const addItem = (prod) => {
+    const existing = form.items.find(i => i.productId === prod._id);
+    if (existing) {
+      const newItems = form.items.map(i => 
+        i.productId === prod._id ? { ...i, quantity: i.quantity + 1 } : i
+      );
+      updateItems(newItems);
+    } else {
+      const newItems = [...form.items, {
+        productId: prod._id,
+        name: prod.name,
+        price: prod.price,
+        quantity: 1
+      }];
+      updateItems(newItems);
+    }
+  };
+
+  const removeItem = (prodId) => {
+    const newItems = form.items.filter(i => i.productId !== prodId);
+    updateItems(newItems);
+  };
+
+  const updateItems = (newItems) => {
+    const total = newItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+    setForm(prev => ({ ...prev, items: newItems, totalValue: total }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -806,6 +850,58 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Insumos del Stock */}
+          <div style={{ background:'rgba(34,197,94,0.05)', border:'1px dashed rgba(34,197,94,0.3)', padding:'1rem', borderRadius:'8px' }}>
+            <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem', color:'#16a34a', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+              <FiPackage size={14}/> Insumos utilizados (Stock)
+            </h3>
+            
+            <div style={{ marginBottom:'1rem' }}>
+              <select 
+                className="select" 
+                style={{ fontSize:'0.85rem' }}
+                onChange={(e) => {
+                  const p = products.find(x => x._id === e.target.value);
+                  if (p) addItem(p);
+                  e.target.value = "";
+                }}
+                disabled={fetchingProducts}
+              >
+                <option value="">{fetchingProducts ? 'Cargando productos...' : '++ Seleccionar Aceite o Filtro del Stock'}</option>
+                {products.filter(p => !form.items.some(i => i.productId === p._id)).map(p => (
+                  <option key={p._id} value={p._id}>
+                    {p.name} - {formatPrice(p.price)} ({p.stock} disp.)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {form.items.length > 0 ? (
+              <div style={{ display:'flex', flexDirection:'column', gap:'0.5rem' }}>
+                {form.items.map(item => (
+                  <div key={item.productId} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', fontSize:'0.85rem', background:'rgba(255,255,255,0.05)', padding:'0.4rem 0.6rem', borderRadius:'6px' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontWeight:600 }}>{item.name}</p>
+                      <p style={{ fontSize:'0.75rem', opacity:0.7 }}>{formatPrice(item.price)} x {item.quantity}</p>
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
+                      <span style={{ fontWeight:700 }}>{formatPrice(item.price * item.quantity)}</span>
+                      <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444', display:'flex' }}>
+                        <FiTrash2 size={14}/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ borderTop:'1px solid rgba(0,0,0,0.1)', marginTop:'0.5rem', paddingTop:'0.5rem', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontWeight:600 }}>Total Insumos:</span>
+                  <span style={{ fontSize:'1.1rem', fontWeight:800, color:'#16a34a' }}>{formatPrice(form.totalValue)}</span>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize:'0.75rem', color:'var(--color-text-3)', textAlign:'center' }}>No se han agregado productos del stock.</p>
+            )}
           </div>
 
           {/* Filtros */}

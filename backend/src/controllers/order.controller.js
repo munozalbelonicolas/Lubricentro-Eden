@@ -137,7 +137,7 @@ const getOrder = catchAsync(async (req, res, next) => {
  */
 const updateOrderStatus = catchAsync(async (req, res, next) => {
   const { status } = req.body;
-  const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+  const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'ready_pickup', 'delivered', 'cancelled'];
 
   if (!validStatuses.includes(status)) {
     return next(new AppError(`Estado inválido. Usa: ${validStatuses.join(', ')}.`, 400));
@@ -168,11 +168,16 @@ const updateOrderStatus = catchAsync(async (req, res, next) => {
  * Estadísticas del dashboard.
  */
 const getOrderStats = catchAsync(async (req, res, next) => {
-  const [totalOrders, totalRevenue, pendingOrders, workshopOrders, shippingOrders, pickupOrders, recentOrders] = await Promise.all([
+  const [totalOrders, totalRevDoc, taskRevDoc, pendingOrders, workshopOrders, shippingOrders, pickupOrders, recentOrders] = await Promise.all([
     Order.countDocuments({ tenantId: req.tenantId }),
     Order.aggregate([
       { $match: { tenantId: req.tenantId, paymentStatus: 'approved' } },
       { $group: { _id: null, total: { $sum: '$total' } } },
+    ]),
+    // Ingresos de taller (tareas manuales completadas)
+    require('../models/Task.model').aggregate([
+      { $match: { tenantId: req.tenantId, status: 'done' } },
+      { $group: { _id: null, total: { $sum: '$totalValue' } } },
     ]),
     Order.countDocuments({ tenantId: req.tenantId, status: 'pending' }),
     Order.countDocuments({ tenantId: req.tenantId, deliveryType: 'workshop' }),
@@ -184,9 +189,12 @@ const getOrderStats = catchAsync(async (req, res, next) => {
       .populate('userId', 'name email'),
   ]);
 
+  const orderRevenue = totalRevDoc[0]?.total || 0;
+  const taskRevenue  = taskRevDoc[0]?.total || 0;
+
   sendSuccess(res, {
     totalOrders,
-    totalRevenue: totalRevenue[0]?.total || 0,
+    totalRevenue: orderRevenue + taskRevenue,
     pendingOrders,
     workshopOrders,
     shippingOrders,
