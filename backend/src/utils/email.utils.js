@@ -20,24 +20,95 @@ const transporter = nodemailer.createTransport({
  */
 exports.sendVerificationEmail = async (user, token) => {
   const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+  const logoUrl = `${process.env.FRONTEND_URL}/logos/Logo-Eden.png`;
   
   const mailOptions = {
     from: `"Lubricentro Eden" <${process.env.EMAIL_USER}>`,
     to: user.email,
-    subject: 'Verificá tu cuenta - Lubricentro Eden',
+    subject: '¡Bienvenido! Verificá tu cuenta en Lubricentro Eden 🚀',
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-        <h2 style="color: #ff6b00; text-align: center;">¡Bienvenido a Lubricentro Eden!</h2>
-        <p>Hola <strong>${user.firstName}</strong>,</p>
-        <p>Gracias por registrarte. Para empezar a usar tu cuenta y realizar compras, necesitamos que verifiques tu dirección de correo electrónico.</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${verifyUrl}" style="background-color: #ff6b00; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verificar mi Cuenta</a>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            color: #1a1a1a;
+          }
+          .header {
+            background-color: #1a1a1a;
+            padding: 40px 20px;
+            text-align: center;
+          }
+          .body {
+            padding: 40px;
+            line-height: 1.6;
+          }
+          .welcome-text {
+            color: #ff6b00;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+          }
+          .btn-container {
+            text-align: center;
+            margin: 35px 0;
+          }
+          .btn {
+            background-color: #ff6b00;
+            color: #ffffff !important;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(255,107,0,0.3);
+            display: inline-block;
+          }
+          .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+          }
+          .link-alt {
+            word-break: break-all;
+            color: #ff6b00;
+            font-size: 11px;
+          }
+        </style>
+      </head>
+      <body style="background-color: #f4f4f4; padding: 20px;">
+        <div class="container">
+          <div class="header">
+            <img src="${logoUrl}" alt="Lubricentro Eden" style="height: 80px; width: auto;">
+          </div>
+          <div class="body">
+            <h1 class="welcome-text">¡Hola ${user.firstName}!</h1>
+            <p style="font-size: 16px; text-align: center;">Estamos muy felices de tenerte con nosotros. Para activar tu cuenta y comenzar a disfrutar de todos nuestros servicios y promociones, por favor confirma tu email pulsando el siguiente botón:</p>
+            
+            <div class="btn-container">
+              <a href="${verifyUrl}" class="btn">VERIFICAR MI CUENTA</a>
+            </div>
+            
+            <p style="font-size: 14px; color: #666; margin-top: 40px;">Si el botón no funciona, podés copiar y pegar este enlace en tu navegador:</p>
+            <p class="link-alt">${verifyUrl}</p>
+          </div>
+          <div class="footer">
+            <p style="margin-bottom: 10px;"><strong>Lubricentro Eden</strong><br>Servicio Integral Automotor</p>
+            <p>Este es un mensaje automático. Por favor no lo respondas.<br>© 2024 Lubricentro Eden</p>
+          </div>
         </div>
-        <p style="font-size: 0.8rem; color: #666;">Si el botón no funciona, copia y pega este link en tu navegador:</p>
-        <p style="font-size: 0.8rem; color: #ff6b00;">${verifyUrl}</p>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="font-size: 0.7rem; color: #999; text-align: center;">Este es un mensaje automático, por favor no lo respondas.</p>
-      </div>
+      </body>
+      </html>
     `,
   };
 
