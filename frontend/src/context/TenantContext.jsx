@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import { tenantService } from '../services/index';
+import { getImageUrl } from '../utils/formatters';
 
 export const TenantContext = createContext(null);
 
@@ -13,14 +14,29 @@ export function TenantProvider({ children }) {
 
     const applyConfig = (tenantData) => {
       if (!tenantData?.config) return;
+      
       const root = document.documentElement;
-      const primary = (tenantData.config.primaryColor === '#FF6B00' || !tenantData.config.primaryColor) 
+      const { config, name } = tenantData;
+
+      // 🎨 Colores
+      const primary = (config.primaryColor === '#FF6B00' || !config.primaryColor) 
         ? '#CB1A20' 
-        : tenantData.config.primaryColor;
+        : config.primaryColor;
+      
       root.style.setProperty('--color-primary', primary);
-      if (tenantData.config.secondaryColor) {
-        root.style.setProperty('--color-secondary', tenantData.config.secondaryColor);
-        // También podemos usar el secundario para reemplazar algunos grises/negros si queremos
+      if (config.secondaryColor) {
+        root.style.setProperty('--color-secondary', config.secondaryColor);
+      }
+
+      // 🖼️ Logo y Favicon Dinámico
+      const faviconLink = document.getElementById('favicon');
+      if (faviconLink) {
+        faviconLink.href = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+      }
+
+      // 🏷️ Título del documento
+      if (name) {
+        document.title = `${name} — Lubricentro Pro`;
       }
     };
 
@@ -48,13 +64,23 @@ export function TenantProvider({ children }) {
   const refreshTenant = async () => {
     try {
       const data = await tenantService.getMe();
-      setTenant(data.data.tenant);
+      const updatedTenant = data.data.tenant;
+      setTenant(updatedTenant);
       
+      // Re-aplicar configuración
       const root = document.documentElement;
-      const primary = (data.data.tenant?.config?.primaryColor === '#FF6B00' || !data.data.tenant?.config?.primaryColor) 
+      const config = updatedTenant.config || {};
+      
+      const primary = (config.primaryColor === '#FF6B00' || !config.primaryColor) 
         ? '#CB1A20' 
-        : data.data.tenant.config.primaryColor;
+        : config.primaryColor;
+      
       root.style.setProperty('--color-primary', primary);
+
+      const faviconLink = document.getElementById('favicon');
+      if (faviconLink) {
+        faviconLink.href = config.logo ? getImageUrl(config.logo) : '/favicon.png';
+      }
     } catch { /* ignorar */ }
   };
 

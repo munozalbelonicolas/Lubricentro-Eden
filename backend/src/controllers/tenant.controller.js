@@ -13,6 +13,13 @@ const { sendSuccess } = require('../utils/apiResponse');
 const getMyTenant = catchAsync(async (req, res, next) => {
   const tenant = await Tenant.findById(req.tenantId);
   if (!tenant) return next(new AppError('Tienda no encontrada.', 404));
+
+  // Absolutizar logo si existe
+  if (tenant.config?.logo && tenant.config.logo.startsWith('/uploads')) {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    tenant.config.logo = `${baseUrl}${tenant.config.logo}`;
+  }
+
   sendSuccess(res, { tenant });
 });
 
@@ -36,6 +43,12 @@ const updateMyTenant = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
 
+  // Absolutizar logo si existe
+  if (tenant.config?.logo && tenant.config.logo.startsWith('/uploads')) {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    tenant.config.logo = `${baseUrl}${tenant.config.logo}`;
+  }
+
   sendSuccess(res, { tenant });
 });
 
@@ -46,12 +59,20 @@ const updateMyTenant = catchAsync(async (req, res, next) => {
 const uploadLogo = catchAsync(async (req, res, next) => {
   if (!req.file) return next(new AppError('No se subió ningún archivo.', 400));
 
-  const logoUrl = `/uploads/logos/${req.file.filename}`;
+  let logoUrl = `/uploads/logos/${req.file.filename}`;
   const tenant = await Tenant.findByIdAndUpdate(
     req.tenantId,
     { 'config.logo': logoUrl },
     { new: true }
   );
+
+  // Enviar URL absoluta al frontend
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  logoUrl = `${baseUrl}${logoUrl}`;
+  
+  if (tenant.config) {
+    tenant.config.logo = logoUrl;
+  }
 
   sendSuccess(res, { tenant, logoUrl });
 });
@@ -73,6 +94,13 @@ const getPublicTenant = catchAsync(async (req, res, next) => {
     'name slug config plan'
   );
   if (!tenant) return next(new AppError('Tienda no encontrada.', 404));
+
+  // Absolutizar logo si existe
+  if (tenant.config?.logo && tenant.config.logo.startsWith('/uploads')) {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    tenant.config.logo = `${baseUrl}${tenant.config.logo}`;
+  }
+
   sendSuccess(res, { tenant });
 });
 
