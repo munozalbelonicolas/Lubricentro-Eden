@@ -26,11 +26,17 @@
 /* Logo */
 .logo { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 .logoImg { 
-  height: 150px; 
+  height: 140px; 
   width: auto; 
   object-fit: contain; 
-  transform: translateY(15px);
-  filter: drop-shadow(0 0 15px rgba(203, 26, 32, 0.4));
+  position: relative;
+  z-index: 10;
+  filter: drop-shadow(0 0 15px rgba(203, 26, 32, 0.5));
+  transition: var(--transition);
+}
+.logoImg:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 20px rgba(203, 26, 32, 0.7));
 }
 .logoText {
   font-family: var(--font-heading);
