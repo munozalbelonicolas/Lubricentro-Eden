@@ -45,7 +45,7 @@
   --transition: all 0.2s ease;
   --transition-slow: all 0.35s ease;
 
-  --header-height: 120px;
+  --header-height: 90px;
   --sidebar-width: 260px;
   --container-max: 1280px;
 }

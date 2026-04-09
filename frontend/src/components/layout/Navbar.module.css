@@ -8,6 +8,7 @@
   border-bottom: 1px solid transparent;
   transition: var(--transition);
   height: var(--header-height);
+  overflow: visible;
 }
 .header.scrolled {
   border-bottom-color: var(--color-border);
@@ -24,7 +25,13 @@
 
 /* Logo */
 .logo { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
-.logoImg { height: 100px; width: auto; object-fit: contain; }
+.logoImg { 
+  height: 150px; 
+  width: auto; 
+  object-fit: contain; 
+  transform: translateY(15px);
+  filter: drop-shadow(0 0 15px rgba(203, 26, 32, 0.4));
+}
 .logoText {
   font-family: var(--font-heading);
   font-size: 1.3rem;
