@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   const cards = [
     { icon: <FiPackage size={22} />,    label: 'Total Órdenes',    value: stats?.totalOrders    ?? '-', color: '#3B82F6' },
-    { icon: <FiDollarSign size={22} />, label: 'Ingresos Aprobados', value: stats ? formatPrice(stats.totalRevenue) : '-', color: '#22C55E' },
+    { icon: <FiDollarSign size={22} />, label: 'Finanzas', value: stats ? formatPrice(stats.totalRevenue) : '-', color: '#22C55E' },
     { icon: <FiClock size={22} />,      label: 'Órdenes Pendientes', value: stats?.pendingOrders  ?? '-', color: '#FBBF24' },
     { icon: <FiTool size={22} />,       label: 'Turnos Taller',     value: stats?.workshopOrders ?? '-', color: '#F59E0B' },
     { icon: <FiShoppingBag size={22}/>, label: 'Productos',         value: `${prodCount} / ${planLimit}`,  color: '#CB1A20' },
@@ -96,6 +96,11 @@ export default function DashboardPage() {
             <p className={styles.quickDesc}>
               {stats?.workshopOrders ?? 0} turnos en total
             </p>
+          </Link>
+          <Link to="/dashboard/finance" className={styles.quickCard} style={{ borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)' }}>
+            <FiDollarSign size={28} style={{ color: '#22c55e' }} />
+            <p className={styles.quickTitle} style={{ color: '#22c55e' }}>Finanzas</p>
+            <p className={styles.quickDesc}>Ingresos y Egresos</p>
           </Link>
           <Link to="/dashboard/config" className={styles.quickCard}>
             <FiSettings size={28} />

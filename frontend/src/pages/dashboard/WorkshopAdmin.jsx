@@ -909,33 +909,10 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
             </div>
           </div>
 
-          {/* Fluidos */}
-          <div style={{ background:'var(--color-surface-2)', padding:'1rem', borderRadius:'8px' }}>
-            <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem', color:'var(--color-primary)' }}>Lubricante utilizado</h3>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
-              <div className="input-group">
-                <label className="input-label">Marca Aceite</label>
-                <input 
-                  className="input" placeholder="Ej: Shell, Mobil..."
-                  value={form.serviceData.oilBrand} 
-                  onChange={e => setForm({...form, serviceData: {...form.serviceData, oilBrand: e.target.value}})}
-                />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Tipo / Viscosidad</label>
-                <input 
-                  className="input" placeholder="Ej: 10W40, 5W30..."
-                  value={form.serviceData.oilType} 
-                  onChange={e => setForm({...form, serviceData: {...form.serviceData, oilType: e.target.value}})}
-                />
-              </div>
-            </div>
-          </div>
-
           {/* Insumos del Stock */}
-          <div style={{ background:'rgba(34,197,94,0.05)', border:'1px dashed rgba(34,197,94,0.3)', padding:'1rem', borderRadius:'8px' }}>
+          <div style={{ background:'rgba(34,197,94,0.05)', border:'1px dashed rgba(34,197,94,0.3)', padding:'1.2rem', borderRadius:'12px' }}>
             <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem', color:'#16a34a', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-              <FiPackage size={14}/> Insumos utilizados (Stock)
+              <FiPackage size={16}/> Insumos Utilizados (Stock)
             </h3>
             
             <div style={{ marginBottom:'1rem' }}>
@@ -949,10 +926,10 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
                 }}
                 disabled={fetchingProducts}
               >
-                <option value="">{fetchingProducts ? 'Cargando productos...' : '++ Seleccionar Aceite o Filtro del Stock'}</option>
+                <option value="">{fetchingProducts ? 'Cargando stock...' : '++ Seleccionar Aceite o Filtro'}</option>
                 {products.filter(p => !form.items.some(i => i.productId === p._id)).map(p => (
                   <option key={p._id} value={p._id}>
-                    {p.name} - {formatPrice(p.price)} ({p.stock} disp.)
+                    {p.name} ({formatPrice(p.price)})
                   </option>
                 ))}
               </select>
@@ -961,14 +938,14 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
             {form.items.length > 0 ? (
               <div style={{ display:'flex', flexDirection:'column', gap:'0.5rem' }}>
                 {form.items.map(item => (
-                  <div key={item.productId} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', fontSize:'0.85rem', background:'rgba(255,255,255,0.05)', padding:'0.4rem 0.6rem', borderRadius:'6px' }}>
+                  <div key={item.productId} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', fontSize:'0.85rem', background:'rgba(255,255,255,0.05)', padding:'0.4rem 0.6rem', borderRadius:'8px' }}>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontWeight:600 }}>{item.name}</p>
                       <p style={{ fontSize:'0.75rem', opacity:0.7 }}>{formatPrice(item.price)} x {item.quantity}</p>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
                       <span style={{ fontWeight:700 }}>{formatPrice(item.price * item.quantity)}</span>
-                      <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444', display:'flex' }}>
+                      <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444' }}>
                         <FiTrash2 size={14}/>
                       </button>
                     </div>
@@ -980,31 +957,10 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
                 </div>
               </div>
             ) : (
-              <p style={{ fontSize:'0.75rem', color:'var(--color-text-3)', textAlign:'center' }}>No se han agregado productos del stock.</p>
+              <div style={{ textAlign:'center', padding:'1rem', opacity:0.5 }}>
+                 <p style={{ fontSize:'0.8rem' }}>No se han agregado productos todavía.</p>
+              </div>
             )}
-          </div>
-
-          {/* Filtros */}
-          <div>
-            <h3 style={{ fontSize:'0.9rem', fontWeight:700, marginBottom:'0.75rem' }}>Filtros reemplazados</h3>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
-              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
-                <input type="checkbox" checked={form.serviceData.filterOil} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterOil: e.target.checked}})} />
-                Filtro de Aceite
-              </label>
-              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
-                <input type="checkbox" checked={form.serviceData.filterAir} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterAir: e.target.checked}})} />
-                Filtro de Aire
-              </label>
-              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
-                <input type="checkbox" checked={form.serviceData.filterFuel} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterFuel: e.target.checked}})} />
-                Filtro Combustible
-              </label>
-              <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
-                <input type="checkbox" checked={form.serviceData.filterCabin} onChange={e => setForm({...form, serviceData: {...form.serviceData, filterCabin: e.target.checked}})} />
-                Filtro Habitáculo
-              </label>
-            </div>
           </div>
 
           {/* Observaciones */}
