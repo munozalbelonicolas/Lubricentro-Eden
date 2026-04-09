@@ -38,10 +38,12 @@ api.interceptors.response.use(
         error.config?.url?.includes(r)
       );
       
+      const isTenantConfig = error.config?.url?.includes('/tenants/me');
+      
       const currentPath = window.location.pathname;
       const isAlreadyOnAuthPage = currentPath === '/login' || currentPath === '/register';
 
-      if (!isAuthRoute && !isAlreadyOnAuthPage) {
+      if (!isAuthRoute && !isAlreadyOnAuthPage && !isTenantConfig) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';

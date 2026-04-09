@@ -48,25 +48,46 @@ export function TenantProvider({ children }) {
       }
     };
 
-    // Intentar cargar info del tenant
-    tenantService.getMe()
-      .then((data) => {
-        setTenant(data.data.tenant);
-        applyConfig(data.data.tenant);
-      })
-      .catch(() => {
-        // Fallback pidiendo la data pública usando el ID de .env
-        if (import.meta.env.VITE_TENANT_ID) {
-          tenantService.getPublic(import.meta.env.VITE_TENANT_ID)
-            .then((data) => {
-              setTenant(data.data.tenant);
-              applyConfig(data.data.tenant);
-            }).catch(() => setTenant(null));
+    // 1. Detectar si hay sesión para elegir endpoint
+    const token = localStorage.getItem('token');
+    
+    // Función para manejar la respuesta del tenant
+    const handleTenantResponse = (tenantData) => {
+      setTenant(tenantData);
+      applyConfig(tenantData);
+    };
+
+    // 2. Fetch de datos según estado de sesión
+    const fetchTenantData = async () => {
+      try {
+        if (token) {
+          // Si hay token, intentar obtener datos extendidos (admin)
+          const data = await tenantService.getMe();
+          handleTenantResponse(data.data.tenant);
+        } else {
+          // Si es invitado, obtener datos públicos
+          const data = await tenantService.getPublic(tenantId);
+          handleTenantResponse(data.data.tenant);
+        }
+      } catch (error) {
+        console.error('Error loading tenant context:', error);
+        // Fallback a configuración pública si falla getMe()
+        if (token && error.status === 401) {
+          try {
+            const publicData = await tenantService.getPublic(tenantId);
+            handleTenantResponse(publicData.data.tenant);
+          } catch (e) {
+            setTenant(null);
+          }
         } else {
           setTenant(null);
         }
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenantData();
   }, []);
 
   const refreshTenant = async () => {
