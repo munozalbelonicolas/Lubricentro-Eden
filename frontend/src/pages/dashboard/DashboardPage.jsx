@@ -36,11 +36,11 @@ export default function DashboardPage() {
   const planLimit = sub?.plan === 'premium' ? '∞' : '20';
 
   const cards = [
-    { icon: <FiPackage size={22} />,    label: 'Total Órdenes',    value: stats?.totalOrders    ?? '-', color: '#3B82F6' },
-    { icon: <FiDollarSign size={22} />, label: 'Finanzas', value: stats ? formatPrice(stats.totalRevenue) : '-', color: '#22C55E' },
-    { icon: <FiClock size={22} />,      label: 'Órdenes Pendientes', value: stats?.pendingOrders  ?? '-', color: '#FBBF24' },
-    { icon: <FiTool size={22} />,       label: 'Turnos Taller',     value: stats?.workshopOrders ?? '-', color: '#F59E0B' },
-    { icon: <FiShoppingBag size={22}/>, label: 'Productos',         value: `${prodCount} / ${planLimit}`,  color: '#CB1A20' },
+    { icon: <FiPackage size={22} />,    label: 'Total Órdenes',    value: stats?.totalOrders    ?? '-', color: '#3B82F6', link: '/dashboard/orders' },
+    { icon: <FiDollarSign size={22} />, label: 'Finanzas', value: stats ? formatPrice(stats.totalRevenue) : '-', color: '#22C55E', link: '/dashboard/finance' },
+    { icon: <FiClock size={22} />,      label: 'Órdenes Pendientes', value: stats?.pendingOrders  ?? '-', color: '#FBBF24', link: '/dashboard/orders?status=pending' },
+    { icon: <FiTool size={22} />,       label: 'Turnos Taller',     value: stats?.workshopOrders ?? '-', color: '#F59E0B', link: '/dashboard/workshop' },
+    { icon: <FiShoppingBag size={22}/>, label: 'Productos',         value: `${prodCount} / ${planLimit}`,  color: '#CB1A20', link: '/dashboard/products' },
   ];
 
   return (
@@ -65,16 +65,16 @@ export default function DashboardPage() {
 
         {/* Stats Cards */}
         <div className={styles.statsGrid}>
-          {cards.map(({ icon, label, value, color }) => (
-            <div key={label} className={styles.statCard}>
+          {cards.map(({ icon, label, value, color, link }) => (
+            <Link key={label} to={link} className={styles.statCard}>
               <div className={styles.statIcon} style={{ background: `${color}22`, color }}>
                 {icon}
               </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <p className={styles.statValue}>{loading ? '...' : value}</p>
                 <p className={styles.statLabel}>{label}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
