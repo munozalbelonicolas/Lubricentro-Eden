@@ -82,7 +82,7 @@ export default function Footer() {
 
       <div className={styles.bottom}>
         <div className="container">
-          <p>© {year} {tenant?.name || 'Lubricentro Eden'} — Powered by NILO-TECH, Todos los derechos reservados.</p>
+          <p>© {year} {tenant?.name || 'Lubricentro Eden'} — Powered by <a href="https://nilotech.online/" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>NILO-TECH</a>, Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

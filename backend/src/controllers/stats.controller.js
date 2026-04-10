@@ -50,10 +50,15 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
   const { startDate, endDate } = req.query;
   
   const now = new Date();
-  const defaultTwelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const defaultStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
   
-  const start = startDate ? new Date(startDate) : defaultTwelveMonthsAgo;
-  const end = endDate ? new Date(endDate) : now;
+  // Validar fechas de entrada
+  let start = startDate ? new Date(startDate) : defaultStart;
+  let end = endDate ? new Date(endDate) : now;
+  
+  if (isNaN(start.getTime())) start = defaultStart;
+  if (isNaN(end.getTime())) end = now;
+  if (start > end) start = new Date(end.getFullYear(), end.getMonth() - 11, 1);
 
   // 1. Ingresos por Órdenes Web
   const orderIncome = await Order.aggregate([
@@ -70,13 +75,12 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
           year: { $year: '$createdAt' }, 
           month: { $month: '$createdAt' } 
         },
-        total: { $sum: '$total' }
+        total: { $sum: { $ifNull: ['$total', 0] } }
       }
     }
   ]);
 
-  // 2. Ingresos por Taller
-  // Nota: Task.date es String 'YYYY-MM-DD'
+  // 2. Ingresos por Taller (Task.date: String 'YYYY-MM-DD')
   const startStr = start.toISOString().split('T')[0];
   const endStr = end.toISOString().split('T')[0];
 
@@ -91,16 +95,15 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
     {
       $group: {
         _id: { 
-          year: { $year: { $toDate: '$date' } }, 
-          month: { $month: { $toDate: '$date' } } 
+          year: { $year: { $convert: { input: '$date', to: 'date', onError: new Date(2000,0,1) } } }, 
+          month: { $month: { $convert: { input: '$date', to: 'date', onError: new Date(2000,0,1) } } } 
         },
-        total: { $sum: '$totalValue' }
+        total: { $sum: { $ifNull: ['$totalValue', 0] } }
       }
     }
   ]);
 
-  // 3. Egresos
-  // Nota: Expense.date es Date. Match con Date objects es correcto.
+  // 3. Egresos (Expense.date: Date)
   const expenses = await Expense.aggregate([
     { 
       $match: { 
@@ -111,36 +114,40 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
     {
       $group: {
         _id: { 
-          year: { $year: { $toDate: '$date' } }, 
-          month: { $month: { $toDate: '$date' } } 
+          year: { $year: { $ifNull: ['$date', new Date(2000,0,1)] } }, 
+          month: { $month: { $ifNull: ['$date', new Date(2000,0,1)] } } 
         },
-        total: { $sum: '$amount' }
+        total: { $sum: { $ifNull: ['$amount', 0] } }
       }
     }
   ]);
 
-  // Determinar cuántos meses cubrir
+  // Reconstruir histórico mes a mes
   const history = [];
-  const tempDate = new Date(start.getFullYear(), start.getMonth(), 1);
+  const curr = new Date(start.getFullYear(), start.getMonth(), 1);
+  const stop = new Date(end.getFullYear(), end.getMonth(), 1);
   
-  while (tempDate <= end) {
-    const y = tempDate.getFullYear();
-    const m = tempDate.getMonth() + 1;
+  // Límite de seguridad para evitar bucles infinitos
+  let safetyCounter = 0;
+  while (curr <= stop && safetyCounter < 100) {
+    safetyCounter++;
+    const y = curr.getFullYear();
+    const m = curr.getMonth() + 1;
 
-    const ordIn = orderIncome.find(x => x._id.year === y && x._id.month === m)?.total || 0;
-    const tskIn = taskIncome.find(x => x._id.year === y && x._id.month === m)?.total || 0;
-    const exp   = expenses.find(x    => x._id.year === y && x._id.month === m)?.total || 0;
+    const ordIn = orderIncome.find(x => x._id && x._id.year === y && x._id.month === m)?.total || 0;
+    const tskIn = taskIncome.find(x => x._id && x._id.year === y && x._id.month === m)?.total || 0;
+    const exp   = expenses.find(x => x._id && x._id.year === y && x._id.month === m)?.total || 0;
 
     history.push({
-      monthName: tempDate.toLocaleString('es-AR', { month: 'short' }),
+      monthName: curr.toLocaleString('es-AR', { month: 'short' }),
       month: m,
       year: y,
-      income: ordIn + tskIn,
-      expenses: exp,
-      profit: (ordIn + tskIn) - exp
+      income: Number(ordIn + tskIn).toFixed(2) * 1,
+      expenses: Number(exp).toFixed(2) * 1,
+      profit: Number((ordIn + tskIn) - exp).toFixed(2) * 1
     });
     
-    tempDate.setMonth(tempDate.getMonth() + 1);
+    curr.setMonth(curr.getMonth() + 1);
   }
 
   res.json({
