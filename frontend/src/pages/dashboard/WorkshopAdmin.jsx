@@ -617,7 +617,10 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
     priority: 'medium',
     status: 'pending',
     items: [],
-    totalValue: 0
+    totalValue: 0,
+    customerName: '',
+    customerEmail: '',
+    customerPhone: ''
   });
 
   useEffect(() => {
@@ -688,6 +691,38 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
               required className="input" placeholder="Ej: VW Gol - Cambio de Aceite"
               value={form.title} onChange={e => setForm({...form, title: e.target.value})}
             />
+          </div>
+
+          <div style={{ background:'rgba(59,130,246,0.05)', border:'1px solid rgba(59,130,246,0.2)', padding:'1rem', borderRadius:'12px', display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+            <h3 style={{ fontSize:'0.85rem', fontWeight:800, color:'#3b82f6', marginBottom:'0.25rem', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+              <FiUser size={14}/> Datos del Cliente (Para Historial y Email)
+            </h3>
+            <div className="input-group">
+              <label className="input-label" style={{ fontSize:'0.75rem' }}>Nombre Completo</label>
+              <input 
+                required className="input" placeholder="Ej: Juan Pérez"
+                value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})}
+                style={{ fontSize:'0.85rem', padding:'0.4rem 0.75rem' }}
+              />
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.75rem' }}>
+              <div className="input-group">
+                <label className="input-label" style={{ fontSize:'0.75rem' }}>Email</label>
+                <input 
+                  required type="email" className="input" placeholder="juan@gmail.com"
+                  value={form.customerEmail} onChange={e => setForm({...form, customerEmail: e.target.value})}
+                  style={{ fontSize:'0.85rem', padding:'0.4rem 0.75rem' }}
+                />
+              </div>
+              <div className="input-group">
+                <label className="input-label" style={{ fontSize:'0.75rem' }}>Teléfono</label>
+                <input 
+                  className="input" placeholder="342 123456"
+                  value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
+                  style={{ fontSize:'0.85rem', padding:'0.4rem 0.75rem' }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="input-group">

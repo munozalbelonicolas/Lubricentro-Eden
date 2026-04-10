@@ -171,3 +171,86 @@ exports.sendAdminCreatedUserEmail = async (user, tempPassword) => {
 
   return transporter.sendMail(mailOptions);
 };
+
+/**
+ * Enviar Reporte de Servicio Técnico + Invitación (Bienvenida)
+ */
+exports.sendServiceReportEmail = async (user, task) => {
+  const loginUrl = `${process.env.FRONTEND_URL}/login`;
+  const logoUrl = `${process.env.FRONTEND_URL}/logos/Logo-Eden.png`;
+  const registerUrl = `${process.env.FRONTEND_URL}/register?email=${user.email}`;
+
+  const mailOptions = {
+    from: `"Lubricentro Eden" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `Reporte de Servicio: ${task.plate || 'Tu Vehículo'} - Lubricentro Eden 🔧`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          .container { font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb; color: #111827; }
+          .header { background: #111827; padding: 40px; text-align: center; }
+          .body { padding: 40px; }
+          .title { color: #f97316; font-size: 24px; font-weight: 800; margin-bottom: 24px; }
+          .report-card { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 12px; padding: 24px; margin-bottom: 30px; }
+          .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #edf2f7; }
+          .data-label { color: #6b7280; font-size: 14px; }
+          .data-value { font-weight: 700; color: #111827; }
+          .promo-box { border: 2px dashed #f97316; background: #fff7ed; padding: 24px; border-radius: 12px; text-align: center; }
+          .btn { background: #f97316; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; display: inline-block; margin-top: 15px; }
+          .footer { background: #f9fafb; padding: 30px; text-align: center; font-size: 12px; color: #9ca3af; }
+        </style>
+      </head>
+      <body style="background-color: #f3f4f6; padding: 20px;">
+        <div class="container">
+          <div class="header">
+            <img src="${logoUrl}" alt="Lubricentro Eden" style="height: 70px;">
+          </div>
+          <div class="body">
+            <h1 class="title">¡Hola ${user.firstName}!</h1>
+            <p>Gracias por confiar en <strong>Lubricentro Eden</strong>. Ya finalizamos el servicio de tu vehículo y aquí tenés un resumen técnico de lo realizado:</p>
+            
+            <div class="report-card">
+              <h3 style="margin-top: 0; font-size: 16px; border-bottom: 2px solid #f97316; padding-bottom: 8px; display: inline-block;">Resumen del Service</h3>
+              <div style="margin-top: 15px;">
+                <div class="data-row">
+                  <span class="data-label">Vehículo</span>
+                  <span class="data-value">${task.title}</span>
+                </div>
+                <div class="data-row">
+                  <span class="data-label">Patente</span>
+                  <span class="data-value">${task.plate || '---'}</span>
+                </div>
+                <div class="data-row">
+                  <span class="data-label">KM Actual</span>
+                  <span class="data-value">${task.currentKm?.toLocaleString() || '---'} KM</span>
+                </div>
+                <div style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; text-align: center;">
+                  <p style="margin: 0; color: #6b7280; font-size: 12px; text-transform: uppercase; font-weight: 700;">Próximo Cambio Sugerido</p>
+                  <p style="margin: 5px 0 0; color: #f97316; font-size: 28px; font-weight: 900;">${task.nextChangeKm?.toLocaleString() || '---'} <span style="font-size: 14px;">KM</span></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="promo-box">
+              <h4 style="margin-top: 0; color: #f97316;">🚀 Gestioná tu vehículo online</h4>
+              <p style="font-size: 14px; margin-bottom: 0;">Hemos creado un perfil temporal para vos. Registrate formalmente para acceder a tu historial completo, recibir ofertas exclusivas y agendar turnos más rápido.</p>
+              <a href="${registerUrl}" class="btn">ACTIVAR MI CUENTA</a>
+            </div>
+            
+            <p style="font-size: 14px; color: #6b7280; margin-top: 30px; text-align: center;">Si tenés alguna duda sobre el servicio, no dudes en contactarnos.</p>
+          </div>
+          <div class="footer">
+            <p><strong>Lubricentro Eden - Servicio Integral Automotor</strong></p>
+            <p>Santa Fe, Argentina - Tel: 342-xxxxxxx</p>
+            <p>© 2024 Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+};

@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'vendedor', 'caja', 'user'],
+      enum: ['admin', 'vendedor', 'caja', 'user', 'referido'],
       default: 'user',
     },
     tenantId: {

@@ -1,7 +1,10 @@
 'use strict';
 const Task = require('../models/Task.model');
+const User = require('../models/User.model');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const { sendServiceReportEmail } = require('../utils/email.utils');
+const crypto = require('crypto');
 
 exports.getAllTasks = catchAsync(async (req, res, next) => {
   const tasks = await Task.find({ tenantId: req.user.tenantId })
@@ -42,8 +45,40 @@ const deductStock = async (tenantId, items) => {
 };
 
 exports.createTask = catchAsync(async (req, res, next) => {
+  const { customerName, customerEmail, customerPhone } = req.body;
   req.body.tenantId = req.user.tenantId;
   req.body.createdBy = req.user._id;
+
+  // Si se envían datos de cliente, buscamos o creamos usuario
+  if (customerEmail) {
+    let user = await User.findOne({ email: customerEmail.toLowerCase(), tenantId: req.user.tenantId });
+    
+    if (!user && customerName) {
+      // Crear usuario referido (Ghost)
+      const nameParts = customerName.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || 'Cliente';
+      
+      const tempPassword = crypto.randomBytes(6).toString('hex');
+      
+      user = await User.create({
+        firstName,
+        lastName,
+        email: customerEmail.toLowerCase(),
+        phone: customerPhone || '---',
+        role: 'referido',
+        password: tempPassword,
+        tenantId: req.user.tenantId,
+        isVerified: true,
+        document: req.body.plate || '000000', // Valor temporal
+        birthDate: new Date('1990-01-01'), // Valor temporal
+      });
+    }
+
+    if (user) {
+      req.body.userId = user._id;
+    }
+  }
 
   const newTask = await Task.create(req.body);
 
@@ -78,13 +113,27 @@ exports.updateTask = catchAsync(async (req, res, next) => {
 
   // --- Lógica de Stock e Ingresos ---
   // SOLO descontamos stock si está pasando de 'pending' a 'done'
-  if (currentTask.status === 'pending' && req.body.status === 'done' && task.items && task.items.length > 0) {
-    const calculatedTotal = await deductStock(req.user.tenantId, task.items);
-    
-    // Actualizar el totalValue si no se envió uno manualmente
-    if (!req.body.totalValue) {
-      task.totalValue = calculatedTotal;
-      await task.save();
+  if (currentTask.status === 'pending' && req.body.status === 'done') {
+    if (task.items && task.items.length > 0) {
+      const calculatedTotal = await deductStock(req.user.tenantId, task.items);
+      
+      // Actualizar el totalValue si no se envió uno manualmente
+      if (!req.body.totalValue) {
+        task.totalValue = calculatedTotal;
+        await task.save();
+      }
+    }
+
+    // Enviar email de reporte si hay un usuario asociado
+    if (task.userId) {
+      const user = await User.findById(task.userId);
+      if (user && user.email) {
+        try {
+          await sendServiceReportEmail(user, task);
+        } catch (err) {
+          console.error('Error enviando reporte por email:', err);
+        }
+      }
     }
   }
 

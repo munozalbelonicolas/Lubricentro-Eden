@@ -138,17 +138,30 @@ exports.updateUserPassword = catchAsync(async (req, res, next) => {
 });
 
 /**
- * Ver historial de compras de un usuario
+ * Ver historial unificado (Compras + Taller) de un usuario
  */
 exports.getUserOrders = catchAsync(async (req, res, next) => {
-  const orders = await Order.find({ 
-    userId: req.params.id, 
-    tenantId: req.user.tenantId 
-  }).sort('-createdAt');
+  const userId = req.params.id;
+  const tenantId = req.user.tenantId;
+
+  // Cargar modelos
+  const Task = require('../models/Task.model');
+
+  // Buscar en ambas colecciones
+  const [orders, tasks] = await Promise.all([
+    Order.find({ userId, tenantId }).sort('-createdAt').lean(),
+    Task.find({ userId, tenantId, status: 'done' }).sort('-date').lean()
+  ]);
+
+  // Normalizar para que el frontend los maneje fácilmente
+  const history = [
+    ...orders.map(o => ({ ...o, _type: 'order' })),
+    ...tasks.map(t => ({ ...t, _type: 'task' }))
+  ].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
   res.json({
     status: 'success',
-    results: orders.length,
-    data: { orders }
+    results: history.length,
+    data: { history }
   });
 });

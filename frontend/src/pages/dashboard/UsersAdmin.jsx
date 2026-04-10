@@ -318,39 +318,83 @@ export default function UsersAdmin() {
           </div>
         )}
 
-        {/* MODAL HISTORIAL */}
+        {/* MODAL HISTORIAL UNIFICADO */}
         {showHistory && (
           <div className="modal-overlay">
-            <div className="modal-card" style={{ maxWidth: '800px' }}>
+            <div className="modal-card" style={{ maxWidth: '900px' }}>
               <div className="modal-header">
-                <h3>Historial de: {showHistory.firstName} {showHistory.lastName}</h3>
-                <button onClick={() => setShowHistory(null)}><FiX /></button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div className={styles.avatar} style={{ width: 40, height: 40, fontSize: '0.9rem' }}>
+                    {(showHistory.firstName?.[0] || 'U')}{(showHistory.lastName?.[0] || '')}
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0 }}>Historial Clínico: {showHistory.firstName} {showHistory.lastName}</h3>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-3)' }}>Seguimiento unificado de taller y tienda</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowHistory(null)}><FiX size={24}/></button>
               </div>
-              <div className={styles.modalBody}>
-                {loadingHistory ? <div className="spinner mr-auto ml-auto" /> : (
-                  history.length === 0 ? <p>No hay compras registradas para este usuario.</p> : (
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>Orden</th>
-                          <th>Fecha</th>
-                          <th>Productos</th>
-                          <th>Total</th>
-                          <th>Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {history.map(order => (
-                          <tr key={order._id}>
-                            <td style={{ fontWeight: 600 }}>#{order.orderNumber}</td>
-                            <td>{formatDateTime(order.createdAt)}</td>
-                            <td>{order.items.length} ítems</td>
-                            <td>{formatPrice(order.total)}</td>
-                            <td>{order.status}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              <div className={styles.modalBody} style={{ maxHeight: '70vh', overflowY: 'auto', padding: '1.5rem' }}>
+                {loadingHistory ? (
+                  <div className="flex-center" style={{ padding: '4rem' }}><div className="spinner" /></div>
+                ) : (
+                  history.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '4rem', opacity: 0.5 }}>
+                      <FiActivity size={48} style={{ marginBottom: '1rem' }} />
+                      <p>No hay registros de actividad para este usuario.</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {history.map((item, idx) => (
+                        <div key={idx} className="card" style={{ 
+                          padding: '1.25rem', 
+                          borderLeft: item._type === 'order' ? '4px solid #f59e0b' : '4px solid #3b82f6',
+                          background: 'var(--color-bg-2)'
+                        }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                                <span style={{ 
+                                  fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', padding: '0.2rem 0.5rem', borderRadius: '4px',
+                                  background: item._type === 'order' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)',
+                                  color: item._type === 'order' ? '#f59e0b' : '#3b82f6'
+                                }}>
+                                  {item._type === 'order' ? 'Tienda Web' : 'Servicio Taller'}
+                                </span>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--color-text-3)' }}>
+                                  {formatDateTime(item.createdAt || item.date)}
+                                </span>
+                              </div>
+                              <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>
+                                {item.title || (item._type === 'order' ? `Pedido #${item.orderNumber}` : 'Servicio Técnico')}
+                              </h4>
+                              {item.plate && <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--color-text-2)' }}>🚗 Patente: <strong>{item.plate}</strong></p>}
+                              
+                              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                {(item.items || []).map((prod, i) => (
+                                  <span key={i} style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    {prod.name} <small style={{ opacity: 0.6 }}>x{prod.quantity}</small>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-text)' }}>
+                                {formatPrice(item.totalValue || item.total)}
+                              </p>
+                              {item.currentKm && <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-3)', fontWeight: 600 }}>{item.currentKm.toLocaleString()} KM</p>}
+                              <span style={{ 
+                                marginTop: '0.5rem', display: 'inline-block',
+                                fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.5rem', borderRadius: '999px',
+                                background: 'rgba(34,197,94,0.1)', color: '#22c55e'
+                              }}>
+                                {item.status?.toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )
                 )}
               </div>
