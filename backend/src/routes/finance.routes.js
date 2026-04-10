@@ -13,6 +13,12 @@ router.use(restrictTo('admin'));
 router.get('/stats', financeController.getFinanceStats);
 router.get('/transactions', financeController.getTransactions);
 
+// Estadísticas avanzadas
+const statsController = require('../controllers/stats.controller');
+router.get('/stats/best-sellers', statsController.getBestSellers);
+router.get('/stats/evolution', statsController.getFinanceEvolution);
+router.get('/stats/product/:productId', statsController.getProductEvolution);
+
 router.post('/expenses', financeController.createExpense);
 router.delete('/expenses/:id', financeController.deleteExpense);
 

@@ -14,6 +14,10 @@ export default function FinancePage() {
   const [showModal, setShowModal] = useState(false);
   const [filterType, setFilterType] = useState('all'); // all, ingreso, egreso
 
+  const currentYear = new Date().getFullYear();
+  const [month, setMonth] = useState(''); // '' es todos
+  const [year, setYear] = useState(currentYear.toString());
+
   const [expenseForm, setExpenseForm] = useState({
     description: '',
     amount: '',
@@ -23,14 +27,17 @@ export default function FinancePage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [month, year]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      const params = { year };
+      if (month) params.month = month;
+
       const [statsData, transData] = await Promise.all([
-        financeService.getStats(),
-        financeService.getTransactions()
+        financeService.getStats(params),
+        financeService.getTransactions(params)
       ]);
       setStats(statsData.data);
       setTransactions(transData.data.transactions);
@@ -74,14 +81,52 @@ export default function FinancePage() {
       <div className="container">
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Módulo de Finanzas</h1>
             <p style={{ color: 'var(--color-text-3)' }}>Seguimiento general de ingresos y egresos</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <FiPlus /> Cargar Egreso / Gasto
-          </button>
+          
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            {/* Filtros de Fecha */}
+            <div style={{ display: 'flex', background: 'var(--color-bg-2)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+              <select 
+                className={styles.filterSelect || 'select'} 
+                value={month} 
+                onChange={(e) => setMonth(e.target.value)}
+                style={{ background: 'transparent', border: 'none', fontSize: '0.85rem', padding: '0.4rem' }}
+              >
+                <option value="">Todos los meses</option>
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+              </select>
+              <div style={{ width: '1px', background: 'var(--color-border)', margin: '0.2rem 0' }} />
+              <select 
+                className={styles.filterSelect || 'select'} 
+                value={year} 
+                onChange={(e) => setYear(e.target.value)}
+                style={{ background: 'transparent', border: 'none', fontSize: '0.85rem', padding: '0.4rem' }}
+              >
+                {[currentYear, currentYear-1, currentYear-2].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FiPlus /> Cargar Egreso
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}

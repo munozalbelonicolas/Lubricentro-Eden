@@ -6,7 +6,7 @@ import { useTenant } from '../../hooks/useTenant';
 import { getImageUrl } from '../../utils/formatters';
 import {
   FiShoppingCart, FiMenu, FiX, FiUser, FiLogOut,
-  FiPackage, FiGrid, FiChevronDown,
+  FiPackage, FiGrid, FiChevronDown, FiBarChart2,
 } from 'react-icons/fi';
 import styles from './Navbar.module.css';
 
@@ -102,6 +102,9 @@ export default function Navbar() {
                       </Link>
                       <Link to="/dashboard/products" className={styles.dropdownItem} onClick={() => setUserOpen(false)}>
                         <FiPackage size={15} /> Productos
+                      </Link>
+                      <Link to="/dashboard/stats" className={styles.dropdownItem} onClick={() => setUserOpen(false)}>
+                        <FiBarChart2 size={15} /> Estadísticas
                       </Link>
                       <div className={styles.dropdownDivider} />
                     </>

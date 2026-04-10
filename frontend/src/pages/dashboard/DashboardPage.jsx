@@ -8,7 +8,7 @@ import { useTenant } from '../../hooks/useTenant';
 import { formatPrice, formatDateTime } from '../../utils/formatters';
 import {
   FiPackage, FiDollarSign, FiClock, FiTrendingUp,
-  FiShoppingBag, FiGrid, FiStar, FiTool, FiActivity, FiUser
+  FiShoppingBag, FiGrid, FiStar, FiTool, FiActivity, FiUser, FiBarChart2
 } from 'react-icons/fi';
 import styles from './DashboardPage.module.css';
 
@@ -94,6 +94,11 @@ export default function DashboardPage() {
             <FiDollarSign size={28} style={{ color: '#22c55e' }} />
             <p className={styles.quickTitle} style={{ color: '#22c55e' }}>Finanzas</p>
             <p className={styles.quickDesc}>Ingresos y Egresos</p>
+          </Link>
+          <Link to="/dashboard/stats" className={styles.quickCard} style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)' }}>
+            <FiBarChart2 size={28} style={{ color: '#ef4444' }} />
+            <p className={styles.quickTitle} style={{ color: '#ef4444' }}>Estadísticas</p>
+            <p className={styles.quickDesc}>Analítica y Evolución</p>
           </Link>
           <Link to="/dashboard/history" className={styles.quickCard} style={{ borderColor: 'rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.06)' }}>
             <FiActivity size={28} style={{ color: '#3b82f6' }} />

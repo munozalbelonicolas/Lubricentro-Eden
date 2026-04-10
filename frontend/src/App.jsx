@@ -23,6 +23,7 @@ import VehicleHistory  from './pages/dashboard/VehicleHistory';
 import FinancePage     from './pages/dashboard/FinancePage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import UsersAdmin      from './pages/dashboard/UsersAdmin';
+import StatsPage       from './pages/dashboard/StatsPage';
 
 // Rutas protegidas
 const PrivateRoute = ({ children }) => {
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="/dashboard/history"      element={<AdminRoute><VehicleHistory /></AdminRoute>} />
           <Route path="/dashboard/finance"      element={<AdminRoute><FinancePage /></AdminRoute>} />
           <Route path="/dashboard/users"        element={<AdminRoute><UsersAdmin /></AdminRoute>} />
+          <Route path="/dashboard/stats"        element={<AdminRoute><StatsPage /></AdminRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
