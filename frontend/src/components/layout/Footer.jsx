@@ -55,7 +55,14 @@ export default function Footer() {
             <span className={styles.contactItem}><FiMapPin size={14} />{cfg.address}</span>
           )}
           {cfg.phone && (
-            <a href={`tel:${cfg.phone}`} className={styles.contactItem}><FiPhone size={14} />{cfg.phone}</a>
+            <a
+              href={`https://wa.me/${cfg.phone.replace(/\D/g, '')}`}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.contactItem}
+            >
+              <FiPhone size={14} />{cfg.phone}
+            </a>
           )}
           {cfg.email && (
             <a href={`mailto:${cfg.email}`} className={styles.contactItem}><FiMail size={14} />{cfg.email}</a>
@@ -75,7 +82,7 @@ export default function Footer() {
 
       <div className={styles.bottom}>
         <div className="container">
-          <p>© {year} {tenant?.name || 'Lubricentro Eden'} — Todos los derechos reservados.</p>
+          <p>© {year} {tenant?.name || 'Lubricentro Eden'} — Powered by NILO-TECH, Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
