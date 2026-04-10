@@ -18,8 +18,6 @@ import RegisterPage    from './pages/RegisterPage';
 import DashboardPage   from './pages/dashboard/DashboardPage';
 import ProductsAdmin   from './pages/dashboard/ProductsAdmin';
 import OrdersAdmin     from './pages/dashboard/OrdersAdmin';
-import TenantConfig    from './pages/dashboard/TenantConfig';
-import SubscriptionPage from './pages/dashboard/SubscriptionPage';
 import WorkshopAdmin   from './pages/dashboard/WorkshopAdmin';
 import VehicleHistory  from './pages/dashboard/VehicleHistory';
 import FinancePage     from './pages/dashboard/FinancePage';
@@ -69,8 +67,6 @@ export default function App() {
           <Route path="/dashboard/history"      element={<AdminRoute><VehicleHistory /></AdminRoute>} />
           <Route path="/dashboard/finance"      element={<AdminRoute><FinancePage /></AdminRoute>} />
           <Route path="/dashboard/users"        element={<AdminRoute><UsersAdmin /></AdminRoute>} />
-          <Route path="/dashboard/config"       element={<AdminRoute><TenantConfig /></AdminRoute>} />
-          <Route path="/dashboard/subscription" element={<AdminRoute><SubscriptionPage /></AdminRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
