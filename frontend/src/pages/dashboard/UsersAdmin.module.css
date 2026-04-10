@@ -112,3 +112,32 @@
   gap: 1.25rem;
   padding: 1.5rem 0;
 }
+
+.roleBadge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.roleBadge[data-role="admin"] {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+.roleBadge[data-role="vendedor"] {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.roleBadge[data-role="caja"] {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.roleBadge[data-role="user"] {
+  background: var(--color-bg-3);
+  color: var(--color-text-3);
+}

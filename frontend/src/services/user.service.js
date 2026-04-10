@@ -18,6 +18,14 @@ export const userService = {
   },
 
   /**
+   * Actualizar usuario (Admin)
+   */
+  updateUser: async (userId, userData) => {
+    const { data } = await api.patch(`/users/${userId}`, userData);
+    return data;
+  },
+
+  /**
    * Alternar estado (Bloquear/Desbloquear)
    */
   toggleStatus: async (userId) => {

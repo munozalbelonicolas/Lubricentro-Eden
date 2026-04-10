@@ -4,7 +4,7 @@ import { formatPrice, formatDateTime } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import { 
   FiUser, FiMail, FiPhone, FiSearch, FiTrash2, 
-  FiLock, FiUserPlus, FiActivity, FiX, FiCheckCircle, FiSlash 
+  FiLock, FiUserPlus, FiActivity, FiX, FiCheckCircle, FiSlash, FiEdit2 
 } from 'react-icons/fi';
 import styles from './UsersAdmin.module.css';
 
@@ -15,14 +15,16 @@ export default function UsersAdmin() {
   
   // Modales
   const [showCreate, setShowCreate] = useState(false);
-  const [showHistory, setShowHistory] = useState(null); // guardará el usuario activo
+  const [showEdit, setShowEdit] = useState(null); // guardará el usuario a editar
+  const [showHistory, setShowHistory] = useState(null);
   const [showPassModal, setShowPassModal] = useState(null);
   
   // Data de formularios
   const [newUserData, setNewUserData] = useState({
-    firstName: '', lastName: '', email: '', document: '', phone: '',
+    firstName: '', lastName: '', email: '', document: '', phone: '', role: 'user',
     address: { street: '', number: '', city: '', province: '', zipCode: '' }
   });
+  const [editUserData, setEditUserData] = useState({});
   const [newPass, setNewPass] = useState('');
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -69,11 +71,35 @@ export default function UsersAdmin() {
       await userService.createUser(newUserData);
       toast.success('Usuario creado. Se envió email con password temporal.');
       setShowCreate(false);
-      setNewUserData({ firstName: '', lastName: '', email: '', document: '', phone: '', address: { street: '', number: '', city: '', province: '', zipCode: '' } });
+      setNewUserData({ firstName: '', lastName: '', email: '', document: '', phone: '', role: 'user', address: { street: '', number: '', city: '', province: '', zipCode: '' } });
       fetchUsers();
     } catch (err) {
       toast.error(err.message || 'Error al crear usuario');
     }
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    try {
+      await userService.updateUser(showEdit._id, editUserData);
+      toast.success('Usuario actualizado');
+      setShowEdit(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error('Error al actualizar');
+    }
+  };
+
+  const openEdit = (user) => {
+    setShowEdit(user);
+    setEditUserData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      document: user.document,
+      phone: user.phone,
+      role: user.role
+    });
   };
 
   const handleUpdatePassword = async (e) => {
@@ -113,7 +139,7 @@ export default function UsersAdmin() {
         <header className={styles.header}>
           <div>
             <h1 className={styles.title}>Gestión de Usuarios</h1>
-            <p className={styles.subtitle}>Administrá tus clientes y consultá sus historiales de compra</p>
+            <p className={styles.subtitle}>Administrá tus clientes y personal</p>
           </div>
           <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
             <FiUserPlus /> Nuevo Usuario
@@ -136,16 +162,15 @@ export default function UsersAdmin() {
             <thead>
               <tr>
                 <th>Usuario</th>
-                <th>DNI / Documento</th>
-                <th>Email / Celular</th>
+                <th>Rol</th>
+                <th>DNI / Email</th>
                 <th>Estado</th>
-                <th>Monto Total</th>
                 <th style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '3rem' }}><div className="spinner mr-auto ml-auto" /></td></tr>
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}><div className="spinner mr-auto ml-auto" /></td></tr>
               ) : filteredUsers.map(user => (
                 <tr key={user._id}>
                   <td>
@@ -155,23 +180,27 @@ export default function UsersAdmin() {
                       </div>
                       <div>
                         <p className={styles.userName}>{user.firstName} {user.lastName}</p>
-                        <p className={styles.userRole}>{user.role?.toUpperCase() || 'CLIENTE'}</p>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-3)' }}>{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td style={{ fontWeight: 500 }}>{user.document || '---'}</td>
                   <td>
-                    <p style={{ margin: 0 }}>{user.email}</p>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-3)' }}>{user.phone || 'Sin teléfono'}</p>
+                    <span className={styles.roleBadge} data-role={user.role}>
+                      {user.role?.toUpperCase()}
+                    </span>
+                  </td>
+                  <td>
+                    <p style={{ margin: 0, fontWeight: 500 }}>{user.document || '---'}</p>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-3)' }}>{user.phone || 'Sin télefono'}</p>
                   </td>
                   <td>
                     <span className={`badge badge-${user.isActive ? 'success' : 'error'}`}>
                       {user.isActive ? 'Activo' : 'Bloqueado'}
                     </span>
                   </td>
-                  <td style={{ fontWeight: 600 }}>{formatPrice(0)} {/* TODO: Implementar agregación de gasto total */}</td>
                   <td className={styles.actions}>
                     <button title="Ver Historial" onClick={() => handleViewHistory(user)}><FiActivity /></button>
+                    <button title="Editar Perfil" onClick={() => openEdit(user)}><FiEdit2 /></button>
                     <button title="Cambiar Password" onClick={() => setShowPassModal(user)}><FiLock /></button>
                     <button title={user.isActive ? 'Bloquear' : 'Desbloquear'} onClick={() => handleToggleStatus(user)}>
                       {user.isActive ? <FiSlash /> : <FiCheckCircle />}
@@ -203,9 +232,20 @@ export default function UsersAdmin() {
                     <input className="input" type="text" required onChange={(e) => setNewUserData({...newUserData, lastName: e.target.value})} />
                   </div>
                 </div>
-                <div className="input-group">
-                  <label>Email</label>
-                  <input className="input" type="email" required onChange={(e) => setNewUserData({...newUserData, email: e.target.value})} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="input-group">
+                    <label>Email</label>
+                    <input className="input" type="email" required onChange={(e) => setNewUserData({...newUserData, email: e.target.value})} />
+                  </div>
+                  <div className="input-group">
+                    <label>Perfil / Rol</label>
+                    <select className="select" value={newUserData.role} onChange={(e) => setNewUserData({...newUserData, role: e.target.value})}>
+                      <option value="user">Cliente</option>
+                      <option value="admin">Administrador</option>
+                      <option value="vendedor">Vendedor</option>
+                      <option value="caja">Caja</option>
+                    </select>
+                  </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="input-group">
@@ -218,10 +258,60 @@ export default function UsersAdmin() {
                   </div>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-3)', fontStyle: 'italic' }}>
-                  * Se enviará un email con una contraseña temporal generada automáticamente.
+                  * Se enviará un email con una contraseña temporal.
                 </p>
                 <div className="modal-footer">
-                  <button type="submit" className="btn btn-primary">Crear y Enviar Email</button>
+                  <button type="submit" className="btn btn-primary">Crear Usuario</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL EDITAR USUARIO */}
+        {showEdit && (
+          <div className="modal-overlay">
+            <div className="modal-card" style={{ maxWidth: '600px' }}>
+              <div className="modal-header">
+                <h3>Editar Perfil: {showEdit.firstName}</h3>
+                <button onClick={() => setShowEdit(null)}><FiX /></button>
+              </div>
+              <form onSubmit={handleEditUser} className={styles.modalBody}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="input-group">
+                    <label>Nombre</label>
+                    <input className="input" type="text" value={editUserData.firstName} onChange={(e) => setEditUserData({...editUserData, firstName: e.target.value})} required />
+                  </div>
+                  <div className="input-group">
+                    <label>Apellido</label>
+                    <input className="input" type="text" value={editUserData.lastName} onChange={(e) => setEditUserData({...editUserData, lastName: e.target.value})} required />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label>Email</label>
+                  <input className="input" type="email" value={editUserData.email} onChange={(e) => setEditUserData({...editUserData, email: e.target.value})} required />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="input-group">
+                    <label>Perfil / Rol</label>
+                    <select className="select" value={editUserData.role} onChange={(e) => setEditUserData({...editUserData, role: e.target.value})}>
+                      <option value="user">Cliente</option>
+                      <option value="admin">Administrador</option>
+                      <option value="vendedor">Vendedor</option>
+                      <option value="caja">Caja</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Documento</label>
+                    <input className="input" type="text" value={editUserData.document} onChange={(e) => setEditUserData({...editUserData, document: e.target.value})} />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label>Teléfono</label>
+                  <input className="input" type="text" value={editUserData.phone} onChange={(e) => setEditUserData({...editUserData, phone: e.target.value})} />
+                </div>
+                <div className="modal-footer">
+                  <button type="submit" className="btn btn-primary">Guardar Cambios</button>
                 </div>
               </form>
             </div>

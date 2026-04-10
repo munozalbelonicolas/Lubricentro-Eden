@@ -78,6 +78,28 @@ exports.toggleUserStatus = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * Actualizar datos de usuario (por Admin)
+ */
+exports.updateUser = catchAsync(async (req, res, next) => {
+  const { firstName, lastName, email, document, phone, role } = req.body;
+
+  const user = await User.findOneAndUpdate(
+    { _id: req.params.id, tenantId: req.user.tenantId },
+    { firstName, lastName, email, document, phone, role },
+    { new: true, runValidators: true }
+  );
+
+  if (!user) {
+    return next(new AppError('Usuario no encontrado.', 404));
+  }
+
+  res.json({
+    status: 'success',
+    data: { user }
+  });
+});
+
+/**
  * Borrado físico (Definitivo)
  */
 exports.deleteUser = catchAsync(async (req, res, next) => {

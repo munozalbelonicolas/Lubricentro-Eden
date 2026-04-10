@@ -14,6 +14,7 @@ router.route('/')
   .post(userController.createUser);
 
 router.route('/:id')
+  .patch(userController.updateUser)
   .delete(userController.deleteUser);
 
 router.patch('/:id/toggle-status', userController.toggleUserStatus);
