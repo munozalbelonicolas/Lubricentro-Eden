@@ -25,6 +25,50 @@
   gap: 0.85rem;
 }
 
+/* Tipos de entrega */
+.deliveryOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.deliveryBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1.25rem;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: #ffffff; /* Texto blanco forzado para contraste */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.deliveryBtn:hover {
+  border-color: var(--color-primary);
+  background: rgba(255, 107, 0, 0.05);
+}
+
+.deliveryBtnActive {
+  border-color: var(--color-primary);
+  background: rgba(255, 107, 0, 0.1) !important;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.deliveryLabel {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #ffffff;
+}
+
+.deliverySub {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
 /* Pago */
 .mpBadge {
   display: flex; align-items: center; justify-content: space-between;

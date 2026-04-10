@@ -14,12 +14,47 @@ exports.getAllTasks = catchAsync(async (req, res, next) => {
   });
 });
 
+/**
+ * Helper para descontar stock de productos usados en una tarea
+ */
+const deductStock = async (tenantId, items) => {
+  if (!items || items.length === 0) return 0;
+  const Product = require('../models/Product.model');
+  let totalValue = 0;
+
+  for (const item of items) {
+    if (!item.productId) continue;
+    
+    // Solo intentar descontar si hay stock suficiente
+    const product = await Product.findOneAndUpdate(
+      { _id: item.productId, tenantId, stock: { $gte: item.quantity } },
+      { $inc: { stock: -item.quantity } },
+      { new: true }
+    );
+
+    if (!product) {
+      console.warn(`Stock insuficiente para producto ${item.productId} o no encontrado.`);
+      continue;
+    }
+    totalValue += item.price * item.quantity;
+  }
+  return totalValue;
+};
+
 exports.createTask = catchAsync(async (req, res, next) => {
-  // Asegurar que el tenantId sea el del usuario logueado
   req.body.tenantId = req.user.tenantId;
   req.body.createdBy = req.user._id;
 
   const newTask = await Task.create(req.body);
+
+  // Si se crea como 'done', descontamos stock inmediatamente
+  if (newTask.status === 'done' && newTask.items && newTask.items.length > 0) {
+    const calculatedTotal = await deductStock(req.user.tenantId, newTask.items);
+    if (!newTask.totalValue) {
+      newTask.totalValue = calculatedTotal;
+      await newTask.save();
+    }
+  }
 
   res.status(201).json({
     status: 'success',
@@ -28,41 +63,27 @@ exports.createTask = catchAsync(async (req, res, next) => {
 });
 
 exports.updateTask = catchAsync(async (req, res, next) => {
+  // Primero buscamos la tarea actual para ver el estado anterior
+  const currentTask = await Task.findOne({ _id: req.params.id, tenantId: req.user.tenantId });
+  if (!currentTask) {
+    return next(new AppError('No se encontró la tarea o no tenés permiso.', 404));
+  }
+
+  // Actualizamos con los nuevos datos
   const task = await Task.findOneAndUpdate(
     { _id: req.params.id, tenantId: req.user.tenantId },
     req.body,
     { new: true, runValidators: true }
   );
 
-  if (!task) {
-    return next(new AppError('No se encontró la tarea o no tenés permiso.', 404));
-  }
-
   // --- Lógica de Stock e Ingresos ---
-  // Si la tarea se marca como 'done' y tiene ítems, descontamos stock
-  if (req.body.status === 'done' && req.body.items && req.body.items.length > 0) {
-    const Product = require('../models/Product.model');
-    let totalValue = 0;
-
-    for (const item of req.body.items) {
-      if (!item.productId) continue;
-      
-      const product = await Product.findOneAndUpdate(
-        { _id: item.productId, tenantId: req.user.tenantId, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity } },
-        { new: true }
-      );
-
-      if (!product) {
-        console.warn(`No se pudo descontar stock para producto ${item.productId}. Stock insuficiente o no encontrado.`);
-        continue;
-      }
-      totalValue += item.price * item.quantity;
-    }
-
-    // Actualizar el totalValue en la tarea si no se envió uno manualmente
+  // SOLO descontamos stock si está pasando de 'pending' a 'done'
+  if (currentTask.status === 'pending' && req.body.status === 'done' && task.items && task.items.length > 0) {
+    const calculatedTotal = await deductStock(req.user.tenantId, task.items);
+    
+    // Actualizar el totalValue si no se envió uno manualmente
     if (!req.body.totalValue) {
-      task.totalValue = totalValue;
+      task.totalValue = calculatedTotal;
       await task.save();
     }
   }

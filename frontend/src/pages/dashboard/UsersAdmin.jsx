@@ -150,10 +150,12 @@ export default function UsersAdmin() {
                 <tr key={user._id}>
                   <td>
                     <div className={styles.userInfo}>
-                      <div className={styles.avatar}>{user.firstName[0]}{user.lastName[0]}</div>
+                      <div className={styles.avatar}>
+                        {(user.firstName?.[0] || 'U')}{(user.lastName?.[0] || '')}
+                      </div>
                       <div>
                         <p className={styles.userName}>{user.firstName} {user.lastName}</p>
-                        <p className={styles.userRole}>{user.role.toUpperCase()}</p>
+                        <p className={styles.userRole}>{user.role?.toUpperCase() || 'CLIENTE'}</p>
                       </div>
                     </div>
                   </td>

@@ -54,13 +54,6 @@ export default function DashboardPage() {
             </h1>
             <p className={styles.storeName}>{tenant?.name}</p>
           </div>
-          <div className={styles.planBadge}>
-            <FiStar size={14} />
-            Plan {sub?.plan?.toUpperCase() || 'FREE'}
-            {sub?.plan !== 'premium' && (
-              <Link to="/dashboard/subscription" className={styles.upgradeCta}>Mejorar</Link>
-            )}
-          </div>
         </div>
 
         {/* Stats Cards */}
@@ -116,11 +109,6 @@ export default function DashboardPage() {
             <FiUser size={28} style={{ color: '#a855f7' }} />
             <p className={styles.quickTitle} style={{ color: '#a855f7' }}>Usuarios</p>
             <p className={styles.quickDesc}>Clientes y accesos</p>
-          </Link>
-          <Link to="/dashboard/subscription" className={styles.quickCard}>
-            <FiStar size={28} />
-            <p className={styles.quickTitle}>Suscripción</p>
-            <p className={styles.quickDesc}>Plan actual: {sub?.plan || 'free'}</p>
           </Link>
         </div>
 
