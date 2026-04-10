@@ -8,12 +8,18 @@ const getUmamiStats = async (startAt, endAt) => {
   const websiteId = process.env.UMAMI_WEBSITE_ID;
 
   if (!apiKey || !websiteId) {
+    console.error('❌ Umami Error: Faltan las variables UMAMI_API_KEY o UMAMI_WEBSITE_ID');
     return null;
   }
 
-  const url = `https://api.umami.is/v1/websites/${websiteId}/stats?startAt=${startAt}&endAt=${endAt}`;
+  // Asegurar que sean números enteros (timestamps)
+  const s = Math.floor(startAt);
+  const e = Math.floor(endAt);
+
+  const url = `https://api.umami.is/v1/websites/${websiteId}/stats?startAt=${s}&endAt=${e}`;
   
   try {
+    console.log(`📡 Consultando Umami Stats: ${url}`);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -22,12 +28,14 @@ const getUmamiStats = async (startAt, endAt) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Umami API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Umami API Error (${response.status}):`, errorText);
+      return null;
     }
 
     return await response.json();
   } catch (err) {
-    console.error('Error fetching Umami stats:', err.message);
+    console.error('❌ Umami Service Error:', err.message);
     return null;
   }
 };
@@ -36,13 +44,15 @@ const getUmamiPageviews = async (startAt, endAt, unit = 'month') => {
   const apiKey = process.env.UMAMI_API_KEY;
   const websiteId = process.env.UMAMI_WEBSITE_ID;
 
-  if (!apiKey || !websiteId) {
-    return null;
-  }
+  if (!apiKey || !websiteId) return null;
 
-  const url = `https://api.umami.is/v1/websites/${websiteId}/pageviews?startAt=${startAt}&endAt=${endAt}&unit=${unit}`;
+  const s = Math.floor(startAt);
+  const e = Math.floor(endAt);
+
+  const url = `https://api.umami.is/v1/websites/${websiteId}/pageviews?startAt=${s}&endAt=${e}&unit=${unit}`;
   
   try {
+    console.log(`📡 Consultando Umami Pageviews: ${url}`);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -51,12 +61,14 @@ const getUmamiPageviews = async (startAt, endAt, unit = 'month') => {
     });
 
     if (!response.ok) {
-      throw new Error(`Umami API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Umami API Error (${response.status}):`, errorText);
+      return null;
     }
 
     return await response.json();
   } catch (err) {
-    console.error('Error fetching Umami pageviews:', err.message);
+    console.error('❌ Umami Service Error:', err.message);
     return null;
   }
 };

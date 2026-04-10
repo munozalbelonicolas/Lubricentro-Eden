@@ -223,7 +223,7 @@ export default function StatsPage() {
               </div>
             </div>
             <div style={{ height: '220px' }}>
-              {visitStats.history?.length > 0 ? (
+              {visitStats && visitStats.history && visitStats.history.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={visitStats.history}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
@@ -237,8 +237,9 @@ export default function StatsPage() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex-center" style={{ height: '100%', opacity: 0.5, fontSize: '0.85rem' }}>
-                  No hay datos de visitas para este periodo
+                <div className="flex-center" style={{ height: '100%', opacity: 0.5, fontSize: '0.85rem', flexDirection: 'column', gap: '0.5rem' }}>
+                  <FiActivity size={24} />
+                  <p>No hay datos de visitas para este periodo</p>
                 </div>
               )}
             </div>

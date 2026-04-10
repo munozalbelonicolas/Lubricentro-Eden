@@ -76,22 +76,23 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
   ]);
 
   // 2. Ingresos por Taller
+  // Nota: Task.date es String 'YYYY-MM-DD'
+  const startStr = start.toISOString().split('T')[0];
+  const endStr = end.toISOString().split('T')[0];
+
   const taskIncome = await Task.aggregate([
     { 
       $match: { 
         tenantId, 
         status: 'done',
-        date: { 
-          $gte: start,
-          $lte: end
-        }
+        date: { $gte: startStr, $lte: endStr }
       } 
     },
     {
       $group: {
         _id: { 
-          year: { $year: '$date' }, 
-          month: { $month: '$date' } 
+          year: { $year: { $toDate: '$date' } }, 
+          month: { $month: { $toDate: '$date' } } 
         },
         total: { $sum: '$totalValue' }
       }
@@ -99,21 +100,19 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
   ]);
 
   // 3. Egresos
+  // Nota: Expense.date es Date. Match con Date objects es correcto.
   const expenses = await Expense.aggregate([
     { 
       $match: { 
         tenantId,
-        date: { 
-          $gte: start,
-          $lte: end
-        }
+        date: { $gte: start, $lte: end }
       } 
     },
     {
       $group: {
         _id: { 
-          year: { $year: '$date' }, 
-          month: { $month: '$date' } 
+          year: { $year: { $toDate: '$date' } }, 
+          month: { $month: { $toDate: '$date' } } 
         },
         total: { $sum: '$amount' }
       }
