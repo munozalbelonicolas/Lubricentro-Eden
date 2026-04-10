@@ -22,11 +22,6 @@ export default function Footer() {
             {cfg.description || 'Tu lubricentro de confianza. Aceites, filtros y repuestos automotor de primera calidad.'}
           </p>
           <div className={styles.social}>
-            {cfg.socialLinks?.instagram && (
-              <a href={cfg.socialLinks.instagram} target="_blank" rel="noreferrer" aria-label="Instagram">
-                <FiInstagram size={18} />
-              </a>
-            )}
             {cfg.socialLinks?.facebook && (
               <a href={cfg.socialLinks.facebook} target="_blank" rel="noreferrer" aria-label="Facebook">
                 <FiFacebook size={18} />
@@ -64,6 +59,11 @@ export default function Footer() {
           )}
           {cfg.email && (
             <a href={`mailto:${cfg.email}`} className={styles.contactItem}><FiMail size={14} />{cfg.email}</a>
+          )}
+          {(cfg.socialLinks?.instagram || (!tenant && 'https://www.instagram.com/lubricentroeden/')) && (
+            <a href={cfg.socialLinks?.instagram || 'https://www.instagram.com/lubricentroeden/'} target="_blank" rel="noreferrer" className={styles.contactItem}>
+              <FiInstagram size={14} /> @lubricentroeden
+            </a>
           )}
           {cfg.businessHours && (
             <span className={styles.contactItem} style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--color-text-3)' }}>
