@@ -113,12 +113,17 @@ exports.getVehicleHistory = catchAsync(async (req, res) => {
   }
 
   if (startDate || endDate) {
-    const dateRange = {};
-    if (startDate) dateRange.$gte = new Date(startDate);
-    if (endDate)   dateRange.$lte = new Date(endDate);
-    
-    taskQuery.date = dateRange;
-    orderQuery.createdAt = dateRange;
+    if (startDate) {
+      taskQuery.date = { ...taskQuery.date, $gte: startDate };
+      orderQuery.createdAt = { ...orderQuery.createdAt, $gte: new Date(startDate) };
+    }
+    if (endDate) {
+      taskQuery.date = { ...taskQuery.date, $lte: endDate };
+      // Para órdenes (Date), el endDate debe ser al final del día
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      orderQuery.createdAt = { ...orderQuery.createdAt, $lte: end };
+    }
   }
 
   // Buscar en ambas colecciones
