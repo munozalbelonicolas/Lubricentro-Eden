@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useTenant } from '../hooks/useTenant';
 import toast from 'react-hot-toast';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { getImageUrl } from '../utils/formatters';
@@ -8,6 +9,7 @@ import styles from './AuthPage.module.css';
 
 export default function LoginPage() {
   const { login }  = useAuth();
+  const { tenant } = useTenant();
   const navigate   = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,10 @@ export default function LoginPage() {
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="/logos/Logo-Eden.png" alt="Logo Eden" style={{ width: '100%', height: 'auto' }} />
+            <img 
+              src={tenant?.config?.logo ? getImageUrl(tenant.config.logo) : '/logos/Logo-Eden.png'} 
+              alt={tenant?.name || 'Logo Eden'} 
+            />
           </div>
           <h1 className={styles.title}>Iniciar Sesión</h1>
           <p className={styles.subtitle}>Accedé a tu cuenta para gestionar tus pedidos</p>

@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useTenant } from '../hooks/useTenant';
 import toast from 'react-hot-toast';
 import { 
   FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiMapPin, 
   FiSmartphone, FiCreditCard, FiCalendar 
 } from 'react-icons/fi';
+import { getImageUrl } from '../utils/formatters';
 import styles from './AuthPage.module.css';
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const { tenant }   = useTenant();
   const navigate     = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -73,7 +76,10 @@ export default function RegisterPage() {
       <div className={`${styles.card} ${styles.cardWide}`} style={{ maxWidth: '800px' }}>
         <div className={styles.header}>
           <div className={styles.logo}>
-            <img src="/logos/Logo-Eden.png" alt="Logo Eden" />
+            <img 
+              src={tenant?.config?.logo ? getImageUrl(tenant.config.logo) : '/logos/Logo-Eden.png'} 
+              alt={tenant?.name || 'Logo Eden'} 
+            />
           </div>
           <h1 className={styles.title}>Creá tu cuenta</h1>
           <p className={styles.subtitle}>Completá tus datos para una experiencia personalizada</p>
