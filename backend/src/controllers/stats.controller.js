@@ -1,5 +1,6 @@
 'use strict';
 
+const mongoose = require('mongoose');
 const Order = require('../models/Order.model');
 const Expense = require('../models/Expense.model');
 const Task = require('../models/Task.model');
@@ -9,10 +10,18 @@ const catchAsync = require('../utils/catchAsync');
  * Obtener productos más vendidos
  */
 exports.getBestSellers = catchAsync(async (req, res) => {
-  const tenantId = req.user.tenantId;
+  const tenantId = new mongoose.Types.ObjectId(req.user.tenantId);
+  const { startDate, endDate } = req.query;
+
+  const match = { tenantId, paymentStatus: 'approved' };
+  if (startDate || endDate) {
+    match.createdAt = {};
+    if (startDate) match.createdAt.$gte = new Date(startDate);
+    if (endDate) match.createdAt.$lte = new Date(endDate);
+  }
 
   const bestSellers = await Order.aggregate([
-    { $match: { tenantId, paymentStatus: 'approved' } },
+    { $match: match },
     { $unwind: '$items' },
     {
       $group: {
@@ -37,9 +46,14 @@ exports.getBestSellers = catchAsync(async (req, res) => {
  * Evolución mensual de finanzas (Ingresos vs Egresos)
  */
 exports.getFinanceEvolution = catchAsync(async (req, res) => {
-  const tenantId = req.user.tenantId;
+  const tenantId = new mongoose.Types.ObjectId(req.user.tenantId);
+  const { startDate, endDate } = req.query;
+  
   const now = new Date();
-  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const defaultTwelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  
+  const start = startDate ? new Date(startDate) : defaultTwelveMonthsAgo;
+  const end = endDate ? new Date(endDate) : now;
 
   // 1. Ingresos por Órdenes Web
   const orderIncome = await Order.aggregate([
@@ -47,7 +61,7 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
       $match: { 
         tenantId, 
         paymentStatus: 'approved',
-        createdAt: { $gte: twelveMonthsAgo }
+        createdAt: { $gte: start, $lte: end }
       } 
     },
     {
@@ -67,14 +81,17 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
       $match: { 
         tenantId, 
         status: 'done',
-        date: { $gte: twelveMonthsAgo.toISOString().split('T')[0] }
+        date: { 
+          $gte: start,
+          $lte: end
+        }
       } 
     },
     {
       $group: {
         _id: { 
-          year: { $year: { $toDate: '$date' } }, 
-          month: { $month: { $toDate: '$date' } } 
+          year: { $year: '$date' }, 
+          month: { $month: '$date' } 
         },
         total: { $sum: '$totalValue' }
       }
@@ -86,39 +103,45 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
     { 
       $match: { 
         tenantId,
-        date: { $gte: twelveMonthsAgo.toISOString().split('T')[0] }
+        date: { 
+          $gte: start,
+          $lte: end
+        }
       } 
     },
     {
       $group: {
         _id: { 
-          year: { $year: { $toDate: '$date' } }, 
-          month: { $month: { $toDate: '$date' } } 
+          year: { $year: '$date' }, 
+          month: { $month: '$date' } 
         },
         total: { $sum: '$amount' }
       }
     }
   ]);
 
-  // Unificar por mes
+  // Determinar cuántos meses cubrir
   const history = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
-    const y = d.getFullYear();
-    const m = d.getMonth() + 1;
+  const tempDate = new Date(start.getFullYear(), start.getMonth(), 1);
+  
+  while (tempDate <= end) {
+    const y = tempDate.getFullYear();
+    const m = tempDate.getMonth() + 1;
 
     const ordIn = orderIncome.find(x => x._id.year === y && x._id.month === m)?.total || 0;
     const tskIn = taskIncome.find(x => x._id.year === y && x._id.month === m)?.total || 0;
     const exp   = expenses.find(x    => x._id.year === y && x._id.month === m)?.total || 0;
 
     history.push({
-      monthName: d.toLocaleString('es-AR', { month: 'short' }),
+      monthName: tempDate.toLocaleString('es-AR', { month: 'short' }),
       month: m,
       year: y,
       income: ordIn + tskIn,
       expenses: exp,
       profit: (ordIn + tskIn) - exp
     });
+    
+    tempDate.setMonth(tempDate.getMonth() + 1);
   }
 
   res.json({
@@ -132,7 +155,9 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
  */
 exports.getProductEvolution = catchAsync(async (req, res) => {
   const { productId } = req.params;
-  const tenantId = req.user.tenantId;
+  const tenantId = new mongoose.Types.ObjectId(req.user.tenantId);
+  const prodId = new mongoose.Types.ObjectId(productId);
+  
   const now = new Date();
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
@@ -142,11 +167,11 @@ exports.getProductEvolution = catchAsync(async (req, res) => {
         tenantId, 
         paymentStatus: 'approved',
         createdAt: { $gte: sixMonthsAgo },
-        'items.productId': new (require('mongoose').Types.ObjectId)(productId)
+        'items.productId': prodId
       } 
     },
     { $unwind: '$items' },
-    { $match: { 'items.productId': new (require('mongoose').Types.ObjectId)(productId) } },
+    { $match: { 'items.productId': prodId } },
     {
       $group: {
         _id: { 
@@ -159,7 +184,7 @@ exports.getProductEvolution = catchAsync(async (req, res) => {
     { $sort: { '_id.year': 1, '_id.month': 1 } }
   ]);
 
-  // Rellenar meses faltantes
+  // Rellenar meses faltantes (fijo a 6 meses por ahora para este gráfico específico)
   const result = [];
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
@@ -178,3 +203,4 @@ exports.getProductEvolution = catchAsync(async (req, res) => {
     data: { evolution: result }
   });
 });
+

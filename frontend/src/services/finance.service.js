@@ -11,13 +11,13 @@ export const financeService = {
     return res.data;
   },
 
-  getBestSellers: async () => {
-    const res = await API.get('/finance/stats/best-sellers');
+  getBestSellers: async (params = {}) => {
+    const res = await API.get('/finance/stats/best-sellers', { params });
     return res.data;
   },
 
-  getFinanceEvolution: async () => {
-    const res = await API.get('/finance/stats/evolution');
+  getFinanceEvolution: async (params = {}) => {
+    const res = await API.get('/finance/stats/evolution', { params });
     return res.data;
   },
 

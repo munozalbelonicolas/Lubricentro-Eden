@@ -15,22 +15,36 @@ export default function StatsPage() {
   const [selectedProd, setSelectedProd] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Filtros de fecha
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [startDate, endDate]);
 
   const fetchStats = async () => {
     setLoading(true);
     try {
+      const params = {};
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
+
       const [bestRes, historyRes] = await Promise.all([
-        financeService.getBestSellers(),
-        financeService.getFinanceEvolution()
+        financeService.getBestSellers(params),
+        financeService.getFinanceEvolution(params)
       ]);
-      setBestSellers(bestRes.data.bestSellers);
-      setHistory(historyRes.data.history);
       
-      if (bestRes.data.bestSellers.length > 0) {
-        handleProductChange(bestRes.data.bestSellers[0]._id);
+      const sellers = bestRes.data.bestSellers || [];
+      setBestSellers(sellers);
+      setHistory(historyRes.data.history || []);
+      
+      // Si no hay producto seleccionado y hay disponibles, seleccionar el primero
+      if (!selectedProd && sellers.length > 0) {
+        handleProductChange(sellers[0]._id, sellers);
+      } else if (selectedProd) {
+        // Refrescar evolución del producto actual
+        handleProductChange(selectedProd._id, sellers);
       }
     } catch (err) {
       toast.error('Error al cargar estadísticas');
@@ -39,15 +53,21 @@ export default function StatsPage() {
     }
   };
 
-  const handleProductChange = async (prodId) => {
+  const handleProductChange = async (prodId, currentSellers = bestSellers) => {
     try {
-      const prod = bestSellers.find(p => p._id === prodId);
+      const prod = currentSellers.find(p => p._id === prodId);
+      if (!prod) return;
       setSelectedProd(prod);
       const res = await financeService.getProductEvolution(prodId);
-      setProdEvolution(res.data.evolution);
+      setProdEvolution(res.data.evolution || []);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const clearFilters = () => {
+    setStartDate('');
+    setEndDate('');
   };
 
   if (loading) return <div className="page flex-center"><div className="spinner" /></div>;
@@ -55,9 +75,27 @@ export default function StatsPage() {
   return (
     <div className="page">
       <div className="container">
-        <div style={{ marginBottom: '2.5rem' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Estadísticas y Analítica</h1>
-          <p style={{ color: 'var(--color-text-3)' }}>Evolución detallada de ventas, productos y rendimiento del sitio.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Estadísticas y Analítica</h1>
+            <p style={{ color: 'var(--color-text-3)' }}>Evolución detallada de ventas, productos y rendimiento del sitio.</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', background: 'var(--color-bg-2)', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Desde:</span>
+              <input type="date" className="input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem', width: 'auto' }} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Hasta:</span>
+              <input type="date" className="input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem', width: 'auto' }} value={endDate} onChange={e => setEndDate(e.target.value)} />
+            </div>
+            {(startDate || endDate) && (
+              <button onClick={clearFilters} style={{ padding: '0.4rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}>
+                <FiX />
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
