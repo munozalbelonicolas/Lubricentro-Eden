@@ -204,3 +204,42 @@ exports.getProductEvolution = catchAsync(async (req, res) => {
   });
 });
 
+/**
+ * Obtener estadísticas de visitas desde Umami
+ */
+const umamiService = require('../services/umami.service');
+
+exports.getSiteVisits = catchAsync(async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  const now = new Date();
+  const start = startDate ? new Date(startDate).getTime() : new Date(now.getFullYear(), now.getMonth() - 5, 1).getTime();
+  const end = endDate ? new Date(endDate).getTime() : now.getTime();
+
+  const [stats, pageviews] = await Promise.all([
+    umamiService.getUmamiStats(start, end),
+    umamiService.getUmamiPageviews(start, end, 'month')
+  ]);
+
+  // Formatear pageviews para el frontend
+  let formattedViews = [];
+  if (pageviews && pageviews.pageviews) {
+    formattedViews = pageviews.pageviews.map(pv => {
+      const d = new Date(pv.t);
+      return {
+        monthName: d.toLocaleString('es-AR', { month: 'short' }),
+        views: pv.y,
+        visitors: pageviews.sessions.find(s => s.t === pv.t)?.y || 0
+      };
+    });
+  }
+
+  res.json({
+    status: 'success',
+    data: {
+      summary: stats,
+      history: formattedViews
+    }
+  });
+});
+

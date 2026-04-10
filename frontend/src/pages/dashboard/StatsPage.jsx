@@ -12,6 +12,7 @@ export default function StatsPage() {
   const [bestSellers, setBestSellers] = useState([]);
   const [history, setHistory] = useState([]);
   const [prodEvolution, setProdEvolution] = useState([]);
+  const [visitStats, setVisitStats] = useState({ summary: {}, history: [] });
   const [selectedProd, setSelectedProd] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,14 +31,16 @@ export default function StatsPage() {
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
 
-      const [bestRes, historyRes] = await Promise.all([
+      const [bestRes, historyRes, visitRes] = await Promise.all([
         financeService.getBestSellers(params),
-        financeService.getFinanceEvolution(params)
+        financeService.getFinanceEvolution(params),
+        financeService.getSiteVisits(params)
       ]);
       
       const sellers = bestRes.data.bestSellers || [];
       setBestSellers(sellers);
       setHistory(historyRes.data.history || []);
+      setVisitStats(visitRes.data || { summary: {}, history: [] });
       
       // Si no hay producto seleccionado y hay disponibles, seleccionar el primero
       if (!selectedProd && sellers.length > 0) {
@@ -199,21 +202,54 @@ export default function StatsPage() {
             </div>
           </div>
 
-          {/* Visitas (Umami Info) */}
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', background: 'linear-gradient(135deg, rgba(168,85,247,0.1) 0%, transparent 100%)' }}>
-            <div style={{ padding: '1rem', background: 'rgba(168,85,247,0.2)', color: '#a855f7', borderRadius: '50%', marginBottom: '1rem' }}>
-              <FiActivity size={32}/>
+          {/* Visitas (Real Analytics) */}
+          <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ padding: '0.5rem', background: 'rgba(168,85,247,0.1)', color: '#a855f7', borderRadius: '8px' }}>
+                  <FiActivity size={20}/>
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700 }}>Tráfico del Sitio</h3>
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Visitas</p>
+                  <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#a855f7' }}>{visitStats.summary?.pageviews?.value || 0}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase' }}>Únicos</p>
+                  <p style={{ fontSize: '1.1rem', fontWeight: 800, color: '#3b82f6' }}>{visitStats.summary?.visitors?.value || 0}</p>
+                </div>
+              </div>
             </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>Analítica de Visitas</h3>
-            <p style={{ color: 'var(--color-text-2)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Estamos recolectando datos mediante <strong>Umami</strong>. Podés ver las visitas detalladas, origen y dispositivos en tiempo real.
-            </p>
-            <a 
-              href="https://cloud.umami.is/share/4c670384-9047-4217-8b65-ba7e7be9f9bc/lubricentro-eden" 
-              target="_blank" rel="noreferrer" className="btn btn-primary"
-            >
-              Ver Panel Umami Externo
-            </a>
+            <div style={{ height: '220px' }}>
+              {visitStats.history?.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={visitStats.history}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                    <XAxis dataKey="monthName" axisLine={false} tickLine={false} tick={{fill: 'var(--color-text-3)', fontSize: 11}} />
+                    <YAxis hide />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: 'var(--shadow-lg)', background: 'var(--color-surface)' }}
+                    />
+                    <Bar dataKey="views" name="Visitas" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="visitors" name="Únicos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex-center" style={{ height: '100%', opacity: 0.5, fontSize: '0.85rem' }}>
+                  No hay datos de visitas para este periodo
+                </div>
+              )}
+            </div>
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+               <a 
+                href="https://cloud.umami.is/share/4c670384-9047-4217-8b65-ba7e7be9f9bc/lubricentro-eden" 
+                target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: 'var(--color-text-3)', textDecoration: 'underline' }}
+              >
+                Ver reporte detallado en Umami Cloud →
+              </a>
+            </div>
           </div>
 
         </div>

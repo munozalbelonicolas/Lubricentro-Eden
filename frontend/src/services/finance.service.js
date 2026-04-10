@@ -25,6 +25,11 @@ export const financeService = {
     const res = await API.get(`/finance/stats/product/${productId}`);
     return res.data;
   },
+
+  getSiteVisits: async (params = {}) => {
+    const res = await API.get('/finance/stats/visits', { params });
+    return res.data;
+  },
   
   createExpense: async (data) => {
     const res = await API.post('/finance/expenses', data);
