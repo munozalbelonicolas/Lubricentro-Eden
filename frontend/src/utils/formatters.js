@@ -93,3 +93,23 @@ export const categoryLabel = {
   herramienta: 'Herramienta',
   otro:        'Otro',
 };
+/**
+ * Estima la fecha del próximo service basada en 10.000 km anuales.
+ * @param {string|Date} lastDate - Fecha del último service.
+ * @param {number} lastKm - KM del último service.
+ * @param {number} nextKm - KM objetivo del próximo cambio.
+ */
+export const estimateNextServiceDate = (lastDate, lastKm, nextKm) => {
+  if (!lastDate || !lastKm || !nextKm) return null;
+  const kmToRun = nextKm - lastKm;
+  if (kmToRun <= 0) return null;
+
+  // Promedio: 10.000 km/año ≈ 27.4 km/día
+  const kmPerDay = 10000 / 365;
+  const daysToReach = Math.round(kmToRun / kmPerDay);
+
+  const date = new Date(lastDate);
+  // Asegurar que manejamos fechas ISO strings correctamente añadiendo mediodía para evitar desfases de zona horaria
+  const d = new Date(date.getTime() + (daysToReach * 24 * 60 * 60 * 1000));
+  return d;
+};

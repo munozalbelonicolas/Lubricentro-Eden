@@ -662,7 +662,7 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await taskService.create(form);
+      await taskService.create({ ...form, status: 'pending' });
       toast.success('Tarea agendada con éxito');
       onSuccess();
       onClose();
@@ -824,6 +824,15 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
 
   const [products, setProducts] = useState([]);
   const [fetchingProducts, setFetchingProducts] = useState(false);
+
+  useEffect(() => {
+    if (form.currentKm) {
+      const current = parseInt(form.currentKm);
+      if (!isNaN(current) && !form.nextChangeKm) {
+        setForm(prev => ({ ...prev, nextChangeKm: current + 10000 }));
+      }
+    }
+  }, [form.currentKm]);
 
   useEffect(() => {
     if (isOpen) {
