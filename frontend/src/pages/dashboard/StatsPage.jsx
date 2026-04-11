@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { financeService } from '../../services/finance.service';
 import { formatPrice } from '../../utils/formatters';
-import { FiTrendingUp, FiPackage, FiActivity, FiArrowUpRight, FiSearch } from 'react-icons/fi';
+import { FiTrendingUp, FiPackage, FiActivity, FiArrowUpRight, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 export default function StatsPage() {
