@@ -91,7 +91,7 @@ export default function FinancePage() {
             {/* Filtros de Fecha */}
             <div style={{ display: 'flex', background: 'var(--color-bg-2)', padding: '0.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
               <select 
-                className={styles.filterSelect || 'select'} 
+                className="select" 
                 value={month} 
                 onChange={(e) => setMonth(e.target.value)}
                 style={{ background: 'transparent', border: 'none', fontSize: '0.85rem', padding: '0.4rem' }}
@@ -112,7 +112,7 @@ export default function FinancePage() {
               </select>
               <div style={{ width: '1px', background: 'var(--color-border)', margin: '0.2rem 0' }} />
               <select 
-                className={styles.filterSelect || 'select'} 
+                className="select" 
                 value={year} 
                 onChange={(e) => setYear(e.target.value)}
                 style={{ background: 'transparent', border: 'none', fontSize: '0.85rem', padding: '0.4rem' }}

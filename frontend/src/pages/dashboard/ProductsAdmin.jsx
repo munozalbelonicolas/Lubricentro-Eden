@@ -11,6 +11,7 @@ const CATEGORIES = Object.entries(categoryLabel);
 const EMPTY_FORM = {
   name: '', description: '', category: '', brand: '', price: '', stock: '',
   viscosity: '', capacity: '', sku: '', vehicleCompatibility: '', featured: false,
+  providerPrice: '', profitMargin: '',
 };
 
 export default function ProductsAdmin() {
@@ -43,6 +44,7 @@ export default function ProductsAdmin() {
       viscosity: p.viscosity, capacity: p.capacity, sku: p.sku,
       vehicleCompatibility: (p.vehicleCompatibility || []).join(', '),
       featured: p.featured, isActive: p.isActive,
+      providerPrice: p.providerPrice || '', profitMargin: p.profitMargin || '',
     });
     setFiles([]);
     setEditing(p);
@@ -52,7 +54,35 @@ export default function ProductsAdmin() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
+    setForm((f) => {
+      const updated = { ...f, [name]: type === 'checkbox' ? checked : value };
+      
+      // Auto-calcular precio si cambia costo o margen
+      if (name === 'providerPrice' || name === 'profitMargin') {
+        const costo = Number(name === 'providerPrice' ? value : f.providerPrice) || 0;
+        const margen = Number(name === 'profitMargin' ? value : f.profitMargin) || 0;
+        if (costo > 0) {
+          updated.price = Math.round(costo * (1 + margen / 100) * 100) / 100;
+        }
+      }
+      return updated;
+    });
+  };
+
+  const handleBulkMargin = async () => {
+    const margin = window.prompt('Ingresá el nuevo % de ganancia para TODOS los productos activos:');
+    if (margin === null || margin === '') return;
+    
+    setLoading(true);
+    try {
+      await productService.bulkUpdateMargin(Number(margin));
+      toast.success(`Margen actualizado al ${margin}% en todo el catálogo.`);
+      load();
+    } catch (err) {
+      toast.error(err.message || 'Error en actualización masiva.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -93,9 +123,14 @@ export default function ProductsAdmin() {
       <div className="container">
         <div className={styles.header}>
           <h1 className="section-title">Productos</h1>
-          <button className="btn btn-primary" onClick={openCreate}>
-            <FiPlus size={16} /> Nuevo Producto
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="btn btn-ghost" onClick={handleBulkMargin} title="Actualizar margen a todos">
+              % Margen Masivo
+            </button>
+            <button className="btn btn-primary" onClick={openCreate}>
+              <FiPlus size={16} /> Nuevo Producto
+            </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -203,7 +238,15 @@ export default function ProductsAdmin() {
                     <input className="input" name="sku" value={form.sku} onChange={handleChange} />
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Precio *</label>
+                    <label className="input-label">Costo Proveedor ($)</label>
+                    <input className="input" name="providerPrice" type="number" min="0" value={form.providerPrice} onChange={handleChange} placeholder="Precio de compra" />
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">% Ganancia</label>
+                    <input className="input" name="profitMargin" type="number" min="0" value={form.profitMargin} onChange={handleChange} placeholder="Ej: 30" />
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Precio de Venta *</label>
                     <input className="input" name="price" type="number" min="0" value={form.price} onChange={handleChange} required />
                   </div>
                   <div className="input-group">

@@ -24,6 +24,7 @@ import FinancePage     from './pages/dashboard/FinancePage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import UsersAdmin      from './pages/dashboard/UsersAdmin';
 import StatsPage       from './pages/dashboard/StatsPage';
+import BudgetPage      from './pages/BudgetPage';
 
 // Rutas protegidas
 const PrivateRoute = ({ children }) => {
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/login"       element={<LoginPage />} />
           <Route path="/register"    element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/presupuesto"  element={<BudgetPage />} />
 
           {/* Usuario autenticado */}
           <Route path="/cart"     element={<PrivateRoute><CartPage /></PrivateRoute>} />

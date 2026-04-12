@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getProducts, getProduct, getProductBySlug, createProduct, updateProduct,
-  deleteProduct, deleteProductImage, getBrands,
+  deleteProduct, deleteProductImage, getBrands, bulkUpdateMargin,
 } = require('../controllers/product.controller');
 const { protect, restrictTo } = require('../middlewares/auth.middleware');
 const tenantMiddleware = require('../middlewares/tenant.middleware');
@@ -22,6 +22,7 @@ router.get('/:id', getProduct);
 
 // Admin
 router.use(protect, restrictTo('admin'));
+router.patch('/bulk-margin', bulkUpdateMargin);
 router.post('/', checkProductLimit, upload.array('images', 5), createProduct);
 router.put('/:id', upload.array('images', 5), updateProduct);
 router.delete('/:id', deleteProduct);

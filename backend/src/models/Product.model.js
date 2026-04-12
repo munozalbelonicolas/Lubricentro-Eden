@@ -37,6 +37,16 @@ const productSchema = new mongoose.Schema(
       required: [true, 'El precio es obligatorio.'],
       min: [0, 'El precio no puede ser negativo.'],
     },
+    providerPrice: {
+      type: Number,
+      default: 0,
+      min: [0, 'El precio de costo no puede ser negativo.'],
+    },
+    profitMargin: {
+      type: Number,
+      default: 0,
+      min: [0, 'El porcentaje de ganancia no puede ser negativo.'],
+    },
     stock: {
       type: Number,
       default: 0,

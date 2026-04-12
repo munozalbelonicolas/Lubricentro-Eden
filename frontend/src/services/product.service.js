@@ -44,4 +44,9 @@ export const productService = {
     const { data } = await api.delete(`/products/${id}/images/${imageIndex}`);
     return data;
   },
+
+  bulkUpdateMargin: async (profitMargin) => {
+    const { data } = await api.patch('/products/bulk-margin', { profitMargin });
+    return data;
+  },
 };

@@ -78,7 +78,7 @@ const getProduct = catchAsync(async (req, res, next) => {
 const createProduct = catchAsync(async (req, res, next) => {
   const {
     name, description, category, brand, price, stock, viscosity,
-    vehicleCompatibility, capacity, sku, featured,
+    vehicleCompatibility, capacity, sku, featured, providerPrice, profitMargin,
   } = req.body;
 
   if (!name || !category || price === undefined) {
@@ -106,6 +106,8 @@ const createProduct = catchAsync(async (req, res, next) => {
     sku,
     featured: featured === 'true' || featured === true,
     images,
+    providerPrice: Number(providerPrice) || 0,
+    profitMargin: Number(profitMargin) || 0,
   });
 
   sendSuccess(res, { product }, 201);
@@ -121,6 +123,7 @@ const updateProduct = catchAsync(async (req, res, next) => {
   const allowedFields = [
     'name', 'description', 'category', 'brand', 'price', 'stock',
     'viscosity', 'vehicleCompatibility', 'capacity', 'sku', 'featured', 'isActive',
+    'providerPrice', 'profitMargin',
   ];
   allowedFields.forEach((field) => {
     if (req.body[field] !== undefined) product[field] = req.body[field];
@@ -194,4 +197,28 @@ module.exports = {
   deleteProduct,
   deleteProductImage,
   getBrands,
+  bulkUpdateMargin: catchAsync(async (req, res, next) => {
+    const { profitMargin } = req.body;
+    if (profitMargin === undefined) return next(new AppError('El margen de ganancia es obligatorio.', 400));
+
+    const margin = Number(profitMargin);
+    const products = await Product.find({ tenantId: req.tenantId, isActive: true });
+
+    const updates = products.map(p => {
+      const newPrice = p.providerPrice * (1 + margin / 100);
+      return Product.updateOne(
+        { _id: p._id },
+        { 
+          $set: { 
+            profitMargin: margin,
+            price: Math.round(newPrice * 100) / 100 
+          } 
+        }
+      );
+    });
+
+    await Promise.all(updates);
+
+    sendSuccess(res, { message: `Se actualizaron ${updates.length} productos con un margen del ${margin}%.` });
+  }),
 };
