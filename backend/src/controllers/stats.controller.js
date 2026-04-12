@@ -17,7 +17,11 @@ exports.getBestSellers = catchAsync(async (req, res) => {
   if (startDate || endDate) {
     match.createdAt = {};
     if (startDate) match.createdAt.$gte = new Date(startDate);
-    if (endDate) match.createdAt.$lte = new Date(endDate);
+    if (endDate) {
+      const e = new Date(endDate);
+      e.setHours(23, 59, 59, 999);
+      match.createdAt.$lte = e;
+    }
   }
 
   const bestSellers = await Order.aggregate([
@@ -52,9 +56,13 @@ exports.getFinanceEvolution = catchAsync(async (req, res) => {
   const now = new Date();
   const defaultStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
   
-  // Validar fechas de entrada
+  // Validar fechas de entrada (asegurar que end incluya el día completo)
   let start = startDate ? new Date(startDate) : defaultStart;
   let end = endDate ? new Date(endDate) : now;
+  
+  if (endDate) {
+    end.setHours(23, 59, 59, 999);
+  }
   
   if (isNaN(start.getTime())) start = defaultStart;
   if (isNaN(end.getTime())) end = now;
@@ -220,11 +228,16 @@ exports.getSiteVisits = catchAsync(async (req, res) => {
 
   const now = new Date();
   const start = startDate ? new Date(startDate).getTime() : new Date(now.getFullYear(), now.getMonth() - 5, 1).getTime();
-  const end = endDate ? new Date(endDate).getTime() : now.getTime();
+  let end = now;
+  if (endDate) {
+    end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+  }
+  const endTs = end.getTime();
 
   const [stats, pageviews] = await Promise.all([
-    umamiService.getUmamiStats(start, end),
-    umamiService.getUmamiPageviews(start, end, 'month')
+    umamiService.getUmamiStats(start, endTs),
+    umamiService.getUmamiPageviews(start, endTs, 'month')
   ]);
 
   // Formatear pageviews para el frontend

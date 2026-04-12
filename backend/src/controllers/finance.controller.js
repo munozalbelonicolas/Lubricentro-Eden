@@ -30,22 +30,15 @@ exports.getFinanceStats = catchAsync(async (req, res, next) => {
     filter.createdAt = { $gte: start, $lte: end };
   }
 
-  // Clonamos el filtro pero ajustamos para Task que usa 'date' en lugar de 'createdAt'
-  const taskFilter = { ...filter, status: 'done' };
-  if (filter.createdAt) {
-    taskFilter.date = { 
-      $gte: filter.createdAt.$gte.toISOString().split('T')[0],
-      $lte: filter.createdAt.$lte.toISOString().split('T')[0]
-    };
-    delete taskFilter.createdAt;
-  }
-
   const expenseFilter = { ...filter };
   if (filter.createdAt) {
-    expenseFilter.date = { 
-      $gte: filter.createdAt.$gte.toISOString().split('T')[0],
-      $lte: filter.createdAt.$lte.toISOString().split('T')[0]
-    };
+    const startStr = filter.createdAt.$gte.toISOString().split('T')[0];
+    const endStr = filter.createdAt.$lte.toISOString().split('T')[0];
+    
+    taskFilter.date = { $gte: startStr, $lte: endStr };
+    expenseFilter.date = { $gte: filter.createdAt.$gte, $lte: filter.createdAt.$lte };
+    
+    delete taskFilter.createdAt;
     delete expenseFilter.createdAt;
   }
 
@@ -103,12 +96,17 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
     taskFilter.date = { $gte: start.toISOString().split('T')[0], $lte: end.toISOString().split('T')[0] };
     expenseFilter.date = { $gte: start.toISOString().split('T')[0], $lte: end.toISOString().split('T')[0] };
   } else if (startDate || endDate) {
-    // Mantener soporte para rango libre de fechas
-    const range = {};
-    if (startDate) range.$gte = new Date(startDate);
-    if (endDate) range.$lte = new Date(endDate);
+    const start = startDate ? new Date(startDate) : new Date(2000, 0, 1);
+    const end = endDate ? new Date(endDate) : new Date();
+    if (endDate) end.setHours(23, 59, 59, 999);
+
+    const range = { $gte: start, $lte: end };
     orderFilter.createdAt = range;
-    // ... simplificado para el ejemplo, mayormente se usará mes/año
+    
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+    taskFilter.date = { $gte: startStr, $lte: endStr };
+    expenseFilter.date = range;
   }
 
   // Buscamos todo lo que genera movimiento de dinero
