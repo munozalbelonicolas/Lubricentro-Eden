@@ -211,7 +211,7 @@ module.exports = {
         { 
           $set: { 
             profitMargin: margin,
-            price: Math.round(newPrice * 100) / 100 
+            price: Math.round(newPrice) 
           } 
         }
       );

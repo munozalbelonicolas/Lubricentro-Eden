@@ -62,7 +62,7 @@ export default function ProductsAdmin() {
         const costo = Number(name === 'providerPrice' ? value : f.providerPrice) || 0;
         const margen = Number(name === 'profitMargin' ? value : f.profitMargin) || 0;
         if (costo > 0) {
-          updated.price = Math.round(costo * (1 + margen / 100) * 100) / 100;
+          updated.price = Math.round(costo * (1 + margen / 100));
         }
       }
       return updated;
@@ -154,7 +154,9 @@ export default function ProductsAdmin() {
                 <tr>
                   <th>Producto</th>
                   <th>Categoría</th>
-                  <th>Precio</th>
+                  <th>Costo Prov.</th>
+                  <th>% Ganancia</th>
+                  <th>P. Público</th>
                   <th>Stock</th>
                   <th>Estado</th>
                   <th>Acciones</th>
@@ -179,6 +181,8 @@ export default function ProductsAdmin() {
                       </div>
                     </td>
                     <td><span className="badge badge-primary">{categoryLabel[p.category] || p.category}</span></td>
+                    <td style={{ fontSize: '0.85rem', color: 'var(--color-text-3)' }}>{formatPrice(p.providerPrice)}</td>
+                    <td style={{ fontSize: '0.85rem', color: 'var(--color-text-3)' }}>{p.profitMargin}%</td>
                     <td style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{formatPrice(p.price)}</td>
                     <td>
                       <span className={`badge ${p.stock === 0 ? 'badge-error' : p.stock <= 5 ? 'badge-warning' : 'badge-success'}`}>
