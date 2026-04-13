@@ -12,13 +12,19 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 /* ─── Constantes ─────────────────────────────────────────── */
-const TIME_SLOTS = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'];
-const SLOT_LABEL = {
-  '08:00-10:00': 'Turno 1 · Mañana temprano',
-  '10:00-12:00': 'Turno 2 · Mañana',
-  '14:00-16:00': 'Turno 3 · Tarde temprano',
-  '16:00-18:00': 'Turno 4 · Tarde',
-};
+const TIME_SLOTS = [];
+for (let h = 8; h < 12; h++) {
+  TIME_SLOTS.push(`${String(h).padStart(2,'0')}:00`);
+  TIME_SLOTS.push(`${String(h).padStart(2,'0')}:30`);
+}
+for (let h = 14; h < 18; h++) {
+  TIME_SLOTS.push(`${String(h).padStart(2,'0')}:00`);
+  TIME_SLOTS.push(`${String(h).padStart(2,'0')}:30`);
+}
+const SLOT_LABEL = TIME_SLOTS.reduce((acc, slot) => {
+  acc[slot] = `${slot} hs`;
+  return acc;
+}, {});
 const DONE_STATUSES = ['delivered', 'confirmed', 'done'];
 const ORDER_STATUSES = ['pending','confirmed','processing','ready_pickup','delivered','cancelled'];
 
@@ -613,7 +619,7 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
     currentKm: '',
     nextChangeKm: '',
     date: selectedDay,
-    timeSlot: '08:00-10:00',
+    timeSlot: '08:00',
     priority: 'medium',
     status: 'pending',
     items: [],
@@ -766,7 +772,7 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
                 onChange={e => setForm({...form, timeSlot: e.target.value})}
               >
                 {Object.entries(SLOT_LABEL).map(([val, label]) => (
-                  <option key={val} value={val}>{val} hs</option>
+                  <option key={val} value={val}>{label}</option>
                 ))}
               </select>
             </div>

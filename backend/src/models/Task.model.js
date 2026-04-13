@@ -43,9 +43,8 @@ const taskSchema = new mongoose.Schema(
       default: 'medium',
     },
     timeSlot: {
-      type: String, // '08:00-10:00', etc.
-      enum: ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'],
-      default: '08:00-10:00',
+      type: String, // '08:00', '08:30', '09:00', etc. (franjas de 30 min)
+      default: '08:00',
     },
     plate: {
       type: String,

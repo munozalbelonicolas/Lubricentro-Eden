@@ -242,8 +242,59 @@ const RecoCard = ({ reco }) => {
   );
 };
 
+// ── Slot Picker (Calendario de turnos) ────────────────────────────────────
+const SlotPickerCard = ({ slots, onSelect }) => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const dates = Object.keys(slots || {});
+  if (dates.length === 0) return (
+    <div style={S.motorPickCard}>
+      <div style={{padding:'14px',color:'#6a6560',fontSize:'12px',textAlign:'center'}}>
+        No hay turnos disponibles en los próximos días.
+      </div>
+    </div>
+  );
+
+  const active = selectedDate || dates[0];
+  const activeSlots = slots[active]?.available || [];
+
+  return (
+    <div style={{...S.motorPickCard, maxWidth:'100%'}}>
+      <div style={S.motorPickHeader}>📅 SELECCIONÁ DÍA Y HORARIO</div>
+      {/* Date tabs */}
+      <div style={{display:'flex', overflowX:'auto', gap:'0', borderBottom:'1px solid #2a2a2a'}}>
+        {dates.map(d => (
+          <button key={d} onClick={() => setSelectedDate(d)} style={{
+            flex:'none', padding:'8px 12px', border:'none', cursor:'pointer',
+            background: d === active ? '#2a1012' : 'transparent',
+            color: d === active ? '#CB1A20' : '#6a6560',
+            borderBottom: d === active ? '2px solid #CB1A20' : '2px solid transparent',
+            fontSize:'11px', fontWeight:700, fontFamily:'inherit', whiteSpace:'nowrap',
+            transition:'all 0.15s',
+          }}>{slots[d]?.label}</button>
+        ))}
+      </div>
+      {/* Time slots grid */}
+      <div style={{padding:'10px', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'6px'}}>
+        {activeSlots.length === 0 ? (
+          <div style={{gridColumn:'1/-1', textAlign:'center', color:'#6a6560', fontSize:'11px', padding:'12px'}}>
+            Sin horarios disponibles
+          </div>
+        ) : activeSlots.map(slot => (
+          <button key={slot} onClick={() => onSelect(active, slot)} className="yor-motor-btn" style={{
+            padding:'7px 4px', borderRadius:'8px', border:'1px solid #2a2a2a',
+            background:'#1a1a1a', color:'#e8e5e0', fontSize:'11px', fontWeight:600,
+            cursor:'pointer', textAlign:'center', fontFamily:'inherit',
+            transition:'all 0.15s',
+          }}>{slot}</button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ============================================================
 //  COMPONENTE PRINCIPAL
+// Note: SlotPickerCard uses useState, imported at top
 // ============================================================
 export default function YorChat() {
   const [open, setOpen]         = useState(false);
@@ -326,6 +377,8 @@ export default function YorChat() {
 
       if (data.type === "motor_pick") {
         pushMsg("assistant", data.message, { type: "motor_pick", vehiculo: data.vehiculo, motores: data.motores });
+      } else if (data.type === "slot_picker") {
+        pushMsg("assistant", data.message, { type: "slot_picker", slots: data.slots });
       } else {
         pushMsg("assistant", data.message);
       }
@@ -380,6 +433,7 @@ export default function YorChat() {
                     <div style={S.bubble(m.role==="user")} dangerouslySetInnerHTML={{__html:fmt(m.content)}}/>
                     {m.extra?.type==="motor_pick" && <MotorPickCard vehiculo={m.extra.vehiculo} motores={m.extra.motores} onSelect={handleSelectMotor}/>}
                     {m.extra?.type==="reco" && <RecoCard reco={m.extra.reco}/>}
+                    {m.extra?.type==="slot_picker" && <SlotPickerCard slots={m.extra.slots} onSelect={(date, slot) => sendMessage(`${date} ${slot}`)}/>}
                   </div>
                 </div>
               </div>
