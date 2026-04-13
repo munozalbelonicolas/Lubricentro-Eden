@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const slugify = require('slugify');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User.model');
+const RefreshToken = require('../models/RefreshToken.model');
 const Tenant = require('../models/Tenant.model');
 const Subscription = require('../models/Subscription.model');
 const catchAsync = require('../utils/catchAsync');
@@ -13,15 +14,31 @@ const { sendVerificationEmail } = require('../utils/email.utils');
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: '15m', // Access token corto (15 min)
   });
 
-const createSendToken = (user, tenant, statusCode, res) => {
+const signRefreshToken = async (userId) => {
+  const token = crypto.randomBytes(40).toString('hex');
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7); // Expira en 7 días
+
+  await RefreshToken.create({
+    token,
+    userId,
+    expiresAt,
+  });
+
+  return token;
+};
+
+const createSendToken = async (user, tenant, statusCode, res) => {
   const token = signToken(user._id);
+  const refreshToken = await signRefreshToken(user._id);
 
   res.status(statusCode).json({
     status: 'success',
     token,
+    refreshToken,
     data: {
       user: {
         _id: user._id,
@@ -109,7 +126,35 @@ exports.register = catchAsync(async (req, res, next) => {
     featuresEnabled: Subscription.getPlanFeatures('free'),
   });
 
-  createSendToken(user, tenant, 201, res);
+  await createSendToken(user, tenant, 201, res);
+});
+
+/**
+ * Endpoint para refrescar el token de acceso
+ */
+exports.refresh = catchAsync(async (req, res, next) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return next(new AppError('No se proporcionó el refresh token.', 400));
+
+  const storedToken = await RefreshToken.findOne({ token: refreshToken });
+  if (!storedToken) return next(new AppError('Refresh token inválido o expirado.', 401));
+
+  // Verificar si expiró (aunque el TTL de Mongo debería haberlo borrado)
+  if (storedToken.expiresAt < new Date()) {
+    await RefreshToken.deleteOne({ _id: storedToken._id });
+    return next(new AppError('Refresh token expirado.', 401));
+  }
+
+  const user = await User.findById(storedToken.userId);
+  if (!user || !user.isActive) return next(new AppError('Usuario no encontrado o inactivo.', 401));
+
+  // Generar nuevo access token
+  const token = signToken(user._id);
+
+  res.status(200).json({
+    status: 'success',
+    token,
+  });
 });
 
 /**
@@ -163,7 +208,7 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   const tenant = await Tenant.findById(user.tenantId);
-  createSendToken(user, tenant, 200, res);
+  await createSendToken(user, tenant, 200, res);
 });
 
 exports.getMe = catchAsync(async (req, res, next) => {
@@ -181,7 +226,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   user.password = newPassword;
   user.passwordChangedAt = Date.now();
   await user.save();
-  createSendToken(user, null, 200, res);
+  await createSendToken(user, null, 200, res);
 });
 
 // ==========================================
@@ -224,7 +269,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
     }
     await user.save({ validateBeforeSave: false });
     const tenant = await Tenant.findById(user.tenantId);
-    return createSendToken(user, tenant, 200, res);
+    return await createSendToken(user, tenant, 200, res);
   }
   
   // Usuario no existe, le enviamos un flag para que complete datos obligatorios extras.
@@ -276,5 +321,5 @@ exports.googleRegister = catchAsync(async (req, res, next) => {
   });
 
   const tenant = await Tenant.findById(tenantId);
-  createSendToken(user, tenant, 201, res);
+  await createSendToken(user, tenant, 201, res);
 });

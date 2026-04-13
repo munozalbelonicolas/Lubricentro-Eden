@@ -25,6 +25,7 @@ import VerifyEmailPage from './pages/VerifyEmailPage';
 import UsersAdmin      from './pages/dashboard/UsersAdmin';
 import StatsPage       from './pages/dashboard/StatsPage';
 import BudgetPage      from './pages/BudgetPage';
+import ErrorBoundary   from './components/common/ErrorBoundary';
 
 // Rutas protegidas
 const PrivateRoute = ({ children }) => {
@@ -46,35 +47,37 @@ export default function App() {
     <>
       <Navbar />
       <main>
-        <Routes>
-          {/* Públicas */}
-          <Route path="/"            element={<HomePage />} />
-          <Route path="/store"       element={<StorePage />} />
-          <Route path="/store/:slug" element={<ProductPage />} />
-          <Route path="/login"       element={<LoginPage />} />
-          <Route path="/register"    element={<RegisterPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/presupuesto"  element={<BudgetPage />} />
+        <ErrorBoundary>
+          <Routes>
+            {/* Públicas */}
+            <Route path="/"            element={<HomePage />} />
+            <Route path="/store"       element={<StorePage />} />
+            <Route path="/store/:slug" element={<ProductPage />} />
+            <Route path="/login"       element={<LoginPage />} />
+            <Route path="/register"    element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/presupuesto"  element={<BudgetPage />} />
 
-          {/* Usuario autenticado */}
-          <Route path="/cart"     element={<PrivateRoute><CartPage /></PrivateRoute>} />
-          <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
-          <Route path="/orders"   element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
-          <Route path="/orders/:id" element={<PrivateRoute><OrderDetailPage /></PrivateRoute>} />
+            {/* Usuario autenticado */}
+            <Route path="/cart"     element={<PrivateRoute><CartPage /></PrivateRoute>} />
+            <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
+            <Route path="/orders"   element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
+            <Route path="/orders/:id" element={<PrivateRoute><OrderDetailPage /></PrivateRoute>} />
 
-          {/* Admin dashboard */}
-          <Route path="/dashboard"              element={<AdminRoute><DashboardPage /></AdminRoute>} />
-          <Route path="/dashboard/products"     element={<AdminRoute><ProductsAdmin /></AdminRoute>} />
-          <Route path="/dashboard/orders"       element={<AdminRoute><OrdersAdmin /></AdminRoute>} />
-          <Route path="/dashboard/workshop"     element={<AdminRoute><WorkshopAdmin /></AdminRoute>} />
-          <Route path="/dashboard/history"      element={<AdminRoute><VehicleHistory /></AdminRoute>} />
-          <Route path="/dashboard/finance"      element={<AdminRoute><FinancePage /></AdminRoute>} />
-          <Route path="/dashboard/users"        element={<AdminRoute><UsersAdmin /></AdminRoute>} />
-          <Route path="/dashboard/stats"        element={<AdminRoute><StatsPage /></AdminRoute>} />
+            {/* Admin dashboard */}
+            <Route path="/dashboard"              element={<AdminRoute><DashboardPage /></AdminRoute>} />
+            <Route path="/dashboard/products"     element={<AdminRoute><ProductsAdmin /></AdminRoute>} />
+            <Route path="/dashboard/orders"       element={<AdminRoute><OrdersAdmin /></AdminRoute>} />
+            <Route path="/dashboard/workshop"     element={<AdminRoute><WorkshopAdmin /></AdminRoute>} />
+            <Route path="/dashboard/history"      element={<AdminRoute><VehicleHistory /></AdminRoute>} />
+            <Route path="/dashboard/finance"      element={<AdminRoute><FinancePage /></AdminRoute>} />
+            <Route path="/dashboard/users"        element={<AdminRoute><UsersAdmin /></AdminRoute>} />
+            <Route path="/dashboard/stats"        element={<AdminRoute><StatsPage /></AdminRoute>} />
 
-          {/* 404 */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* 404 */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
       <Footer />
       <YorChat />

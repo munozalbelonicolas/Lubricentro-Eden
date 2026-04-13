@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const mongoSanitize = require('express-mongo-sanitize');
 const xssClean = require('xss-clean');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const path = require('path');
@@ -27,7 +28,8 @@ const taskRoutes = require('./src/routes/task.routes');
 const userRoutes = require('./src/routes/user.routes');
 
 const app = express();
-app.set('trust proxy', 1); // Confiar en el proxy de Render para detectar HTTPS correctamente
+app.set('trust proxy', 1);
+app.use(compression()); // Gzip/Brotli compression for all responses
 
 // ──────────────────────────────────────────────
 // Conexión a MongoDB

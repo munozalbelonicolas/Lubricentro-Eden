@@ -8,6 +8,8 @@ const {
 } = require('../controllers/product.controller');
 const { protect, restrictTo } = require('../middlewares/auth.middleware');
 const tenantMiddleware = require('../middlewares/tenant.middleware');
+const validate = require('../middlewares/validate.middleware');
+const { productValidator } = require('../validators/product.validator');
 const { checkProductLimit } = require('../middlewares/plan.middleware');
 const upload = require('../config/multer');
 
@@ -23,8 +25,8 @@ router.get('/:id', getProduct);
 // Admin
 router.use(protect, restrictTo('admin'));
 router.patch('/bulk-margin', bulkUpdateMargin);
-router.post('/', checkProductLimit, upload.array('images', 5), createProduct);
-router.put('/:id', upload.array('images', 5), updateProduct);
+router.post('/', checkProductLimit, upload.array('images', 5), productValidator, validate, createProduct);
+router.put('/:id', upload.array('images', 5), productValidator, validate, updateProduct);
 router.delete('/:id', deleteProduct);
 router.delete('/:id/images/:imageIndex', deleteProductImage);
 

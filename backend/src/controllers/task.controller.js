@@ -1,6 +1,6 @@
-'use strict';
 const Task = require('../models/Task.model');
 const User = require('../models/User.model');
+const StockService = require('../services/stockService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const { sendServiceReportEmail } = require('../utils/email.utils');
@@ -16,33 +16,6 @@ exports.getAllTasks = catchAsync(async (req, res, next) => {
     data: { tasks }
   });
 });
-
-/**
- * Helper para descontar stock de productos usados en una tarea
- */
-const deductStock = async (tenantId, items) => {
-  if (!items || items.length === 0) return 0;
-  const Product = require('../models/Product.model');
-  let totalValue = 0;
-
-  for (const item of items) {
-    if (!item.productId) continue;
-    
-    // Solo intentar descontar si hay stock suficiente
-    const product = await Product.findOneAndUpdate(
-      { _id: item.productId, tenantId, stock: { $gte: item.quantity } },
-      { $inc: { stock: -item.quantity } },
-      { new: true }
-    );
-
-    if (!product) {
-      console.warn(`Stock insuficiente para producto ${item.productId} o no encontrado.`);
-      continue;
-    }
-    totalValue += item.price * item.quantity;
-  }
-  return totalValue;
-};
 
 exports.createTask = catchAsync(async (req, res, next) => {
   const { customerName, customerEmail, customerPhone } = req.body;
@@ -96,7 +69,7 @@ exports.createTask = catchAsync(async (req, res, next) => {
 
   // Si se crea como 'done', descontamos stock inmediatamente
   if (newTask.status === 'done' && newTask.items && newTask.items.length > 0) {
-    const calculatedTotal = await deductStock(req.user.tenantId, newTask.items);
+    const calculatedTotal = await StockService.deductStock(req.user.tenantId, newTask.items);
     if (!newTask.totalValue) {
       newTask.totalValue = calculatedTotal;
       await newTask.save();
@@ -127,7 +100,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   // SOLO descontamos stock si está pasando de 'pending' a 'done'
   if (currentTask.status === 'pending' && req.body.status === 'done') {
     if (task.items && task.items.length > 0) {
-      const calculatedTotal = await deductStock(req.user.tenantId, task.items);
+      const calculatedTotal = await StockService.deductStock(req.user.tenantId, task.items);
       
       // Actualizar el totalValue si no se envió uno manualmente
       if (!req.body.totalValue) {

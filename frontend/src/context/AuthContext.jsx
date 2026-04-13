@@ -40,6 +40,9 @@ export function AuthProvider({ children }) {
 
   const storeAuthData = (data) => {
     localStorage.setItem('token', data.token);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(data.data.user));
     if (data.data.tenant) {
       localStorage.setItem('tenantId', data.data.tenant._id);
@@ -59,6 +62,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tenantId');
     setUser(null);

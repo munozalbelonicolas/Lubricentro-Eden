@@ -25,31 +25,40 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ── Response interceptor: manejo global de errores ──
+// ── Response interceptor: manejo global de errores y refresh token ──
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    const message = error.response?.data?.message || error.message || 'Error de red';
-    const status  = error.response?.status;
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
 
-    // Sesión expirada: limpiar y redirigir
-    if (status === 401) {
-      const isAuthRoute = ['/auth/login', '/auth/register'].some((r) =>
-        error.config?.url?.includes(r)
+    // Si es 401 y no es una re-petición de refresh, intentamos refrescar
+    if (status === 401 && !originalRequest._retry) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      const isAuthRoute = ['/auth/login', '/auth/register', '/auth/refresh'].some((r) =>
+        originalRequest.url?.includes(r)
       );
-      
-      const isTenantConfig = error.config?.url?.includes('/tenants/me');
-      
-      const currentPath = window.location.pathname;
-      const isAlreadyOnAuthPage = currentPath === '/login' || currentPath === '/register';
 
-      if (!isAuthRoute && !isAlreadyOnAuthPage && !isTenantConfig) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+      if (refreshToken && !isAuthRoute) {
+        originalRequest._retry = true;
+        try {
+          const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+          const newToken = data.token;
+          
+          localStorage.setItem('token', newToken);
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          
+          return api(originalRequest);
+        } catch (refreshError) {
+          // Si falla el refresh, limpiamos sesión y redirigimos
+          localStorage.clear();
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        }
       }
     }
 
+    const message = error.response?.data?.message || error.message || 'Error de red';
     return Promise.reject({ message, status, data: error.response?.data });
   }
 );

@@ -2,6 +2,7 @@
 
 const Order = require('../models/Order.model');
 const Product = require('../models/Product.model');
+const StockService = require('../services/stockService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const { sendSuccess } = require('../utils/apiResponse');
@@ -154,11 +155,7 @@ const updateOrderStatus = catchAsync(async (req, res, next) => {
   // Solo restaurar stock si el pago fue aprobado alguna vez
   // (el stock solo se descuenta en el webhook cuando paymentStatus === 'approved')
   if (status === 'cancelled' && order.paymentStatus === 'approved') {
-    for (const item of order.items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: item.quantity },
-      });
-    }
+    await StockService.restoreStock(req.tenantId, order.items);
   }
 
   sendSuccess(res, { order });

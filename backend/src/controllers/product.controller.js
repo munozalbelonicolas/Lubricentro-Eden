@@ -24,37 +24,69 @@ const getProducts = catchAsync(async (req, res, next) => {
     featured,
   } = req.query;
 
-  const filter = { tenantId: req.tenantId, isActive: true };
+  const pipeline = [];
 
-  // Escapar caracteres especiales de regex para evitar ReDoS
-  const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // 1. Fase de Búsqueda Atlas Search (Debe ser la primera etapa)
+  if (search) {
+    pipeline.push({
+      $search: {
+        index: 'default', // Nombre del índice configurado en Atlas
+        text: {
+          query: search,
+          path: ['name', 'description', 'brand'],
+          fuzzy: { maxEdits: 1 } // Tolerancia a errores tipográficos
+        }
+      }
+    });
+  }
 
-  if (category) filter.category = category;
-  if (brand) filter.brand = new RegExp(escapeRegex(brand), 'i');
-  if (viscosity) filter.viscosity = new RegExp(escapeRegex(viscosity), 'i');
-  if (vehicleCompatibility) filter.vehicleCompatibility = { $in: [vehicleCompatibility] };
-  if (featured === 'true') filter.featured = true;
+  // 2. Fase de Filtros Standard ($match)
+  const matchStage = { tenantId: req.tenantId, isActive: true };
+
+  if (category) matchStage.category = category;
+  if (brand && !search) matchStage.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (viscosity) matchStage.viscosity = new RegExp(viscosity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (vehicleCompatibility) matchStage.vehicleCompatibility = { $in: [vehicleCompatibility] };
+  if (featured === 'true') matchStage.featured = true;
 
   if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = Number(minPrice);
-    if (maxPrice) filter.price.$lte = Number(maxPrice);
+    matchStage.price = {};
+    if (minPrice) matchStage.price.$gte = Number(minPrice);
+    if (maxPrice) matchStage.price.$lte = Number(maxPrice);
   }
 
-  if (search) {
-    const safeSearch = escapeRegex(search);
-    filter.$or = [
-      { name: new RegExp(safeSearch, 'i') },
-      { description: new RegExp(safeSearch, 'i') },
-      { brand: new RegExp(safeSearch, 'i') },
-    ];
-  }
+  pipeline.push({ $match: matchStage });
 
+  // 3. Fase de Procesamiento Global (Paginación + Conteo)
   const skip = (Number(page) - 1) * Number(limit);
-  const [products, total] = await Promise.all([
-    Product.find(filter).sort(sort).skip(skip).limit(Number(limit)),
-    Product.countDocuments(filter),
-  ]);
+  
+  // Determinamos el sort
+  let sortStage = {};
+  if (search && !req.query.sort) {
+    // Si hay búsqueda y no se especificó orden, usamos relevancia
+    sortStage = { score: { $meta: 'searchScore' } };
+    pipeline.push({ $addFields: { score: { $meta: 'searchScore' } } });
+  } else {
+    const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
+    const sortOrder = sort.startsWith('-') ? -1 : 1;
+    sortStage[sortField] = sortOrder;
+  }
+
+  pipeline.push({
+    $facet: {
+      metadata: [{ $count: 'total' }],
+      data: [
+        { $sort: sortStage },
+        { $skip: skip },
+        { $limit: Number(limit) }
+      ]
+    }
+  });
+
+  const [results] = await Product.aggregate(pipeline);
+
+  const total = results.metadata[0]?.total || 0;
+  const products = results.data;
 
   sendSuccess(res, { products }, 200, {
     pagination: {
