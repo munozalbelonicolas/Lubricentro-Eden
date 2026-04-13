@@ -42,7 +42,9 @@ export default function OrdersAdmin() {
   const filtered = orders.filter((o) => {
     const matchSearch = !search ||
       o.orderNumber?.includes(search.toUpperCase()) ||
-      o.userId?.name?.toLowerCase().includes(search.toLowerCase());
+      o.userId?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+      o.userId?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
+      o.userId?.email?.toLowerCase().includes(search.toLowerCase());
     const matchType = !typeFilter || o.deliveryType === typeFilter;
     return matchSearch && matchType;
   });
@@ -128,7 +130,7 @@ export default function OrdersAdmin() {
                       <tr key={order._id} style={isWorkshop ? { background: 'rgba(245,158,11,0.05)' } : {}}>
                         <td style={{ fontWeight: 700, color: 'var(--color-primary)' }}>#{order.orderNumber}</td>
                         <td>
-                          <p style={{ fontWeight: 500, fontSize: '0.9rem' }}>{order.userId?.name || 'N/A'}</p>
+                          <p style={{ fontWeight: 500, fontSize: '0.9rem' }}>{order.userId ? `${order.userId.firstName || ''} ${order.userId.lastName || ''}`.trim() : 'N/A'}</p>
                           <p style={{ fontSize: '0.75rem', color: 'var(--color-text-3)' }}>{order.userId?.email}</p>
                         </td>
                         <td>

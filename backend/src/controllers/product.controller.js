@@ -26,9 +26,12 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   const filter = { tenantId: req.tenantId, isActive: true };
 
+  // Escapar caracteres especiales de regex para evitar ReDoS
+  const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   if (category) filter.category = category;
-  if (brand) filter.brand = new RegExp(brand, 'i');
-  if (viscosity) filter.viscosity = new RegExp(viscosity, 'i');
+  if (brand) filter.brand = new RegExp(escapeRegex(brand), 'i');
+  if (viscosity) filter.viscosity = new RegExp(escapeRegex(viscosity), 'i');
   if (vehicleCompatibility) filter.vehicleCompatibility = { $in: [vehicleCompatibility] };
   if (featured === 'true') filter.featured = true;
 
@@ -39,10 +42,11 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   if (search) {
+    const safeSearch = escapeRegex(search);
     filter.$or = [
-      { name: new RegExp(search, 'i') },
-      { description: new RegExp(search, 'i') },
-      { brand: new RegExp(search, 'i') },
+      { name: new RegExp(safeSearch, 'i') },
+      { description: new RegExp(safeSearch, 'i') },
+      { brand: new RegExp(safeSearch, 'i') },
     ];
   }
 

@@ -149,9 +149,10 @@ const webhook = catchAsync(async (req, res, next) => {
     // Descontar stock al confirmar el pago (solo si no estaba aprobado antes)
     if (mpStatus === 'approved' && previousPaymentStatus !== 'approved') {
       for (const item of order.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: -item.quantity },
-        });
+        await Product.findOneAndUpdate(
+          { _id: item.productId, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } }
+        );
       }
       console.log(`✅ Stock descontado para orden ${orderId}`);
     }

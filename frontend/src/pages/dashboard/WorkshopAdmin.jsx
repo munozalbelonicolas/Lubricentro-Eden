@@ -478,7 +478,7 @@ function EventCard({ event, onStatusChange, onDeleteTask, onPrint }) {
           {isOrder ? (
             <>
               <div style={{ display:'flex', alignItems:'center', gap:'0.35rem', color:'var(--color-text-2)', fontSize:'0.9rem', marginBottom:'0.75rem' }}>
-                <FiUser size={14}/> {event.userId?.name || 'Cliente'} <span style={{ opacity:0.5 }}>#{event.orderNumber}</span>
+                <FiUser size={14}/> {event.userId ? `${event.userId.firstName || ''} ${event.userId.lastName || ''}`.trim() : 'Cliente'} <span style={{ opacity:0.5 }}>#{event.orderNumber}</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:'0.25rem' }}>
                 {event.items.map((item, idx) => (

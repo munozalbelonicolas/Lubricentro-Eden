@@ -182,7 +182,8 @@ exports.getVehicleHistory = catchAsync(async (req, res) => {
   const orderQuery = { tenantId, status: { $in: ['delivered', 'confirmed', 'processing', 'ready_pickup'] } };
 
   if (plate) {
-    const cleanPlate = plate.replace(/\s+/g, '').split('').join('\\s*');
+    const escapedPlate = plate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const cleanPlate = escapedPlate.replace(/\s+/g, '').split('').join('\\s*');
     const plateRegex = { $regex: new RegExp(`${cleanPlate}`, 'i') }; // Búsqueda parcial más flexible
     
     taskQuery.plate = plateRegex;
