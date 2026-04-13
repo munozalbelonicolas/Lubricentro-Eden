@@ -278,7 +278,13 @@ exports.sendMessage = async (req, res) => {
   try {
     let session = await ChatSession.findOne({ sessionId });
     if (!session) {
-      session = await ChatSession.create({ sessionId: sessionId || uuidv4() });
+      session = await ChatSession.create({ 
+        sessionId: sessionId || uuidv4(),
+        userId: req.user?._id
+      });
+    } else if (!session.userId && req.user) {
+      // Vincular sesión anónima si el usuario se ha logueado
+      session.userId = req.user._id;
     }
 
     session.messages.push({ role: "user", content: message.trim() });
@@ -429,9 +435,18 @@ exports.selectMotor = async (req, res) => {
 // ── GET /api/chat/session/:sessionId ──────────────────────────────────────
 exports.getSession = async (req, res) => {
   try {
-    const session = await ChatSession.findOne({ sessionId: req.params.sessionId })
-      .select("sessionId messages vehiculo updatedAt");
+    const session = await ChatSession.findOne({ sessionId: req.params.sessionId });
     if (!session) return res.status(404).json({ error: "Sesión no encontrada." });
+
+    // Protección de privacidad:
+    // 1. Si la sesión tiene dueño, solo el dueño o un admin pueden verla.
+    if (session.userId) {
+      if (!req.user || (req.user.role !== 'admin' && session.userId.toString() !== req.user._id.toString())) {
+        return res.status(403).json({ error: "No tienes permiso para ver esta sesión." });
+      }
+    }
+    // 2. Si es anónima, se permite acceso por ID (UUID es difícil de adivinar).
+
     return res.json(session);
   } catch (err) {
     return res.status(500).json({ error: "Error interno." });

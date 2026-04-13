@@ -60,4 +60,29 @@ const restrictTo = (...roles) => (req, res, next) => {
   next();
 };
 
-module.exports = { protect, restrictTo };
+/**
+ * Middleware opcional: carga req.user si el token es válido, 
+ * pero permite continuar si no hay token o es inválido.
+ */
+const authOptional = catchAsync(async (req, res, next) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (user && !user.changedPasswordAfter(decoded.iat)) {
+      req.user = user;
+    }
+  } catch (err) {
+    // Ignoramos errores de token en modo opcional
+  }
+  
+  next();
+});
+
+module.exports = { protect, restrictTo, authOptional };

@@ -68,6 +68,20 @@ exports.toggleUserStatus = catchAsync(async (req, res, next) => {
     return next(new AppError('Usuario no encontrado.', 404));
   }
 
+  if (user.isActive) {
+    // Si se va a desactivar, verificar que no sea el último admin
+    if (user.role === 'admin') {
+      const adminCount = await User.countDocuments({ 
+        tenantId: req.user.tenantId, 
+        role: 'admin', 
+        isActive: true 
+      });
+      if (adminCount <= 1) {
+        return next(new AppError('No podés desactivar al único administrador del sistema.', 400));
+      }
+    }
+  }
+
   user.isActive = !user.isActive;
   await user.save({ validateBeforeSave: false });
 
@@ -83,15 +97,32 @@ exports.toggleUserStatus = catchAsync(async (req, res, next) => {
 exports.updateUser = catchAsync(async (req, res, next) => {
   const { firstName, lastName, email, document, phone, role } = req.body;
 
-  const user = await User.findOneAndUpdate(
-    { _id: req.params.id, tenantId: req.user.tenantId },
-    { firstName, lastName, email, document, phone, role },
-    { new: true, runValidators: true }
-  );
+  const user = await User.findOne({ _id: req.params.id, tenantId: req.user.tenantId });
 
   if (!user) {
     return next(new AppError('Usuario no encontrado.', 404));
   }
+
+  // Si se intenta cambiar el rol de admin a otro, verificar que no sea el último
+  if (user.role === 'admin' && role && role !== 'admin') {
+    const adminCount = await User.countDocuments({ 
+      tenantId: req.user.tenantId, 
+      role: 'admin', 
+      isActive: true 
+    });
+    if (adminCount <= 1) {
+      return next(new AppError('No podés quitarle el rol de admin al único administrador del sistema.', 400));
+    }
+  }
+
+  user.firstName = firstName || user.firstName;
+  user.lastName = lastName || user.lastName;
+  user.email = email || user.email;
+  user.document = document || user.document;
+  user.phone = phone || user.phone;
+  user.role = role || user.role;
+
+  await user.save({ runValidators: true });
 
   res.json({
     status: 'success',

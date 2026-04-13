@@ -7,8 +7,11 @@ const {
   selectMotor,
   getSession,
 } = require("../controllers/chatController");
+const { authOptional } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
+
+router.use(authOptional);
 
 // Rate limiter específico para el chat: 30 mensajes por IP por minuto
 const chatLimiter = rateLimit({

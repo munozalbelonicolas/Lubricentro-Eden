@@ -27,6 +27,7 @@ const ChatSessionSchema = new mongoose.Schema({
   messages:   { type: [MessageSchema], default: [] },
   vehiculo:   { type: String, default: null }, // último vehículo consultado
   booking:    { type: BookingSchema, default: () => ({}) },
+  userId:     { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
   createdAt:  { type: Date, default: Date.now },
   updatedAt:  { type: Date, default: Date.now },
   // TTL: la sesión expira en 2 horas de inactividad
