@@ -26,7 +26,7 @@ const getDateRange = () => {
 };
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart, isEmpty } = useCart();
+  const { items, totalPrice, clearCart, removeItem, isEmpty } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -129,7 +129,12 @@ export default function CheckoutPage() {
         navigate(`/orders/${order._id}`);
       }
     } catch (err) {
-      toast.error(err.message || 'Error al procesar el pedido.');
+      if (err.response?.status === 409 && err.response?.data?.errorItem) {
+        toast.error('Un producto de tu carrito se agotó recién o fue eliminado. Lo quitaremos para que puedas continuar.');
+        removeItem(err.response.data.errorItem);
+      } else {
+        toast.error(err.response?.data?.message || err.message || 'Error al procesar el pedido.');
+      }
       setLoading(false);
     }
   };

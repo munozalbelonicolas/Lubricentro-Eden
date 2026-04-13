@@ -77,17 +77,44 @@ app.use(
   })
 );
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000, // aumentado en dev
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: process.env.NODE_ENV === 'production' ? 1000 : 3000,
   message: 'Demasiadas peticiones desde esta IP, intenta en 15 minutos.',
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api', limiter);
 
-// Webhook de Mercado Pago necesita body raw
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: process.env.NODE_ENV === 'production' ? 30 : 100, // max 30 intentos de login/registro
+  message: 'Demasiados intentos de autenticación, por favor intenta en 15 minutos.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const orderLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: process.env.NODE_ENV === 'production' ? 50 : 200, // max 50 pedidos por hora por IP
+  message: 'Has alcanzado el límite de creación de pedidos. Intenta más tarde.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const webhookLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minuto
+  max: process.env.NODE_ENV === 'production' ? 60 : 300, // max 60 webhooks por minuto
+  message: 'Too many webhook requests',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api', globalLimiter);
+app.use('/api/auth', authLimiter);
+app.use('/api/orders', orderLimiter);
+
+// Webhook de Mercado Pago necesita body raw (aplicar limiter antes)
+app.use('/api/payments/webhook', webhookLimiter, express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));

@@ -36,11 +36,13 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'El precio es obligatorio.'],
       min: [0, 'El precio no puede ser negativo.'],
+      validate: { validator: Number.isInteger, message: 'Debe ser entero.' }
     },
     providerPrice: {
       type: Number,
       default: 0,
       min: [0, 'El precio de costo no puede ser negativo.'],
+      validate: { validator: Number.isInteger, message: 'Debe ser entero.' }
     },
     profitMargin: {
       type: Number,
@@ -51,6 +53,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: [0, 'El stock no puede ser negativo.'],
+      validate: { validator: Number.isInteger, message: 'El stock debe ser entero.' }
     },
     sku: {
       type: String,

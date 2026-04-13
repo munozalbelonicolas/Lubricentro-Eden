@@ -52,12 +52,18 @@ const createOrder = catchAsync(async (req, res, next) => {
   for (const item of items) {
     const product = productMap[item.productId];
     if (!product) {
-      return next(new AppError(`Producto ${item.productId} no encontrado o no disponible.`, 400));
+      return res.status(409).json({
+        status: 'fail',
+        message: `Producto ${item.name} no encontrado o fue eliminado recientemente.`,
+        errorItem: item.productId
+      });
     }
     if (product.stock < item.quantity) {
-      return next(
-        new AppError(`Stock insuficiente para "${product.name}". Disponible: ${product.stock}.`, 400)
-      );
+      return res.status(409).json({
+        status: 'fail',
+        message: `Stock insuficiente para "${product.name}". Disponible: ${product.stock}.`,
+        errorItem: item.productId
+      });
     }
 
     orderItems.push({
