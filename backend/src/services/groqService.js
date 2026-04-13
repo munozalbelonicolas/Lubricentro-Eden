@@ -168,5 +168,21 @@ const generalChat = async (history, vehiculoContext = null) => {
     { maxTokens: 500, temperature: 0.7 }
   );
 };
+/**
+ * Detecta si el usuario quiere agendar un turno/visita.
+ * Retorna: { quiere_turno: true/false }
+ */
+const detectBookingIntent = async (message) => {
+  const raw = await callGroq([{
+    role: "user",
+    content: `Analizá este mensaje de un cliente de un lubricentro. Respondé SOLO con JSON válido.
+Mensaje: "${message}"
+Si el cliente quiere agendar un turno, visita, cita, reservar, sacar turno, o pedir una fecha para un servicio:
+{"quiere_turno":true}
+Si NO quiere agendar: {"quiere_turno":false}`,
+  }], { maxTokens: 60, jsonMode: true });
 
-module.exports = { detectVehicle, fetchMotorizations, recommendOil, generalChat, callGroq };
+  return parseJSON(raw) || { quiere_turno: false };
+};
+
+module.exports = { detectVehicle, fetchMotorizations, recommendOil, generalChat, callGroq, detectBookingIntent };
