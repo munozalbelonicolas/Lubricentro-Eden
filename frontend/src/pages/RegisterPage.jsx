@@ -145,10 +145,25 @@ export default function RegisterPage() {
             />
           </div>
           {step === 1 ? (
-            <>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
               <h1 className={styles.title}>Creá tu cuenta</h1>
               <p className={styles.subtitle}>Completá tus datos para una experiencia personalizada</p>
-            </>
+              
+              <div style={{ marginTop: '1rem', width: '100%' }}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => { toast.error('Error en autenticación de Google.') }}
+                  text="signup_with"
+                  shape="rectangular"
+                  theme="filled_blue"
+                  size="large"
+                  width="100%"
+                />
+              </div>
+              <div style={{ width: '100%', borderBottom: '1px solid var(--color-border)', height: '1px', position: 'relative', marginTop: '1.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: 'var(--color-surface)', padding: '0 10px', fontSize: '0.8rem', color: 'var(--color-text-3)' }}>O completá el registro manual</span>
+              </div>
+            </div>
           ) : (
             <>
               <h1 className={styles.title} style={{ color: 'var(--color-primary)' }}>¡Hola {form.firstName}!</h1>
@@ -306,22 +321,7 @@ export default function RegisterPage() {
           </button>
         </form>
         
-        {step === 1 && (
-          <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '100%', borderBottom: '1px solid var(--color-border)', height: '1px', position: 'relative' }}>
-              <span style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: 'var(--color-surface)', padding: '0 10px', fontSize: '0.8rem', color: 'var(--color-text-3)' }}>O registrate más rápido con</span>
-            </div>
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => { toast.error('Error en autenticación de Google.') }}
-              text="signup_with"
-              shape="rectangular"
-              theme="filled_blue"
-              size="large"
-              width="100%"
-            />
-          </div>
-        )}
+
 
         {step === 1 ? (
           <p className={styles.footer}>
