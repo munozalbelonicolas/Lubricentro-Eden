@@ -39,8 +39,9 @@ const S = {
     zIndex:9999, transition:"transform 0.2s",
   },
   panel: {
-    position:"fixed", bottom:"100px", right:"28px",
-    width:"380px", height:"590px", background:"#111",
+    position:"fixed", bottom:"100px", right:"20px",
+    width:"calc(100vw - 40px)", maxWidth:"380px", height:"calc(100vh - 120px)", maxHeight:"590px",
+    background:"#111",
     borderRadius:"20px", border:"1px solid #2a2a2a",
     display:"flex", flexDirection:"column", overflow:"hidden",
     zIndex:9998,

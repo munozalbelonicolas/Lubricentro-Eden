@@ -51,7 +51,26 @@ export default function CheckoutPage() {
 
   const { min: dateMin, max: dateMax } = getDateRange();
 
-  const handleChange = (e) => setShipping((s) => ({ ...s, [e.target.name]: e.target.value }));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Validaciones en tiempo real
+    if (name === 'name') {
+      // Solo letras, espacios y algunos caracteres especiales de nombres (acentos, ñ)
+      const cleanValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '');
+      setShipping((s) => ({ ...s, [name]: cleanValue }));
+      return;
+    }
+    
+    if (name === 'phone') {
+      // Solo números, +, -, y espacios
+      const cleanValue = value.replace(/[^0-9+ \-]/g, '');
+      setShipping((s) => ({ ...s, [name]: cleanValue }));
+      return;
+    }
+
+    setShipping((s) => ({ ...s, [name]: value }));
+  };
   const handleAppt = (e) => setAppointment((a) => ({ ...a, [e.target.name]: e.target.value }));
 
   const handleDeliveryType = (type) => {
