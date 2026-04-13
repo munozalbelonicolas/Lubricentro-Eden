@@ -95,8 +95,12 @@ exports.register = catchAsync(async (req, res, next) => {
     document, birthDate, phone, address,
     role: 'admin',
     tenantId: tenant._id,
-    isVerified: true, // El admin se autoverifica por simplicidad en SaaS o podemos activar email tmb
+    isVerified: true,
   });
+
+  // Asignar ownerId al tenant ahora que tenemos el user
+  tenant.ownerId = user._id;
+  await tenant.save();
 
   await Subscription.create({
     tenantId: tenant._id,
@@ -137,7 +141,16 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   const user = await User.findOne({ email: email.toLowerCase(), tenantId }).select('+password');
-  if (!user || !(await user.comparePassword(password))) {
+  if (!user) {
+    return next(new AppError('Email o contraseña incorrectos.', 401));
+  }
+
+  // Usuarios registrados vía Google no tienen password local
+  if (!user.password) {
+    return next(new AppError('Esta cuenta fue creada con Google. Usá el botón "Iniciar con Google" para ingresar.', 400));
+  }
+
+  if (!(await user.comparePassword(password))) {
     return next(new AppError('Email o contraseña incorrectos.', 401));
   }
 
@@ -179,10 +192,15 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   
-  const ticket = await client.verifyIdToken({
-    idToken: credential,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
+  let ticket;
+  try {
+    ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+  } catch (err) {
+    return next(new AppError('El token de Google es inválido o expiró. Intentá nuevamente.', 401));
+  }
   
   const payload = ticket.getPayload();
   const { email, given_name, family_name, sub } = payload;
@@ -227,7 +245,12 @@ exports.googleRegister = catchAsync(async (req, res, next) => {
   if (!tenantId) return next(new AppError('Falta ID de la tienda.', 400));
 
   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-  const ticket = await client.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+  let ticket;
+  try {
+    ticket = await client.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+  } catch (err) {
+    return next(new AppError('El token de Google es inválido o expiró. Intentá el registro nuevamente.', 401));
+  }
   const payload = ticket.getPayload();
   const { email, given_name, family_name, sub } = payload;
 

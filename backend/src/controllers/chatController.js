@@ -221,9 +221,18 @@ const processBookingStep = async (session, userMessage) => {
           };
         }
 
+        // Obtener el createdBy: ownerId o el primer admin del tenant
+        let createdById = tenant.ownerId;
+        if (!createdById) {
+          const User = require('../models/User.model');
+          const adminUser = await User.findOne({ tenantId: tenant._id, role: 'admin' }).select('_id');
+          createdById = adminUser?._id;
+        }
+        if (!createdById) throw new Error('No se encontró un usuario admin para asignar la tarea.');
+
         await Task.create({
           tenantId: tenant._id,
-          createdBy: tenant.ownerId,
+          createdBy: createdById,
           title: `${booking.data.vehiculo} — Turno vía Chat`,
           description: `Turno agendado por el chatbot.\nCliente: ${booking.data.nombre}\nTeléfono: ${booking.data.telefono}\nEmail: ${booking.data.email}`,
           date: booking.data.fecha,

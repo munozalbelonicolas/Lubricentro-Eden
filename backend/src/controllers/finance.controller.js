@@ -31,7 +31,7 @@ exports.getFinanceStats = catchAsync(async (req, res, next) => {
   }
 
   const expenseFilter = { ...filter };
-  const taskFilter = { ...filter };
+  const taskFilter = { ...filter, status: 'done' };
   if (filter.createdAt) {
     const startStr = filter.createdAt.$gte.toISOString().split('T')[0];
     const endStr = filter.createdAt.$lte.toISOString().split('T')[0];
@@ -95,7 +95,7 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
     }
     orderFilter.createdAt = { $gte: start, $lte: end };
     taskFilter.date = { $gte: start.toISOString().split('T')[0], $lte: end.toISOString().split('T')[0] };
-    expenseFilter.date = { $gte: start.toISOString().split('T')[0], $lte: end.toISOString().split('T')[0] };
+    expenseFilter.date = { $gte: start, $lte: end };
   } else if (startDate || endDate) {
     const start = startDate ? new Date(startDate) : new Date(2000, 0, 1);
     const end = endDate ? new Date(endDate) : new Date();
