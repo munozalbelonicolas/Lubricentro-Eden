@@ -85,6 +85,11 @@ exports.createTask = catchAsync(async (req, res, next) => {
     if (user) {
       req.body.userId = user._id;
     }
+
+    // Asegurar que los datos de contacto queden persistidos aunque no haya usuario vinculado
+    req.body.customerName = customerName;
+    req.body.customerEmail = customerEmail;
+    req.body.customerPhone = customerPhone;
   }
 
   const newTask = await Task.create(req.body);

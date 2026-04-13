@@ -78,11 +78,17 @@ const taskSchema = new mongoose.Schema(
     totalValue: {
       type: Number,
       default: 0
-    }
+    },
+    // Datos de respaldo si no hay un usuario registrado vinculado
+    customerName:  { type: String, trim: true },
+    customerEmail: { type: String, trim: true, lowercase: true },
+    customerPhone: { type: String, trim: true },
   },
   { timestamps: true }
 );
 
 taskSchema.index({ tenantId: 1, date: 1 });
+taskSchema.index({ tenantId: 1, plate: 1 }); // Índice para búsquedas rápidas de historial
+taskSchema.index({ tenantId: 1, status: 1 });
 
 module.exports = mongoose.model('Task', taskSchema);

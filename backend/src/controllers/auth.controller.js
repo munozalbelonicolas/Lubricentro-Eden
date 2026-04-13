@@ -119,8 +119,12 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { token } = req.query;
   if (!token) return next(new AppError('Token inválido.', 400));
 
-  const user = await User.findOne({ verificationToken: token });
-  if (!user) return next(new AppError('El link expiró o es inválido.', 400));
+  const user = await User.findOne({ 
+    verificationToken: token,
+    tenantId: req.tenantId || req.body.tenantId // Hardening para asegurar consistencia
+  });
+
+  if (!user) return next(new AppError('El link expiró o es inválido para esta tienda.', 400));
 
   user.isVerified = true;
   user.verificationToken = undefined;
@@ -254,8 +258,11 @@ exports.googleRegister = catchAsync(async (req, res, next) => {
   const payload = ticket.getPayload();
   const { email, given_name, family_name, sub } = payload;
 
-  const existingUser = await User.findOne({ email: email.toLowerCase(), tenantId });
-  if (existingUser) return next(new AppError('El email ya está registrado.', 400));
+  const existingByEmail = await User.findOne({ email: email.toLowerCase(), tenantId });
+  if (existingByEmail) return next(new AppError('El email ya está registrado.', 400));
+
+  const existingByDoc = await User.findOne({ document, tenantId });
+  if (existingByDoc) return next(new AppError('El documento (DNI) ya está registrado en este sistema.', 400));
 
   const user = await User.create({
     firstName: given_name,

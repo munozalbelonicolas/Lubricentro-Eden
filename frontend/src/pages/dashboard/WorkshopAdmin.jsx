@@ -670,6 +670,15 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validar que la fecha no sea en el pasado
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const selectedDate = new Date(form.date + 'T12:00:00');
+    if (selectedDate < today) {
+      return toast.error('No podés agendar tareas en fechas pasadas.');
+    }
+
     setLoading(true);
     try {
       await taskService.create({ ...form, status: 'pending' });
