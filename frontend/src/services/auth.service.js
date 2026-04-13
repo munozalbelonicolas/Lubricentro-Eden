@@ -33,11 +33,24 @@ export const authService = {
     return data;
   },
 
-  /**
-   * Cambiar contraseña.
-   */
   updatePassword: async ({ currentPassword, newPassword }) => {
     const { data } = await api.patch('/auth/update-password', { currentPassword, newPassword });
+    return data;
+  },
+
+  /**
+   * Google Sign-In: envia el credential. Puede devolver token normal o flag unregistered: true
+   */
+  googleSignIn: async (credential) => {
+    const { data } = await api.post('/auth/google', { credential });
+    return data;
+  },
+
+  /**
+   * Google Register: envía credential + datos adicionales obligatorios.
+   */
+  googleRegister: async (payload) => {
+    const { data } = await api.post('/auth/google-register', payload);
     return data;
   },
 };

@@ -6,11 +6,15 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { TenantProvider } from './context/TenantContext';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './index.css';
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-client-id.apps.googleusercontent.com';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
       <TenantProvider>
         <AuthProvider>
           <CartProvider>
@@ -34,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </CartProvider>
         </AuthProvider>
       </TenantProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   </React.StrictMode>
 );

@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTenant } from '../hooks/useTenant';
+import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { getImageUrl } from '../utils/formatters';
 import styles from './AuthPage.module.css';
 
 export default function LoginPage() {
-  const { login }  = useAuth();
+  const { login, loginWithGoogle }  = useAuth();
   const { tenant } = useTenant();
   const navigate   = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
@@ -30,6 +31,24 @@ export default function LoginPage() {
       navigate('/');
     } catch (err) {
       toast.error(err.message || 'Error al iniciar sesión.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (response) => {
+    try {
+      setLoading(true);
+      const res = await loginWithGoogle(response.credential);
+      if (res?.unregistered) {
+        toast.error('Tu cuenta de Google no está registrada. ¡Completá estos datos para terminar!');
+        navigate('/register', { state: { googleData: res.data } });
+      } else {
+        toast.success('¡Bienvenido de vuelta!');
+        navigate('/');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Error al iniciar sesión con Google.');
     } finally {
       setLoading(false);
     }
@@ -98,6 +117,21 @@ export default function LoginPage() {
             {loading ? <span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} /> : 'Ingresar'}
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '100%', borderBottom: '1px solid var(--color-border)', height: '1px', position: 'relative' }}>
+            <span style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: 'var(--color-surface)', padding: '0 10px', fontSize: '0.8rem', color: 'var(--color-text-3)' }}>O iniciar con</span>
+          </div>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => { toast.error('Error en autenticación de Google.') }}
+            text="signin_with"
+            shape="rectangular"
+            theme="filled_blue"
+            size="large"
+            width="100%"
+          />
+        </div>
 
         <p className={styles.footer}>
           ¿No tenés cuenta?{' '}

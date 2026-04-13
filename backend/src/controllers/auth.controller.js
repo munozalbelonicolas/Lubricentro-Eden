@@ -3,6 +3,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const slugify = require('slugify');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User.model');
 const Tenant = require('../models/Tenant.model');
 const Subscription = require('../models/Subscription.model');
@@ -164,4 +165,79 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   user.passwordChangedAt = Date.now();
   await user.save();
   createSendToken(user, null, 200, res);
+});
+
+// ==========================================
+// GOOGLE AUTH
+// ==========================================
+exports.googleAuth = catchAsync(async (req, res, next) => {
+  const { credential } = req.body;
+  const tenantId = req.tenantId || req.body.tenantId;
+  
+  if (!credential) return next(new AppError('No se recibió el token de Google.', 400));
+  if (!tenantId) return next(new AppError('Falta ID de la tienda.', 400));
+
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  
+  const ticket = await client.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  
+  const payload = ticket.getPayload();
+  const { email, given_name, family_name, sub } = payload;
+  
+  const user = await User.findOne({ email: email.toLowerCase(), tenantId });
+  
+  if (user) {
+    if (!user.googleId) {
+      user.googleId = sub;
+      await user.save({ validateBeforeSave: false });
+    }
+    const tenant = await Tenant.findById(user.tenantId);
+    return createSendToken(user, tenant, 200, res);
+  }
+  
+  // Usuario no existe, le enviamos un flag para que complete datos obligatorios extras.
+  res.status(200).json({
+    status: 'success',
+    unregistered: true,
+    data: {
+      email: email.toLowerCase(),
+      firstName: given_name,
+      lastName: family_name || '',
+      googleId: sub,
+      credential // Devolvemos el credential para usarlo en googleRegister
+    }
+  });
+});
+
+exports.googleRegister = catchAsync(async (req, res, next) => {
+  const { credential, document, birthDate, phone, address, role = 'user' } = req.body;
+  const tenantId = req.tenantId || req.body.tenantId;
+
+  if (!credential) return next(new AppError('Falta credencial de Google.', 400));
+  if (!tenantId) return next(new AppError('Falta ID de la tienda.', 400));
+
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+  const payload = ticket.getPayload();
+  const { email, given_name, family_name, sub } = payload;
+
+  const existingUser = await User.findOne({ email: email.toLowerCase(), tenantId });
+  if (existingUser) return next(new AppError('El email ya está registrado.', 400));
+
+  const user = await User.create({
+    firstName: given_name,
+    lastName: family_name || '',
+    email: email.toLowerCase(),
+    document, birthDate, phone, address,
+    role,
+    tenantId,
+    googleId: sub,
+    isVerified: true
+  });
+
+  const tenant = await Tenant.findById(tenantId);
+  createSendToken(user, tenant, 201, res);
 });

@@ -20,23 +20,36 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (credentials) => {
     const data = await authService.login(credentials);
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.data.user));
-    if (data.data.tenant) {
-      localStorage.setItem('tenantId', data.data.tenant._id);
-    }
-    setUser(data.data.user);
+    storeAuthData(data);
     return data;
   }, []);
 
-  const register = useCallback(async (payload) => {
-    const data = await authService.register(payload);
+  const loginWithGoogle = useCallback(async (credential) => {
+    const data = await authService.googleSignIn(credential);
+    if (!data.unregistered) {
+      storeAuthData(data);
+    }
+    return data;
+  }, []);
+
+  const registerWithGoogle = useCallback(async (payload) => {
+    const data = await authService.googleRegister(payload);
+    storeAuthData(data);
+    return data;
+  }, []);
+
+  const storeAuthData = (data) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.data.user));
     if (data.data.tenant) {
       localStorage.setItem('tenantId', data.data.tenant._id);
     }
     setUser(data.data.user);
+  };
+
+  const register = useCallback(async (payload) => {
+    const data = await authService.register(payload);
+    storeAuthData(data);
     return data;
   }, []);
 
@@ -55,7 +68,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, registerWithGoogle, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

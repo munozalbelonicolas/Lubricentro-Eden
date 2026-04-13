@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'La contraseña es obligatoria.'],
+      required: [function() { return !this.googleId; }, 'La contraseña es obligatoria.'],
       minlength: [6, 'La contraseña debe tener al menos 6 caracteres.'],
       select: false,
     },
@@ -70,6 +70,11 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
     passwordChangedAt: Date,
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
   },
   { timestamps: true }
 );
