@@ -43,7 +43,14 @@ const getProducts = catchAsync(async (req, res, next) => {
   // 2. Fase de Filtros Standard ($match)
   const matchStage = { tenantId: req.tenantId, isActive: true };
 
-  if (category) matchStage.category = category;
+  if (category) {
+    if (Array.isArray(category)) {
+      matchStage.category = { $in: category };
+    } else {
+      matchStage.category = category;
+    }
+  }
+  
   if (brand && !search) matchStage.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   if (viscosity) matchStage.viscosity = new RegExp(viscosity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   if (vehicleCompatibility) matchStage.vehicleCompatibility = { $in: [vehicleCompatibility] };

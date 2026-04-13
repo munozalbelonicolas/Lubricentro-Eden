@@ -122,6 +122,14 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     }
   }
 
+  // RESTAURAR stock si pasamos de 'done' a 'pending' (Corrigiendo error humano)
+  if (currentTask.status === 'done' && req.body.status === 'pending') {
+    if (task.items && task.items.length > 0) {
+      await StockService.restoreStock(req.user.tenantId, task.items);
+      // Opcional: resetear totalValue si queremos que se re-calcule después
+    }
+  }
+
   res.status(200).json({
     status: 'success',
     data: { task }
@@ -160,9 +168,13 @@ exports.getVehicleHistory = catchAsync(async (req, res) => {
   const orderQuery = { tenantId, status: { $in: ['delivered', 'confirmed', 'processing', 'ready_pickup'] } };
 
   if (plate) {
-    const escapedPlate = plate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const cleanPlate = escapedPlate.replace(/\s+/g, '').split('').join('\\s*');
-    const plateRegex = { $regex: new RegExp(`${cleanPlate}`, 'i') }; // Búsqueda parcial más flexible
+    // PROTECCIÓN ReDoS: Limitar la longitud máxima del input de patente
+    const safePlate = plate.slice(0, 15).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // En lugar de inyectar \s* entre CADA carácter (lo cual causa ReDoS con inputs > 10 chars),
+    // simplemente quitamos espacios e ignoramos "case" con una búsqueda parcial.
+    const cleanPlate = safePlate.replace(/\s+/g, '');
+    const plateRegex = { $regex: new RegExp(cleanPlate, 'i') }; 
     
     taskQuery.plate = plateRegex;
     orderQuery['workshopAppointment.vehicle'] = plateRegex;

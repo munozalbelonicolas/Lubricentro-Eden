@@ -114,7 +114,9 @@ export default function CheckoutPage() {
       const order = orderData.data.order;
 
       const prefData = await paymentService.createPreference(order._id);
-      clearCart();
+      
+      // ELIMINADO clearCart() aquí. Solo se vaciará si el usuario vuelve exitoso.
+      // Así prevenimos el "Carrito abandonado destructivo" si falla el pago de MercadoPago.
 
       const redirectUrl = import.meta.env.DEV
         ? prefData.data.sandboxInitPoint
@@ -308,9 +310,11 @@ export default function CheckoutPage() {
               <div className={styles.deliverySummary}>
                 {deliveryType === 'shipping' && <span>🚚 Envío a domicilio</span>}
                 {deliveryType === 'pickup'   && <span>📦 Retiro en tienda</span>}
-                {deliveryType === 'workshop' && appointment.date && (
-                  <span>🔧 Taller: {new Date(appointment.date + 'T12:00:00').toLocaleDateString('es-AR')} — {appointment.timeSlot} hs</span>
-                )}
+                {deliveryType === 'workshop' && appointment.date && (() => {
+                  const [y, m, d] = appointment.date.split('-');
+                  const localDate = new Date(y, m - 1, d);
+                  return <span>🔧 Taller: {localDate.toLocaleDateString('es-AR')} — {appointment.timeSlot} hs</span>;
+                })()}
                 {deliveryType === 'workshop' && !appointment.date && <span>🔧 Cambio en taller</span>}
               </div>
 

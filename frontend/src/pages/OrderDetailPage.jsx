@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useCart } from '../hooks/useCart';
 import { orderService, paymentService } from '../services/index';
-import { formatPrice, formatDate, formatDateTime, orderStatusLabel, paymentStatusLabel, deliveryTypeLabel, getImageUrl } from '../utils/formatters';
+import { formatPrice, formatDateTime, orderStatusLabel, paymentStatusLabel, deliveryTypeLabel, getImageUrl } from '../utils/formatters';
 import { FiArrowLeft, FiPackage, FiMapPin, FiClock, FiTool, FiCalendar } from 'react-icons/fi';
 import styles from './OrderDetailPage.module.css';
 
@@ -12,10 +13,16 @@ export default function OrderDetailPage() {
   const [order, setOrder]     = useState(null);
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { clearCart } = useCart();
 
   const paymentResult = searchParams.get('payment'); // success | failure | pending
 
   useEffect(() => {
+    // Si el pago retorna éxito, vaciamos el carrito del usuario.
+    if (paymentResult === 'success') {
+      clearCart();
+    }
+
     orderService.getById(id)
       .then(async (data) => {
         setOrder(data.data.order);

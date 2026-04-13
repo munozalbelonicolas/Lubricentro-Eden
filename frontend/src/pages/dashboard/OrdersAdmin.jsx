@@ -23,13 +23,19 @@ export default function OrdersAdmin() {
     try {
       const params = { limit: 100 };
       if (statusFilter) params.status = statusFilter;
+      if (search) params.search = search;
       const data = await orderService.getAll(params);
       setOrders(data.data.orders || []);
     } catch (err) { toast.error(err.message); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, [statusFilter]);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      load();
+    }, 500); // Debounce de 500ms
+    return () => clearTimeout(handler);
+  }, [statusFilter, search]);
 
   const handleStatusChange = async (orderId, status) => {
     try {
@@ -40,13 +46,7 @@ export default function OrdersAdmin() {
   };
 
   const filtered = orders.filter((o) => {
-    const matchSearch = !search ||
-      o.orderNumber?.includes(search.toUpperCase()) ||
-      o.userId?.firstName?.toLowerCase().includes(search.toLowerCase()) ||
-      o.userId?.lastName?.toLowerCase().includes(search.toLowerCase()) ||
-      o.userId?.email?.toLowerCase().includes(search.toLowerCase());
-    const matchType = !typeFilter || o.deliveryType === typeFilter;
-    return matchSearch && matchType;
+    return !typeFilter || o.deliveryType === typeFilter;
   });
 
   return (

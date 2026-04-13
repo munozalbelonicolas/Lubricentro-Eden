@@ -436,6 +436,45 @@ function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, on
           </div>
         );
       })}
+
+      {/* RENDERIZAR EVENTOS SIN HORARIO U HORARIO FUERA DE RANGO */}
+      {(() => {
+        const otherEvents = dayEvents.filter((e) => {
+          const t = e.workshopAppointment?.timeSlot || e.timeSlot;
+          return !TIME_SLOTS.includes(t);
+        });
+        if (otherEvents.length === 0) return null;
+        return (
+          <div style={{ marginBottom:'2rem' }}>
+            <div style={{
+              display:'flex', alignItems:'center', gap:'0.6rem',
+              background:'var(--color-surface-2)',
+              border:'1px solid var(--color-border)',
+              borderRadius:'12px', padding:'0.7rem 1rem', marginBottom:'0.75rem',
+            }}>
+              <FiClock style={{ color:'var(--color-text-2)', flexShrink:0 }}/>
+              <div>
+                <p style={{ fontWeight:800, color:'var(--color-text)', fontSize:'0.95rem' }}>Sin horario asignado (o fuera de rango)</p>
+                <p style={{ fontSize:'0.75rem', color:'var(--color-text-3)', marginTop:'0.1rem' }}>
+                  {otherEvents.length} {otherEvents.length===1?'actividad':'actividades'}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+              {otherEvents.map((ev) => (
+                <EventCard 
+                  key={ev._id} 
+                  event={ev} 
+                  onStatusChange={onStatusChange} 
+                  onDeleteTask={onDeleteTask} 
+                  onPrint={onPrint}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

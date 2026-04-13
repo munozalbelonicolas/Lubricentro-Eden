@@ -4,7 +4,7 @@
 }
 .searchBar { position: relative; margin-bottom: 1.25rem; }
 .searchIcon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--color-text-3); }
-.searchInput { padding-left: 2.75rem; }
+.searchInput { padding-left: 2.75rem !important; }
 
 .productCell { display: flex; align-items: center; gap: 0.75rem; }
 .productThumb {

@@ -100,12 +100,32 @@ const createOrder = catchAsync(async (req, res, next) => {
  * Listar órdenes (admin: todas | user: solo las propias).
  */
 const getOrders = catchAsync(async (req, res, next) => {
-  const { page = 1, limit = 20, status, paymentStatus } = req.query;
+  const { page = 1, limit = 20, status, paymentStatus, search } = req.query;
 
   const filter = { tenantId: req.tenantId };
   if (req.user.role !== 'admin') filter.userId = req.user._id;
   if (status) filter.status = status;
   if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+  // Búsqueda del lado del servidor
+  if (search) {
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = new RegExp(escapeRegex(search), 'i');
+    
+    // Buscar usuarios que coincidan con el término
+    const User = require('../models/User.model');
+    const matchedUsers = await User.find({ 
+      tenantId: req.tenantId, 
+      $or: [{ firstName: rx }, { lastName: rx }, { email: rx }] 
+    }).select('_id');
+    
+    const userIds = matchedUsers.map(u => u._id);
+
+    filter.$or = [
+      { orderNumber: rx },
+      { userId: { $in: userIds } }
+    ];
+  }
 
   const skip = (Number(page) - 1) * Number(limit);
   const [orders, total] = await Promise.all([
@@ -145,17 +165,25 @@ const updateOrderStatus = catchAsync(async (req, res, next) => {
     return next(new AppError(`Estado inválido. Usa: ${validStatuses.join(', ')}.`, 400));
   }
 
+  // Buscar el estado anterior
+  const previousOrder = await Order.findOne({ _id: req.params.id, tenantId: req.tenantId });
+  if (!previousOrder) return next(new AppError('Orden no encontrada.', 404));
+
   const order = await Order.findOneAndUpdate(
     { _id: req.params.id, tenantId: req.tenantId },
     { status },
     { new: true }
   );
-  if (!order) return next(new AppError('Orden no encontrada.', 404));
 
-  // Solo restaurar stock si el pago fue aprobado alguna vez
-  // (el stock solo se descuenta en el webhook cuando paymentStatus === 'approved')
-  if (status === 'cancelled' && order.paymentStatus === 'approved') {
+  // Lógica de mitigación de fugas de stock
+  // 1. Cancelando una orden paga -> Restaurar stock
+  if (previousOrder.status !== 'cancelled' && status === 'cancelled' && order.paymentStatus === 'approved') {
     await StockService.restoreStock(req.tenantId, order.items);
+  }
+  
+  // 2. Reactivando una orden cancelada que ya estaba paga -> Volver a descontar stock
+  if (previousOrder.status === 'cancelled' && status !== 'cancelled' && order.paymentStatus === 'approved') {
+    await StockService.deductStock(req.tenantId, order.items);
   }
 
   sendSuccess(res, { order });

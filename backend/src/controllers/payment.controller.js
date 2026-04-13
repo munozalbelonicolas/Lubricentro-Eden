@@ -5,6 +5,7 @@ const mpClient = require('../config/mercadopago');
 const Order   = require('../models/Order.model');
 const Payment = require('../models/Payment.model');
 const Product = require('../models/Product.model');
+const StockService = require('../services/stockService');
 const catchAsync    = require('../utils/catchAsync');
 const AppError      = require('../utils/AppError');
 const { sendSuccess } = require('../utils/apiResponse');
@@ -137,33 +138,42 @@ const webhook = catchAsync(async (req, res, next) => {
         mercadoPagoData:      paymentData,
         status:               mpStatus,
         paidAt: status === 'approved' ? new Date() : undefined,
-      }
+      },
+      { upsert: true }
     );
 
-    await Order.findByIdAndUpdate(orderId, {
-      paymentStatus: mpStatus,
-      status: status === 'approved' ? 'confirmed' : order.status,
-    });
+    // ── Prevenir Race Conditions (Modificación Atómica) ────────
+    // Intentamos actualizar la orden SOLAMENTE si el estado de pago está cambiando.
+    // Esto previene que 2 webhooks concurrentes procesen la deducción de stock dos veces.
+    const newStatus = (status === 'approved' && order.status === 'pending') ? 'confirmed' : order.status;
+    
+    // IMPORTANTE: order.paymentStatus en la BD puede ser distinto al objeto `order` si hubo race condition.
+    const updatedOrder = await Order.findOneAndUpdate(
+      { 
+        _id: orderId,
+        paymentStatus: { $ne: mpStatus } // Condición Atómica
+      },
+      {
+        paymentStatus: mpStatus,
+        status: newStatus,
+      },
+      { new: true }
+    );
 
-    // ── Gestión de stock ──────────────────────────────────────
-    // Descontar stock al confirmar el pago (solo si no estaba aprobado antes)
-    if (mpStatus === 'approved' && previousPaymentStatus !== 'approved') {
-      for (const item of order.items) {
-        await Product.findOneAndUpdate(
-          { _id: item.productId, stock: { $gte: item.quantity } },
-          { $inc: { stock: -item.quantity } }
-        );
-      }
-      console.log(`✅ Stock descontado para orden ${orderId}`);
+    if (!updatedOrder) {
+      console.log(`⚠️ Orden ${orderId} ya estaba en estado ${mpStatus} o procesada. Webhook ignorado por concurrencia.`);
+      return;
     }
 
-    // Restaurar stock si el pago pasa de aprobado → rechazado/reembolsado
-    if (['rejected', 'refunded'].includes(mpStatus) && previousPaymentStatus === 'approved') {
-      for (const item of order.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity },
-        });
-      }
+    // ── Gestión de stock ──────────────────────────────────────
+    if (mpStatus === 'approved') {
+      await StockService.deductStock(order.tenantId, order.items);
+      console.log(`✅ Stock descontado de forma segura para orden ${orderId}`);
+    }
+
+    // Restaurar stock si el pago pasa de aprobado a rechazado/reembolsado
+    if (['rejected', 'refunded'].includes(mpStatus) && order.paymentStatus === 'approved') {
+      await StockService.restoreStock(order.tenantId, order.items);
       console.log(`↩️  Stock restaurado para orden ${orderId} (${mpStatus})`);
     }
     // ─────────────────────────────────────────────────────────
