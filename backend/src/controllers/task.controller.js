@@ -70,8 +70,15 @@ exports.createTask = catchAsync(async (req, res, next) => {
         password: tempPassword,
         tenantId: req.user.tenantId,
         isVerified: true,
-        document: req.body.plate || '000000', // Valor temporal
-        birthDate: new Date('1990-01-01'), // Valor temporal
+        document: req.body.plate || '000000',
+        birthDate: new Date('1990-01-01'),
+        address: {
+          street: 'Sin especificar',
+          number: '0',
+          city: 'Sin especificar',
+          province: 'Sin especificar',
+          zipCode: '0000'
+        }
       });
     }
 

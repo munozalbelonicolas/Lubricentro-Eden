@@ -10,7 +10,12 @@ import {
 } from 'react-icons/fi';
 import styles from './CheckoutPage.module.css';
 
-const TIME_SLOTS = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'];
+// Generar franjas de 30 minutos (08:00 a 17:30)
+const TIME_SLOTS = [];
+for (let h = 8; h < 18; h++) {
+  TIME_SLOTS.push(`${String(h).padStart(2,'0')}:00`);
+  if (h < 17 || h === 17) TIME_SLOTS.push(`${String(h).padStart(2,'0')}:30`);
+}
 
 // Mínimo mañana, máximo 30 días
 const getDateRange = () => {

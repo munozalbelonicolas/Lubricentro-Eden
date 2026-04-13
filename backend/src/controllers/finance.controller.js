@@ -31,6 +31,7 @@ exports.getFinanceStats = catchAsync(async (req, res, next) => {
   }
 
   const expenseFilter = { ...filter };
+  const taskFilter = { ...filter };
   if (filter.createdAt) {
     const startStr = filter.createdAt.$gte.toISOString().split('T')[0];
     const endStr = filter.createdAt.$lte.toISOString().split('T')[0];
@@ -166,7 +167,7 @@ exports.createExpense = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteExpense = catchAsync(async (req, res) => {
+exports.deleteExpense = catchAsync(async (req, res, next) => {
   const expense = await Expense.findOneAndDelete({
     _id: req.params.id,
     tenantId: req.user.tenantId

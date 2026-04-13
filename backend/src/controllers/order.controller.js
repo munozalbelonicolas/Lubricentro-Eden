@@ -22,9 +22,10 @@ const createOrder = catchAsync(async (req, res, next) => {
     if (!workshopAppointment?.date || !workshopAppointment?.timeSlot) {
       return next(new AppError('Para el turno de taller se requiere fecha y franja horaria.', 400));
     }
-    const validSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00'];
-    if (!validSlots.includes(workshopAppointment.timeSlot)) {
-      return next(new AppError(`Franja horaria inválida. Opciones: ${validSlots.join(', ')}.`, 400));
+    // Validar formato de franja horaria (HH:MM o HH:MM-HH:MM)
+    const slotPattern = /^([01]\d|2[0-3]):[0-5]\d(-([01]\d|2[0-3]):[0-5]\d)?$/;
+    if (!slotPattern.test(workshopAppointment.timeSlot)) {
+      return next(new AppError('Franja horaria inválida. Use formato HH:MM (ej: 08:30).', 400));
     }
     const apptDate = new Date(workshopAppointment.date);
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); tomorrow.setHours(0,0,0,0);
@@ -108,7 +109,7 @@ const getOrders = catchAsync(async (req, res, next) => {
   const skip = (Number(page) - 1) * Number(limit);
   const [orders, total] = await Promise.all([
     Order.find(filter)
-      .populate('userId', 'name email')
+      .populate('userId', 'firstName lastName email')
       .sort('-createdAt')
       .skip(skip)
       .limit(Number(limit)),
@@ -127,7 +128,7 @@ const getOrder = catchAsync(async (req, res, next) => {
   const filter = { _id: req.params.id, tenantId: req.tenantId };
   if (req.user.role !== 'admin') filter.userId = req.user._id;
 
-  const order = await Order.findOne(filter).populate('userId', 'name email');
+  const order = await Order.findOne(filter).populate('userId', 'firstName lastName email');
   if (!order) return next(new AppError('Orden no encontrada.', 404));
   sendSuccess(res, { order });
 });
@@ -186,7 +187,7 @@ const getOrderStats = catchAsync(async (req, res, next) => {
     Order.find({ tenantId: req.tenantId })
       .sort('-createdAt')
       .limit(5)
-      .populate('userId', 'name email'),
+      .populate('userId', 'firstName lastName email'),
   ]);
 
   const orderRevenue = totalRevDoc[0]?.total || 0;

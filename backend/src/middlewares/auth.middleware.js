@@ -29,7 +29,7 @@ const protect = catchAsync(async (req, res, next) => {
   }
 
   // 3. Verificar que el usuario sigue existiendo
-  const user = await User.findById(decoded.id).select('+password');
+  const user = await User.findById(decoded.id);
   if (!user) {
     return next(new AppError('El usuario del token ya no existe.', 401));
   }

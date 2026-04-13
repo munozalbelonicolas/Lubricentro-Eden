@@ -49,7 +49,11 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (payload) => {
     const data = await authService.register(payload);
-    storeAuthData(data);
+    // El endpoint de registro de cliente NO devuelve token (requiere verificación email).
+    // Solo guardamos si viene token (caso admin/SaaS).
+    if (data.token) {
+      storeAuthData(data);
+    }
     return data;
   }, []);
 

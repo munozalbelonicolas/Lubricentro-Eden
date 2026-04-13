@@ -190,10 +190,17 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email: email.toLowerCase(), tenantId });
   
   if (user) {
+    // Auto-verificar si viene de Google (Google ya validó el email)
+    if (!user.isVerified) {
+      user.isVerified = true;
+    }
+    if (!user.isActive) {
+      return next(new AppError('Tu cuenta está desactivada. Contacta al administrador.', 403));
+    }
     if (!user.googleId) {
       user.googleId = sub;
-      await user.save({ validateBeforeSave: false });
     }
+    await user.save({ validateBeforeSave: false });
     const tenant = await Tenant.findById(user.tenantId);
     return createSendToken(user, tenant, 200, res);
   }
@@ -213,7 +220,7 @@ exports.googleAuth = catchAsync(async (req, res, next) => {
 });
 
 exports.googleRegister = catchAsync(async (req, res, next) => {
-  const { credential, document, birthDate, phone, address, role = 'user' } = req.body;
+  const { credential, document, birthDate, phone, address } = req.body;
   const tenantId = req.tenantId || req.body.tenantId;
 
   if (!credential) return next(new AppError('Falta credencial de Google.', 400));
@@ -232,7 +239,7 @@ exports.googleRegister = catchAsync(async (req, res, next) => {
     lastName: family_name || '',
     email: email.toLowerCase(),
     document, birthDate, phone, address,
-    role,
+    role: 'user',
     tenantId,
     googleId: sub,
     isVerified: true
