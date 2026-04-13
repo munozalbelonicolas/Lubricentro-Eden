@@ -611,6 +611,7 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [fetchingProducts, setFetchingProducts] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
 
   const [form, setForm] = useState({
     title: '',
@@ -785,6 +786,14 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
             </h3>
             
             <div style={{ marginBottom:'1rem' }}>
+              <input
+                type="text"
+                className="input"
+                placeholder="🔍 Buscar insumo..."
+                value={productSearch}
+                onChange={e => setProductSearch(e.target.value)}
+                style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}
+              />
               <select 
                 className="select" 
                 style={{ fontSize:'0.85rem' }}
@@ -792,11 +801,14 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
                   const p = products.find(x => x._id === e.target.value);
                   if (p) addItem(p);
                   e.target.value = "";
+                  setProductSearch("");
                 }}
                 disabled={fetchingProducts}
               >
                 <option value="">{fetchingProducts ? 'Cargando stock...' : '++ Seleccionar Aceite o Filtro'}</option>
-                {products.filter(p => !form.items.some(i => i.productId === p._id)).map(p => (
+                {products.filter(p => !form.items.some(i => i.productId === p._id))
+                         .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+                         .map(p => (
                   <option key={p._id} value={p._id}>
                     {p.name} ({formatPrice(p.price)})
                   </option>
