@@ -12,6 +12,7 @@ export default function FinancePage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, ingreso, egreso
 
   const currentYear = new Date().getFullYear();
@@ -28,6 +29,16 @@ export default function FinancePage() {
   useEffect(() => {
     fetchData();
   }, [month, year]);
+
+  // Bloquear el scroll del background si el modal está abierto
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => { document.body.style.overflow = 'auto'; };
+  }, [showModal]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -63,12 +74,15 @@ export default function FinancePage() {
 
   const handleDeleteExpense = async (id) => {
     if (!window.confirm('¿Eliminar este registro?')) return;
+    setDeletingId(id);
     try {
       await financeService.deleteExpense(id);
       toast.success('Gasto eliminado');
       fetchData();
     } catch (err) {
       toast.error('Error al eliminar');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -209,8 +223,12 @@ export default function FinancePage() {
                     </td>
                     <td>
                       {t.type === 'egreso' && (
-                        <button onClick={() => handleDeleteExpense(t.id)} style={{ color: '#ef4444', opacity: 0.7 }}>
-                          <FiTrash2 size={16}/>
+                        <button 
+                          onClick={() => handleDeleteExpense(t.id)} 
+                          style={{ color: '#ef4444', opacity: deletingId === t.id ? 0.3 : 0.7 }}
+                          disabled={deletingId === t.id}
+                        >
+                          {deletingId === t.id ? <div className="spinner" style={{ width: 16, height: 16 }}/> : <FiTrash2 size={16}/>}
                         </button>
                       )}
                     </td>

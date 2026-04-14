@@ -47,14 +47,10 @@ export default function SEOHead({
       {/* JSON-LD Structured Data */}
       {jsonLd && (Array.isArray(jsonLd)
         ? jsonLd.map((schema, i) => (
-            <script key={i} type="application/ld+json">
-              {JSON.stringify(schema)}
-            </script>
+            <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
           ))
         : (
-            <script type="application/ld+json">
-              {JSON.stringify(jsonLd)}
-            </script>
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
           )
       )}
 

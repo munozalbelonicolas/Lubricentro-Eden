@@ -57,8 +57,8 @@ export default function CheckoutPage() {
     
     // Validaciones en tiempo real
     if (name === 'name') {
-      // Solo letras, espacios y algunos caracteres especiales de nombres (acentos, ñ)
-      const cleanValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g, '');
+      // Solo letras, espacios y algunos caracteres especiales de nombres (acentos, ñ, apóstrofes, guiones)
+      const cleanValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ \-']/g, '');
       setShipping((s) => ({ ...s, [name]: cleanValue }));
       return;
     }

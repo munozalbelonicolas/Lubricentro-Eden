@@ -11,8 +11,13 @@ const generateSitemap = async () => {
     console.log('Generando sitemap dinámico para SEO...');
     
     // Obtener productos desde el servidor remoto
-    const { data } = await axios.get(`${API_URL}/products?limit=1000`);
-    const products = data.data.products || [];
+    let products = [];
+    try {
+      const { data } = await axios.get(`${API_URL}/products?limit=5000`);
+      products = data.data.products || [];
+    } catch (err) {
+      console.warn('⚠️ Falló la conexión a la API. Generando sitemap sin productos.');
+    }
 
     const currentDate = new Date().toISOString().split('T')[0];
 

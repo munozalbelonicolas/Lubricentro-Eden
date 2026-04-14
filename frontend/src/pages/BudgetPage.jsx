@@ -82,8 +82,11 @@ export default function BudgetPage() {
   };
 
   const generatePDF = () => {
-    const doc = new jsPDF();
     const items = selectedItems.filter(Boolean);
+    if (items.length === 0) {
+      toast.error('Seleccioná al menos un ítem al presupuesto');
+      return;
+    }
     const total = items.reduce((acc, curr) => acc + curr.price, 0);
 
     // Header decorativo

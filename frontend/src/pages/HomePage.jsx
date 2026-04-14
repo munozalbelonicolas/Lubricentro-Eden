@@ -44,15 +44,23 @@ export default function HomePage() {
   const [loading,  setLoading]    = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       productService.getAll({ featured: true, limit: 4 }),
       productService.getAll({ sort: '-createdAt', limit: 8 }),
     ])
-      .then(([featData, recData]) => {
-        setFeatured(featData.data.products || []);
-        setRecent(recData.data.products || []);
+      .then(([featResult, recResult]) => {
+        if (featResult.status === 'fulfilled') {
+          setFeatured(featResult.value.data.products || []);
+        } else {
+          console.error('Error fetching featured:', featResult.reason);
+        }
+        
+        if (recResult.status === 'fulfilled') {
+          setRecent(recResult.value.data.products || []);
+        } else {
+          console.error('Error fetching recent:', recResult.reason);
+        }
       })
-      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 

@@ -34,14 +34,23 @@ export default function StorePage() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
-    productService.getAll(filters)
+    
+    productService.getAll(filters, { signal: controller.signal })
       .then((data) => {
         setProducts(data.data.products);
         setPagination(data.pagination || { total: 0, pages: 1, page: 1 });
+        setLoading(false);
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch((error) => {
+        if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+          console.error(error);
+          setLoading(false);
+        }
+      });
+      
+    return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.toString()]);
 

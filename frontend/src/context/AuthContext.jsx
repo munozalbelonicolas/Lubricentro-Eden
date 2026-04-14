@@ -65,6 +65,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tenantId');
+    localStorage.removeItem('lubricentro_cart');
     setUser(null);
     toast.success('Sesión cerrada correctamente.');
     window.location.href = '/login';

@@ -6,6 +6,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import YorChat from './components/chat/YorChat';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // ── Eager load: páginas públicas que deben cargar rápido ──
 import HomePage    from './pages/HomePage';
@@ -61,6 +62,7 @@ const PageLoader = () => (
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Navbar />
       <main>
         <ErrorBoundary>

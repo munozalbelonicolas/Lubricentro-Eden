@@ -1,8 +1,8 @@
 import api from './api';
 
 export const productService = {
-  getAll: async (params = {}) => {
-    const { data } = await api.get('/products', { params });
+  getAll: async (params = {}, options = {}) => {
+    const { data } = await api.get('/products', { params, ...options });
     return data;
   },
 

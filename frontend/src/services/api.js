@@ -25,6 +25,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Mutex y Cola para concurrencia de Refrescos de Token
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
+
 // ── Response interceptor: manejo global de errores y refresh token ──
 api.interceptors.response.use(
   (response) => response,
@@ -40,20 +52,38 @@ api.interceptors.response.use(
       );
 
       if (refreshToken && !isAuthRoute) {
+        if (isRefreshing) {
+          return new Promise(function(resolve, reject) {
+            failedQueue.push({ resolve, reject });
+          }).then(token => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          }).catch(err => {
+            return Promise.reject(err);
+          });
+        }
+
         originalRequest._retry = true;
+        isRefreshing = true;
+
         try {
+          // Desactivar temporalmente los interceptors globales usando axios directo
           const { data } = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
           const newToken = data.token;
           
           localStorage.setItem('token', newToken);
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           
+          processQueue(null, newToken);
           return api(originalRequest);
         } catch (refreshError) {
+          processQueue(refreshError, null);
           // Si falla el refresh, limpiamos sesión y redirigimos
           localStorage.clear();
           window.location.href = '/login';
           return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       }
     }
