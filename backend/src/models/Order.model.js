@@ -58,6 +58,7 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     orderNumber: {
       type: String,
@@ -78,11 +79,13 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ['pending', 'confirmed', 'processing', 'shipped', 'ready_pickup', 'delivered', 'cancelled'],
       default: 'pending',
+      index: true,
     },
     paymentStatus: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'refunded', 'in_process'],
       default: 'pending',
+      index: true,
     },
     paymentId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -100,12 +103,13 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Generar número de orden único antes de guardar
+// Generar número de orden único antes de guardar usando entropía criptográfica
 orderSchema.pre('save', async function (next) {
   if (!this.orderNumber) {
+    const crypto = require('crypto');
     const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).slice(2, 6).toUpperCase();
-    this.orderNumber = `ORD-${timestamp}-${random}`;
+    const entropy = crypto.randomBytes(3).toString('hex').toUpperCase();
+    this.orderNumber = `ORD-${timestamp}-${entropy}`;
   }
   next();
 });

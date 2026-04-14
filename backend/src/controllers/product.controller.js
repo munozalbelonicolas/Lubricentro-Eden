@@ -208,6 +208,20 @@ const deleteProductImage = catchAsync(async (req, res, next) => {
     return next(new AppError('Índice de imagen inválido.', 400));
   }
 
+  const imagePath = product.images[index];
+  if (imagePath) {
+    const fs = require('fs');
+    const path = require('path');
+    const physicalPath = path.join(__dirname, '../../', imagePath);
+    try {
+      if (fs.existsSync(physicalPath)) {
+        fs.unlinkSync(physicalPath);
+      }
+    } catch (err) {
+      console.error('Error al eliminar archivo fisico:', err);
+    }
+  }
+
   product.images.splice(index, 1);
   await product.save();
   sendSuccess(res, { product });

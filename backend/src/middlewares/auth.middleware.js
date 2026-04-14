@@ -28,10 +28,13 @@ const protect = catchAsync(async (req, res, next) => {
     return next(new AppError('Token inválido o expirado. Inicia sesión nuevamente.', 401));
   }
 
-  // 3. Verificar que el usuario sigue existiendo
+  // 3. Verificar que el usuario sigue existiendo y está activo
   const user = await User.findById(decoded.id);
   if (!user) {
     return next(new AppError('El usuario del token ya no existe.', 401));
+  }
+  if (!user.isActive) {
+    return next(new AppError('Tu cuenta ha sido desactivada o suspendida. Acceso denegado.', 403));
   }
 
   // 4. Verificar que la contraseña no fue cambiada después del token

@@ -123,7 +123,7 @@ const getOrders = catchAsync(async (req, res, next) => {
     const matchedUsers = await User.find({ 
       tenantId: req.tenantId, 
       $or: [{ firstName: rx }, { lastName: rx }, { email: rx }] 
-    }).select('_id');
+    }).select('_id').limit(200);
     
     const userIds = matchedUsers.map(u => u._id);
 
