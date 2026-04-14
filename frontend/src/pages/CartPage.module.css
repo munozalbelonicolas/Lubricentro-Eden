@@ -145,6 +145,38 @@
   .summaryCard { position: static; }
 }
 @media (max-width: 560px) {
-  .item { flex-wrap: wrap; }
-  .itemPrice { text-align: left; }
+  .item {
+    display: grid;
+    grid-template-areas:
+      "img info remove"
+      "img qty price";
+    grid-template-columns: 64px 1fr auto;
+    gap: 0.75rem 1rem;
+    padding: 0.85rem;
+  }
+  .itemImg {
+    grid-area: img;
+    width: 64px;
+    height: 64px;
+  }
+  .itemInfo {
+    grid-area: info;
+  }
+  .itemQty {
+    grid-area: qty;
+    width: max-content;
+  }
+  .itemPrice {
+    grid-area: price;
+    text-align: right;
+    align-self: center;
+    min-width: auto;
+    font-size: 1rem;
+  }
+  .removeBtn {
+    grid-area: remove;
+    align-self: flex-start;
+    justify-self: flex-end;
+    padding: 0.25rem;
+  }
 }
