@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     document: {
       type: String,
       required: [true, 'El documento es obligatorio.'],
-      match: [/^\d+$/, 'El documento debe ser solo numérico.'],
+      match: [/^[A-Za-z0-9]+$/, 'El documento debe ser alfanumérico.'],
     },
     birthDate: {
       type: Date,

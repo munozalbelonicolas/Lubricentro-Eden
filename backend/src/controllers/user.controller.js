@@ -134,10 +134,11 @@ exports.updateUser = catchAsync(async (req, res, next) => {
  * Borrado físico (Definitivo)
  */
 exports.deleteUser = catchAsync(async (req, res, next) => {
-  const user = await User.findOneAndDelete({ 
-    _id: req.params.id, 
-    tenantId: req.user.tenantId 
-  });
+  const user = await User.findOneAndUpdate(
+    { _id: req.params.id, tenantId: req.user.tenantId },
+    { isActive: false },
+    { new: true }
+  );
 
   if (!user) {
     return next(new AppError('Usuario no encontrado.', 404));

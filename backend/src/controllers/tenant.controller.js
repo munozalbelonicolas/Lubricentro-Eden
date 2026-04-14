@@ -31,9 +31,16 @@ const updateMyTenant = catchAsync(async (req, res, next) => {
   const updates = {};
   if (name) updates.name = name;
   if (config) {
-    // Merge de config (no reemplazar todo)
-    const current = (await Tenant.findById(req.tenantId)).config.toObject();
-    updates.config = { ...current, ...config };
+    const tenant = await Tenant.findById(req.tenantId);
+    const current = tenant.config ? tenant.config.toObject() : {};
+    
+    // Deep merge for colors and layout to avoid wiping themes when only uploading logo
+    updates.config = {
+      ...current,
+      ...config,
+      colors: { ...(current.colors || {}), ...(config.colors || {}) },
+      layout: { ...(current.layout || {}), ...(config.layout || {}) }
+    };
   }
 
   const tenant = await Tenant.findByIdAndUpdate(req.tenantId, updates, {
