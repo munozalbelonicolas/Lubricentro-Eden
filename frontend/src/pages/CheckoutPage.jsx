@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { orderService, paymentService } from '../services/index';
 import { formatPrice, getImageUrl } from '../utils/formatters';
+import SEOHead from '../components/seo/SEOHead';
 import toast from 'react-hot-toast';
 import {
   FiMapPin, FiPhone, FiCreditCard, FiShield,
@@ -143,9 +144,9 @@ export default function CheckoutPage() {
 
   return (
     <div className="page">
+      <SEOHead title="Finalizar Compra" noindex />
       <div className="container">
         <h1 className="section-title" style={{ marginBottom: '2rem' }}>Finalizar Compra</h1>
-
         <form onSubmit={handleSubmit} className={styles.layout}>
           <div className={styles.formSection}>
 

@@ -33,6 +33,13 @@ const generateSitemap = async () => {
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <url>
+    <loc>${SITE_URL}/presupuesto</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 `;
 
     // Entradas para cada producto (Slugs)

@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
@@ -13,6 +14,7 @@ const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'dummy-client-id
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
+    <HelmetProvider>
     <GoogleOAuthProvider clientId={googleClientId}>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
       <TenantProvider>
@@ -40,5 +42,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       </TenantProvider>
       </BrowserRouter>
     </GoogleOAuthProvider>
+    </HelmetProvider>
   </React.StrictMode>
 );

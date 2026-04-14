@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { productService } from '../services/product.service';
 import { formatPrice } from '../utils/formatters';
 import { FiArrowRight, FiArrowLeft, FiDownload, FiCheckCircle } from 'react-icons/fi';
+import SEOHead from '../components/seo/SEOHead';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import toast from 'react-hot-toast';
@@ -136,6 +137,11 @@ export default function BudgetPage() {
 
   return (
     <div className="page">
+      <SEOHead
+        title="Generador de Presupuestos"
+        description="Armá un presupuesto profesional para el service de tu vehículo. Seleccioná aceite, filtros y calculá el costo total al instante."
+        canonical="/presupuesto"
+      />
       <div className="container" style={{ maxWidth: '800px' }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <h1 className="section-title">Generador de Presupuestos</h1>

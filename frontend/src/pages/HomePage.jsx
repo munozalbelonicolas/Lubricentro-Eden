@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { productService } from '../services/product.service';
 import { useTenant } from '../hooks/useTenant';
 import ProductCard from '../components/products/ProductCard';
+import SEOHead from '../components/seo/SEOHead';
 import { formatPrice, getImageUrl, categoryLabel } from '../utils/formatters';
 import { FiArrowRight, FiShield, FiTruck, FiStar, FiZap } from 'react-icons/fi';
 import styles from './HomePage.module.css';
@@ -22,6 +23,19 @@ const FEATURES = [
   { icon: <FiStar   size={24} />, title: 'Calidad Garantizada',  desc: 'Asesoramiento técnico especializado.' },
   { icon: <FiZap    size={24} />, title: 'Mejor Precio',         desc: 'Precios competitivos en todo el catálogo.' },
 ];
+
+const LOCAL_BUSINESS_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": "AutoPartsStore",
+  "name": "Lubricentro Eden",
+  "url": "https://lubricentro-eden.com.ar",
+  "logo": "https://lubricentro-eden.com.ar/logos/Logo-Eden.png",
+  "image": "https://lubricentro-eden.com.ar/aceite-premium.jpg",
+  "description": "Lubricentro especializado en aceites sintéticos, filtros, aditivos y repuestos automotor de las mejores marcas. Envío a todo el país.",
+  "sameAs": [
+    "https://www.instagram.com/lubricentroeden/"
+  ],
+};
 
 export default function HomePage() {
   const { tenant }  = useTenant();
@@ -47,6 +61,12 @@ export default function HomePage() {
 
   return (
     <div className={styles.home}>
+      <SEOHead
+        title="Aceites, Filtros y Repuestos Automotor Online"
+        description="Lubricentro Eden: tu tienda online de aceites sintéticos, filtros, aditivos y repuestos automotor de las mejores marcas. Envío rápido a todo el país. Los mejores precios."
+        canonical="/"
+        jsonLd={LOCAL_BUSINESS_JSONLD}
+      />
       {/* ── HERO ── */}
       <section className={styles.hero} style={{ '--accent': primaryColor }}>
         <div className={styles.heroBg}>

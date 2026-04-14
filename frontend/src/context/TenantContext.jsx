@@ -49,10 +49,7 @@ export function TenantProvider({ children }) {
       console.error('Error updating favicon:', err);
     }
 
-    // 🏷️ Título del documento
-    if (name) {
-      document.title = `${name} — Lubricentro Pro`;
-    }
+    // 🏷️ Título del documento — ahora manejado por react-helmet-async en cada página
   };
 
   useEffect(() => {

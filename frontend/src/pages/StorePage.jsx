@@ -4,6 +4,7 @@ import { productService } from '../services/product.service';
 import { useTenant } from '../hooks/useTenant';
 import ProductCard from '../components/products/ProductCard';
 import ProductFilters from '../components/products/ProductFilters';
+import SEOHead from '../components/seo/SEOHead';
 import { FiChevronLeft, FiChevronRight, FiGrid, FiList } from 'react-icons/fi';
 import { categoryLabel } from '../utils/formatters';
 import styles from './StorePage.module.css';
@@ -50,12 +51,22 @@ export default function StorePage() {
       .catch(console.error);
   }, []);
 
-  const pageTitle = params.get('category')
-    ? `${categoryLabel[params.get('category')] || ''} — Catálogo`
+  const activeCategory = params.get('category');
+  const pageTitle = activeCategory
+    ? `${categoryLabel[activeCategory] || ''} — Catálogo`
     : 'Catálogo Completo';
+
+  const seoDescription = activeCategory
+    ? `Comprá ${(categoryLabel[activeCategory] || activeCategory).toLowerCase()} automotor online en Lubricentro Eden. Las mejores marcas al mejor precio con envío a todo el país.`
+    : 'Explorá nuestro catálogo completo de aceites, filtros, aditivos y repuestos automotor. Las mejores marcas al mejor precio.';
 
   return (
     <div className="page">
+      <SEOHead
+        title={pageTitle}
+        description={seoDescription}
+        canonical="/store"
+      />
       <div className="container">
         {/* Header */}
         <div className={styles.pageHeader}>

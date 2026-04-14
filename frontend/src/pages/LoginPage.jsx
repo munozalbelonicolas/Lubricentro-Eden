@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTenant } from '../hooks/useTenant';
 import { GoogleLogin } from '@react-oauth/google';
+import SEOHead from '../components/seo/SEOHead';
 import toast from 'react-hot-toast';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { getImageUrl } from '../utils/formatters';
@@ -56,6 +57,7 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <SEOHead title="Iniciar Sesión" noindex />
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logo}>

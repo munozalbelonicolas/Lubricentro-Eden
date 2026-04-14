@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { orderService } from '../services/index';
 import { formatPrice, formatDate, orderStatusLabel, paymentStatusLabel } from '../utils/formatters';
+import SEOHead from '../components/seo/SEOHead';
 import { FiPackage, FiChevronRight } from 'react-icons/fi';
 import styles from './OrdersPage.module.css';
 
@@ -22,6 +23,7 @@ export default function OrdersPage() {
 
   return (
     <div className="page">
+      <SEOHead title="Mis Pedidos" noindex />
       <div className="container">
         <h1 className="section-title" style={{ marginBottom: '2rem' }}>Mis Pedidos</h1>
 

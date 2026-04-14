@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { formatPrice, getImageUrl } from '../utils/formatters';
+import SEOHead from '../components/seo/SEOHead';
 import { FiTrash2, FiMinus, FiPlus, FiShoppingBag, FiArrowLeft, FiTool } from 'react-icons/fi';
 import styles from './CartPage.module.css';
 
@@ -18,6 +19,7 @@ export default function CartPage() {
   if (isEmpty) {
     return (
       <div className="page">
+        <SEOHead title="Carrito" noindex />
         <div className="container">
           <div className={styles.empty}>
             <FiShoppingBag size={64} className={styles.emptyIcon} />
@@ -34,6 +36,7 @@ export default function CartPage() {
 
   return (
     <div className="page">
+      <SEOHead title="Mi Carrito" noindex />
       <div className="container">
         <div className={styles.header}>
           <div>

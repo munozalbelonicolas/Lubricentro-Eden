@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTenant } from '../hooks/useTenant';
 import { GoogleLogin } from '@react-oauth/google';
+import SEOHead from '../components/seo/SEOHead';
 import toast from 'react-hot-toast';
 import { 
   FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiMapPin, 
@@ -136,6 +137,7 @@ export default function RegisterPage() {
 
   return (
     <div className={styles.page}>
+      <SEOHead title="Crear Cuenta" noindex />
       <div className={`${styles.card} ${styles.cardWide}`} style={{ maxWidth: '800px' }}>
         <div className={styles.header}>
           <div className={styles.logo}>

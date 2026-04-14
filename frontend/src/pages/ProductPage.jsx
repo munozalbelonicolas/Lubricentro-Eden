@@ -3,8 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../services/product.service';
 import { useCart } from '../hooks/useCart';
 import { formatPrice, getImageUrl, categoryLabel } from '../utils/formatters';
+import SEOHead from '../components/seo/SEOHead';
 import { FiShoppingCart, FiArrowLeft, FiTag, FiPackage, FiDroplet } from 'react-icons/fi';
 import styles from './ProductPage.module.css';
+
+const SITE_URL = 'https://lubricentro-eden.com.ar';
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -32,6 +35,42 @@ export default function ProductPage() {
 
   const isOutOfStock = product.stock === 0;
   const images = product.images?.length > 0 ? product.images : [null];
+  const canonicalUrl = `/store/${product.slug}`;
+  const productImageUrl = product.images?.[0] ? getImageUrl(product.images[0]) : `${SITE_URL}/aceite-premium.jpg`;
+
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "description": product.description || `${product.name} — producto automotor de calidad`,
+    "image": product.images?.map(img => getImageUrl(img)) || [],
+    "sku": product.sku || undefined,
+    "brand": product.brand ? { "@type": "Brand", "name": product.brand } : undefined,
+    "offers": {
+      "@type": "Offer",
+      "price": product.price,
+      "priceCurrency": "ARS",
+      "availability": product.stock > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      "url": `${SITE_URL}${canonicalUrl}`,
+      "seller": { "@type": "Organization", "name": "Lubricentro Eden" },
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Inicio", "item": SITE_URL },
+      { "@type": "ListItem", "position": 2, "name": "Catálogo", "item": `${SITE_URL}/store` },
+      { "@type": "ListItem", "position": 3, "name": product.name, "item": `${SITE_URL}${canonicalUrl}` },
+    ],
+  };
+
+  const seoDescription = product.description
+    ? product.description.substring(0, 155)
+    : `Comprá ${product.name}${product.brand ? ` ${product.brand}` : ''} al mejor precio en Lubricentro Eden. Envío rápido a todo el país.`;
 
   const handleAdd = () => {
     addItem(product, qty);
@@ -39,6 +78,14 @@ export default function ProductPage() {
 
   return (
     <div className="page">
+      <SEOHead
+        title={product.name}
+        description={seoDescription}
+        canonical={canonicalUrl}
+        image={productImageUrl}
+        type="product"
+        jsonLd={[productJsonLd, breadcrumbJsonLd]}
+      />
       <div className="container">
         <Link to="/store" className={styles.backLink}>
           <FiArrowLeft size={16} /> Volver al catálogo
