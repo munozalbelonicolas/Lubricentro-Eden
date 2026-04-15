@@ -1,7 +1,6 @@
-'use strict';
-
 const asyncHandler = require('express-async-handler');
 const { calcularEnvio } = require('../services/andreani.service');
+const Tenant = require('../models/Tenant.model');
 const AppError = require('../utils/AppError');
 
 /**
@@ -32,6 +31,9 @@ exports.quote = asyncHandler(async (req, res) => {
     throw new AppError('Código postal inválido. Ingresá un CP de 4 a 8 dígitos.', 400);
   }
 
+  const tenant = await Tenant.findById(req.tenantId);
+  const { freeShippingThreshold, freeShippingEnabled } = tenant?.config || {};
+
   const result = await calcularEnvio({
     cpDestino: String(cpDestino).trim(),
     pesoGramos:     Number(pesoGramos),
@@ -39,6 +41,11 @@ exports.quote = asyncHandler(async (req, res) => {
     anchoCm:        Number(anchoCm),
     altoCm:         Number(altoCm),
     valorDeclarado: Number(valorDeclarado),
+    // Configuración dinámica desde DB
+    config: {
+      freeShippingThreshold: freeShippingThreshold ?? parseInt(process.env.FREE_SHIPPING_THRESHOLD || '70000', 10),
+      freeShippingEnabled:   freeShippingEnabled   ?? true
+    }
   });
 
   res.json({ ok: true, data: result });

@@ -88,15 +88,28 @@ const getTenantUsers = catchAsync(async (req, res, next) => {
  * Info pública de una tienda (para landing page pública).
  */
 const getPublicTenant = catchAsync(async (req, res, next) => {
-  const tenant = await Tenant.findOne({ slug: req.params.slug, isActive: true }).select(
-    'name slug config plan'
-  );
-  if (!tenant) return next(new AppError('Tienda no encontrada.', 404));
+  // En modo NO MULTI-TENANT, si el slug es 'me' o no viene, usamos el tenant detectado por el middleware
+  const identifier = req.params.slug;
+  let tenant;
 
-  // Dejar que el frontend maneje la construcción de la URL
+  if (identifier && identifier !== 'me') {
+    tenant = await Tenant.findOne({ slug: identifier, isActive: true });
+  } else {
+    // Si no hay slug o es 'me', usamos el que encontró el middleware (el primero/único)
+    tenant = await Tenant.findById(req.tenantId);
+  }
 
+  if (!tenant || !tenant.isActive) return next(new AppError('Tienda no encontrada.', 404));
 
-  sendSuccess(res, { tenant });
+  sendSuccess(res, { 
+    tenant: {
+      _id: tenant._id,
+      name: tenant.name,
+      slug: tenant.slug,
+      config: tenant.config,
+      plan: tenant.plan
+    }
+  });
 });
 
 module.exports = { getMyTenant, updateMyTenant, uploadLogo, getTenantUsers, getPublicTenant };

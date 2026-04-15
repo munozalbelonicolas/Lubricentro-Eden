@@ -10,7 +10,8 @@ const tenantMiddleware = require('../middlewares/tenant.middleware');
 const upload = require('../config/multer');
 
 // Ruta pública: info de tienda por slug
-router.get('/public/:slug', getPublicTenant);
+// tenantMiddleware resuelve el único tenant si no hay slug o se envía 'me'
+router.get('/public/:slug', tenantMiddleware, getPublicTenant);
 
 // Rutas protegidas (requieren tenant + auth)
 router.use(tenantMiddleware, protect, restrictTo('admin'));

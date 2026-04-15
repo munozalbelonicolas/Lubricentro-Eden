@@ -144,7 +144,8 @@ async function buscarSucursales(cpDestino) {
  *
  * @returns {object} { shipping, pickup, freeThreshold, source }
  */
-async function calcularEnvio({ cpDestino, pesoGramos = 1000, largoCm = 20, anchoCm = 15, altoCm = 10, valorDeclarado = 0 }) {
+async function calcularEnvio({ cpDestino, pesoGramos = 1000, largoCm = 20, anchoCm = 15, altoCm = 10, valorDeclarado = 0, config = {} }) {
+  const { freeShippingThreshold = 70000, freeShippingEnabled = true } = config;
   const useRealApi = Boolean(ANDREANI_USER && ANDREANI_PASS && ANDREANI_CONTRACT);
   let shippingResult = null;
   let pickupResult   = null;
@@ -214,8 +215,8 @@ async function calcularEnvio({ cpDestino, pesoGramos = 1000, largoCm = 20, ancho
     source = 'fallback';
   }
 
-  // Aplicar envío gratis si supera el umbral
-  const isFreeShipping = valorDeclarado >= FREE_SHIPPING_THRESHOLD;
+  // Aplicar envío gratis si supera el umbral y está habilitado
+  const isFreeShipping = freeShippingEnabled && valorDeclarado >= freeShippingThreshold;
   if (isFreeShipping) {
     shippingResult.precio = 0;
   }
@@ -224,8 +225,9 @@ async function calcularEnvio({ cpDestino, pesoGramos = 1000, largoCm = 20, ancho
     shipping: shippingResult,
     pickup:   pickupResult,
     sucursales: sucursales.slice(0, 3), // máximo 3 sucursales
-    freeThreshold: FREE_SHIPPING_THRESHOLD,
+    freeThreshold: freeShippingThreshold,
     isFreeShipping,
+    freeShippingEnabled,
     source,
   };
 }

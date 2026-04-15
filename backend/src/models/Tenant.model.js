@@ -17,6 +17,16 @@ const tenantConfigSchema = new mongoose.Schema(
       whatsapp: { type: String, default: '' },
     },
     businessHours: { type: String, default: '' },
+    // ── Configuración de envío ──────────────────────────
+    freeShippingThreshold: {
+      type: Number,
+      default: 70000,
+      min: 0,
+    },
+    freeShippingEnabled: {
+      type: Boolean,
+      default: true,
+    },
   },
   { _id: false }
 );

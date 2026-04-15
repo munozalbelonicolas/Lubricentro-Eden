@@ -11,6 +11,7 @@ export default function TenantConfig() {
     name: '', address: '', phone: '', email: '', description: '',
     businessHours: '', instagram: '', facebook: '', whatsapp: '',
     primaryColor: '#CB1A20', secondaryColor: '#0D0D0D',
+    freeShippingThreshold: 70000, freeShippingEnabled: true,
   });
   const [saving, setSaving] = useState(false);
   const fileRef = useRef();
@@ -30,6 +31,8 @@ export default function TenantConfig() {
         whatsapp:      cfg.socialLinks?.whatsapp || '',
         primaryColor:  cfg.primaryColor || '#CB1A20',
         secondaryColor:cfg.secondaryColor || '#0D0D0D',
+        freeShippingThreshold: cfg.freeShippingThreshold ?? 70000,
+        freeShippingEnabled:   cfg.freeShippingEnabled   ?? true,
       });
     }
   }, [tenant]);
@@ -55,6 +58,8 @@ export default function TenantConfig() {
             facebook:  form.facebook,
             whatsapp:  form.whatsapp,
           },
+          freeShippingThreshold: Number(form.freeShippingThreshold),
+          freeShippingEnabled:   form.freeShippingEnabled,
         },
       });
       await refreshTenant();
@@ -164,6 +169,42 @@ export default function TenantConfig() {
                     onChange={(e) => setForm((f) => ({ ...f, secondaryColor: e.target.value }))} />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Configuración de Envío */}
+          <div className="card">
+            <p className={styles.sectionTitle}>🚚 Configuración de Envío</p>
+            <div className={styles.grid}>
+              <div className="input-group">
+                <label className="input-label">Monto mínimo para Envío Gratis</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: 'var(--color-text-3)' }}>$</span>
+                  <input
+                    className="input"
+                    type="number"
+                    name="freeShippingThreshold"
+                    value={form.freeShippingThreshold}
+                    onChange={handleChange}
+                    min="0"
+                    disabled={!form.freeShippingEnabled}
+                  />
+                </div>
+              </div>
+              <div className="input-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '1.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.freeShippingEnabled}
+                    onChange={(e) => setForm(f => ({ ...f, freeShippingEnabled: e.target.checked }))}
+                    style={{ width: '20px', height: '20px', accentColor: 'var(--color-primary)' }}
+                  />
+                  <span style={{ fontWeight: 500 }}>Habilitar promoción de Envío Gratis</span>
+                </label>
+              </div>
+              <p style={{ gridColumn: '1 / -1', fontSize: '0.8rem', color: 'var(--color-text-3)', fontStyle: 'italic' }}>
+                Si está habilitado, los pedidos que superen este monto tendrán costo de envío $0.
+              </p>
             </div>
           </div>
 

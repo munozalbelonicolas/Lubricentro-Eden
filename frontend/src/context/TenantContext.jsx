@@ -53,9 +53,9 @@ export function TenantProvider({ children }) {
   };
 
   useEffect(() => {
-    const tenantId = localStorage.getItem('tenantId') || import.meta.env.VITE_TENANT_ID;
-    if (!tenantId) { setLoading(false); return; }
-
+    const tenantId = localStorage.getItem('tenantId') || import.meta.env.VITE_TENANT_ID || 'me';
+    // No retornamos early; si es 'me', el backend elegirá el único tenant disponible (modo no multi-tenant)
+    
     // 1. Detectar si hay sesión para elegir endpoint
     const token = localStorage.getItem('token');
     

@@ -14,20 +14,20 @@ const tenantMiddleware = catchAsync(async (req, res, next) => {
   const tenantHeader = req.headers['x-tenant-id'];
   const defaultTenantId = process.env.VITE_TENANT_ID;
 
-  if (!tenantHeader && !defaultTenantId) {
-    return next();
-  }
-
   let tenant;
   const identifier = tenantHeader || defaultTenantId;
 
-  // Buscar por ObjectId o slug
-  if (identifier.match(/^[a-f\d]{24}$/i)) {
-    tenant = await Tenant.findById(identifier);
+  if (identifier) {
+    // Buscar por ObjectId o slug
+    if (identifier.match(/^[a-f\d]{24}$/i)) {
+      tenant = await Tenant.findById(identifier);
+    } else {
+      tenant = await Tenant.findOne({ slug: identifier.toLowerCase() });
+    }
   } else {
-    tenant = await Tenant.findOne({ slug: identifier.toLowerCase() });
+    // [NO MULTI-TENANT] Si no hay identificador, tomamos el único/primer tenant
+    tenant = await Tenant.findOne().sort({ createdAt: 1 });
   }
-
 
   if (!tenant) {
     return next(new AppError('Tienda no encontrada o inactiva.', 404));
