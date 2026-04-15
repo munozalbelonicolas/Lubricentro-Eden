@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useParams } from 'react-router-dom';
 import { productService } from '../services/product.service';
 import { useTenant } from '../hooks/useTenant';
 import ProductCard from '../components/products/ProductCard';
@@ -11,20 +11,24 @@ import styles from './StorePage.module.css';
 
 const ITEMS_PER_PAGE = 20;
 
-export default function StorePage() {
+export default function StorePage({ isFeaturedRoute }) {
   const { tenant }        = useTenant();
   const [params]          = useSearchParams();
+  const { categoryId }    = useParams();
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, pages: 1, page: 1 });
   const [brands, setBrands]     = useState([]);
   const [loading, setLoading]   = useState(true);
   const [view, setView]         = useState('grid');
 
+  const activeCategory = categoryId || params.get('category');
+
   // Leer todos los filtros de los search params
   const currentPage = parseInt(params.get('page') || '1', 10);
   const filters = {
     search:    params.get('search') || undefined,
-    category:  params.get('category') || undefined,
+    category:  activeCategory || undefined,
+    featured:  isFeaturedRoute ? true : (params.get('featured') === 'true' || undefined),
     brand:     params.get('brand') || undefined,
     viscosity: params.get('viscosity') || undefined,
     minPrice:  params.get('minPrice') || undefined,
@@ -60,7 +64,6 @@ export default function StorePage() {
       .catch(console.error);
   }, []);
 
-  const activeCategory = params.get('category');
   const pageTitle = activeCategory
     ? `${categoryLabel[activeCategory] || ''} — Catálogo`
     : 'Catálogo Completo';
@@ -74,7 +77,7 @@ export default function StorePage() {
       <SEOHead
         title={pageTitle}
         description={seoDescription}
-        canonical="/store"
+        canonical={categoryId ? `/store/categoria/${categoryId}` : (isFeaturedRoute ? `/store/destacados` : `/store`)}
       />
       <div className="container">
         {/* Header */}

@@ -71,6 +71,8 @@ export default function App() {
               {/* Públicas */}
               <Route path="/"            element={<HomePage />} />
               <Route path="/store"       element={<StorePage />} />
+              <Route path="/store/categoria/:categoryId" element={<StorePage />} />
+              <Route path="/store/destacados" element={<StorePage isFeaturedRoute={true} />} />
               <Route path="/store/:slug" element={<ProductPage />} />
               <Route path="/login"       element={<LoginPage />} />
               <Route path="/register"    element={<RegisterPage />} />

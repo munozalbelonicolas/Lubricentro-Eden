@@ -70,8 +70,8 @@ export default function HomePage() {
   return (
     <div className={styles.home}>
       <SEOHead
-        title="Aceites, Filtros y Repuestos Automotor Online"
-        description="Lubricentro Eden: tu tienda online de aceites sintéticos, filtros, aditivos y repuestos automotor de las mejores marcas. Envío rápido a todo el país. Los mejores precios."
+        title="Aceites, filtros y repuestos automotor"
+        description="Descubrí Lubricentro Eden, tu tienda online especializada en aceites sintéticos, filtros, aditivos y repuestos automotor. Las mejores marcas y envíos rápidos a todo el país."
         canonical="/"
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
@@ -86,7 +86,7 @@ export default function HomePage() {
             <span className={styles.heroBadge}>🔧 Especialistas en Lubricación</span>
             <h1 className={styles.heroTitle}>
               {heroTitle}
-              <span className={styles.heroAccent}> — Calidad<br />que se siente</span>
+              <span className={styles.heroAccent}> — Aceites, filtros y<br />repuestos automotor</span>
             </h1>
             <p className={styles.heroDesc}>
               {tenant?.config?.description ||
@@ -96,14 +96,14 @@ export default function HomePage() {
               <Link to="/store" className="btn btn-primary btn-lg">
                 Ver Catálogo <FiArrowRight size={18} />
               </Link>
-              <Link to="/store?category=aceite" className="btn btn-outline btn-lg">
+              <Link to="/store/categoria/aceite" className="btn btn-outline btn-lg">
                 🛢️ Aceites
               </Link>
             </div>
           </div>
           <div className={styles.heroVisual}>
             <div className={styles.heroCard}>
-              <img src="/aceite-premium.jpg" alt="Aceites Premium Sintéticos" className={styles.heroCardImg} />
+              <img src="/aceite-premium.jpg" alt="Aceites Premium Sintéticos" className={styles.heroCardImg} fetchpriority="high" />
               <div className={styles.heroCardInner}>
                 <p className={styles.heroCardTitle}>Aceites Premium</p>
                 <p className={styles.heroCardSub}>Sintéticos y semi-sintéticos</p>
@@ -120,7 +120,7 @@ export default function HomePage() {
           <p className={styles.sectionSub}>Todo lo que necesitás para tu vehículo, en un solo lugar.</p>
           <div className={styles.categoryGrid}>
             {CATEGORIES.map(({ key, icon, label, desc }) => (
-              <Link key={key} to={`/store?category=${key}`} className={styles.categoryCard}>
+              <Link key={key} to={`/store/categoria/${key}`} className={styles.categoryCard}>
                 <span className={styles.categoryIcon}>{icon}</span>
                 <p className={styles.categoryName}>{label}</p>
                 <p className={styles.categoryDesc}>{desc}</p>
@@ -139,7 +139,7 @@ export default function HomePage() {
                 <h2 className="section-title">Productos Destacados</h2>
                 <p className={styles.sectionSub}>Seleccionados por nuestros expertos.</p>
               </div>
-              <Link to="/store?featured=true" className="btn btn-outline btn-sm">
+              <Link to="/store/destacados" className="btn btn-outline btn-sm">
                 Ver todos <FiArrowRight size={14} />
               </Link>
             </div>
