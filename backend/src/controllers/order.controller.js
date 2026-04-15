@@ -12,7 +12,7 @@ const { sendSuccess } = require('../utils/apiResponse');
  * Crear nueva orden desde el carrito.
  */
 const createOrder = catchAsync(async (req, res, next) => {
-  const { items, shipping, notes, deliveryType, workshopAppointment } = req.body;
+  const { items, shipping, notes, deliveryType, workshopAppointment, shippingCost: shippingCostReq, shippingType } = req.body;
 
   if (!items || items.length === 0) {
     return next(new AppError('La orden debe contener al menos un producto.', 400));
@@ -76,7 +76,8 @@ const createOrder = catchAsync(async (req, res, next) => {
     subtotal += product.price * item.quantity;
   }
 
-  const shippingCost = 0;
+  // Usar el costo de envío calculado en el frontend (validado en el checkout)
+  const shippingCost = (deliveryType === 'shipping' && shippingCostReq > 0) ? Number(shippingCostReq) : 0;
   const total = subtotal + shippingCost;
 
   // ⚠️  NO se descuenta stock aquí.
@@ -235,4 +236,35 @@ const getOrderStats = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports = { createOrder, getOrders, getOrder, updateOrderStatus, getOrderStats };
+/**
+ * PATCH /api/orders/:id/tracking  (admin)
+ * Guarda el número de seguimiento y el carrier del envío.
+ */
+const updateTracking = catchAsync(async (req, res, next) => {
+  const { trackingNumber, trackingCarrier, shippingStatus } = req.body;
+
+  const validCarriers = ['andreani', 'enviopack', 'correoarg', 'oca', 'otro', ''];
+  const validStatuses = ['preparing', 'dispatched', 'in_transit', 'delivered', ''];
+
+  if (trackingCarrier && !validCarriers.includes(trackingCarrier)) {
+    return next(new AppError('Carrier inválido.', 400));
+  }
+  if (shippingStatus && !validStatuses.includes(shippingStatus)) {
+    return next(new AppError('Estado de envío inválido.', 400));
+  }
+
+  const order = await Order.findOneAndUpdate(
+    { _id: req.params.id, tenantId: req.tenantId },
+    {
+      ...(trackingNumber  !== undefined && { trackingNumber:  String(trackingNumber).trim() }),
+      ...(trackingCarrier !== undefined && { trackingCarrier }),
+      ...(shippingStatus  !== undefined && { shippingStatus }),
+    },
+    { new: true }
+  );
+
+  if (!order) return next(new AppError('Orden no encontrada.', 404));
+  sendSuccess(res, { order });
+});
+
+module.exports = { createOrder, getOrders, getOrder, updateOrderStatus, getOrderStats, updateTracking };

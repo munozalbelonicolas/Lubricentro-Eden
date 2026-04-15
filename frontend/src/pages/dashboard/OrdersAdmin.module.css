@@ -3,3 +3,45 @@
 .searchBar { position: relative; flex: 1; min-width: 200px; }
 .searchIcon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-3); }
 .searchInput { padding-left: 2.5rem; }
+
+/* ── Panel de tracking inline ── */
+.trackingPanel {
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.trackingPanelTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--color-info);
+  margin-bottom: 0.85rem;
+}
+
+.trackingPanelForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.trackingPanelActions {
+  display: flex;
+  gap: 0.4rem;
+  padding-bottom: 0.05rem;
+}
+
+@media (max-width: 900px) {
+  .trackingPanelForm {
+    grid-template-columns: 1fr 1fr;
+  }
+  .trackingPanelActions {
+    grid-column: 1 / -1;
+  }
+}

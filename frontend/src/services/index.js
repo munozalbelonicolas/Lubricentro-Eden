@@ -27,6 +27,11 @@ export const orderService = {
     return data;
   },
 
+  updateTracking: async (id, { trackingNumber, trackingCarrier, shippingStatus }) => {
+    const { data } = await api.patch(`/orders/${id}/tracking`, { trackingNumber, trackingCarrier, shippingStatus });
+    return data;
+  },
+
   getStats: async () => {
     const { data } = await api.get('/orders/stats');
     return data;
@@ -110,5 +115,20 @@ export const taskService = {
     if (filters.endDate) params.append('endDate', filters.endDate);
     const { data } = await api.get(`/tasks/history?${params.toString()}`);
     return data;
+  },
+};
+
+export const shippingService = {
+  /**
+   * Cotiza el costo de envío para un CP destino.
+   * @param {string} cpDestino
+   * @param {number} valorDeclarado - total del carrito
+   * @param {number} [pesoGramos=1000]
+   */
+  quote: async (cpDestino, valorDeclarado, pesoGramos = 1000) => {
+    const { data } = await api.post('/shipping/quote', {
+      cpDestino, valorDeclarado, pesoGramos,
+    });
+    return data.data;
   },
 };

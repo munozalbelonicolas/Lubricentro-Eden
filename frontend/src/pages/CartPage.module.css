@@ -120,6 +120,14 @@
   color: var(--color-text-2);
 }
 .free { color: var(--color-success); font-weight: 500; }
+
+/* Separador del calculador de envío */
+.shippingCalcWrap {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
 .summaryTotal {
   display: flex; justify-content: space-between; align-items: center;
   padding-top: 1rem;

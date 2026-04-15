@@ -26,6 +26,7 @@ const subscriptionRoutes = require('./src/routes/subscription.routes');
 const chatRoutes = require('./src/routes/chatRoutes');
 const taskRoutes = require('./src/routes/task.routes');
 const userRoutes = require('./src/routes/user.routes');
+const shippingRoutes = require('./src/routes/shipping.routes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -143,6 +144,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/shipping', shippingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

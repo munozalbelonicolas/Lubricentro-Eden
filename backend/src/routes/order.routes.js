@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  createOrder, getOrders, getOrder, updateOrderStatus, getOrderStats,
+  createOrder, getOrders, getOrder, updateOrderStatus, getOrderStats, updateTracking,
 } = require('../controllers/order.controller');
 const { protect, restrictTo } = require('../middlewares/auth.middleware');
 const tenantMiddleware = require('../middlewares/tenant.middleware');
@@ -14,6 +14,7 @@ router.get('/stats', restrictTo('admin'), getOrderStats);
 router.get('/', getOrders);
 router.post('/', createOrder);
 router.get('/:id', getOrder);
-router.patch('/:id/status', restrictTo('admin'), updateOrderStatus);
+router.patch('/:id/status',   restrictTo('admin'), updateOrderStatus);
+router.patch('/:id/tracking', restrictTo('admin'), updateTracking);
 
 module.exports = router;

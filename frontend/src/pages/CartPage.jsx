@@ -1,14 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { formatPrice, getImageUrl } from '../utils/formatters';
 import SEOHead from '../components/seo/SEOHead';
+import ShippingCalculator from '../components/common/ShippingCalculator';
 import { FiTrash2, FiMinus, FiPlus, FiShoppingBag, FiArrowLeft, FiTool } from 'react-icons/fi';
 import styles from './CartPage.module.css';
 
 export default function CartPage() {
   const { items, totalPrice, totalItems, isEmpty, removeItem, updateQuantity, clearCart } = useCart();
   const navigate = useNavigate();
+  const [shippingOption, setShippingOption] = useState(null); // { type, cost, days, servicio, cp }
 
   // Detectar si hay aceite + filtro para ofrecer turno de taller
   const canOfferWorkshop = useMemo(() => {
@@ -103,14 +105,35 @@ export default function CartPage() {
                   <span>Subtotal ({totalItems} ítems)</span>
                   <span>{formatPrice(totalPrice)}</span>
                 </div>
-                <div className={styles.summaryRow}>
-                  <span>Envío</span>
-                  <span className={styles.free}>A calcular</span>
-                </div>
+                {shippingOption && (
+                  <div className={styles.summaryRow}>
+                    <span>Envío {shippingOption.type === 'pickup' ? '(Retiro en suc.)' : 'a domicilio'}</span>
+                    <span className={shippingOption.cost === 0 ? styles.free : ''}>
+                      {shippingOption.cost === 0 ? '¡Gratis!' : formatPrice(shippingOption.cost)}
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* ── Calculador de envío Andreani ── */}
+              <div className={styles.shippingCalcWrap}>
+                <ShippingCalculator
+                  totalPrice={totalPrice}
+                  weightGrams={items.reduce((acc, i) => acc + (i.weight || 500) * i.quantity, 0) || 1000}
+                  onSelectOption={(opt) => {
+                    setShippingOption(opt);
+                    // Persistir en sessionStorage para reutilizar en el checkout
+                    sessionStorage.setItem('shippingOption', JSON.stringify(opt));
+                  }}
+                  selectedType={shippingOption?.type}
+                />
+              </div>
+
               <div className={styles.summaryTotal}>
                 <span>Total</span>
-                <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
+                <span className={styles.totalPrice}>
+                  {formatPrice(totalPrice + (shippingOption?.cost || 0))}
+                </span>
               </div>
               {/* Banner de taller cuando hay aceite + filtro */}
               {canOfferWorkshop && (
@@ -141,7 +164,7 @@ export default function CartPage() {
                 onClick={() => navigate('/checkout')}
                 style={{ marginTop: '1rem' }}
               >
-                Proceder al pago
+                {shippingOption ? 'Proceder al pago →' : 'Proceder al pago'}
               </button>
               <Link to="/store" className={styles.continueShopping}>
                 <FiArrowLeft size={14} /> Seguir comprando

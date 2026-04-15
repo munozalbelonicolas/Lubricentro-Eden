@@ -99,6 +99,21 @@ const orderSchema = new mongoose.Schema(
     shipping: { type: shippingSchema, default: () => ({}) },
     workshopAppointment: { type: workshopAppointmentSchema, default: null },
     notes: { type: String, default: '' },
+
+    // ── Seguimiento de envío ──────────────────────────────
+    // El admin (Jorge) carga el número una vez que lo tiene del carrier
+    trackingNumber:  { type: String, default: '' },
+    trackingCarrier: {
+      type: String,
+      enum: ['andreani', 'enviopack', 'correoarg', 'oca', 'otro', ''],
+      default: '',
+    },
+    // Estado del envío independiente del estado de la orden
+    shippingStatus: {
+      type: String,
+      enum: ['preparing', 'dispatched', 'in_transit', 'delivered', ''],
+      default: '',
+    },
   },
   { timestamps: true }
 );

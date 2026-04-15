@@ -4,6 +4,7 @@ import { useCart } from '../hooks/useCart';
 import { orderService, paymentService } from '../services/index';
 import { formatPrice, formatDateTime, orderStatusLabel, paymentStatusLabel, deliveryTypeLabel, getImageUrl } from '../utils/formatters';
 import { FiArrowLeft, FiPackage, FiMapPin, FiClock, FiTool, FiCalendar } from 'react-icons/fi';
+import ShippingTracker from '../components/common/ShippingTracker';
 import styles from './OrderDetailPage.module.css';
 
 export default function OrderDetailPage() {
@@ -118,6 +119,13 @@ export default function OrderDetailPage() {
               <div className="card" style={{ marginTop: '1rem' }}>
                 <p className={styles.sectionTitle}>Notas</p>
                 <p style={{ color: 'var(--color-text-2)', fontSize: '0.9rem' }}>{order.notes}</p>
+              </div>
+            )}
+
+            {/* Seguimiento de envío (solo shipping + pago aprobado) */}
+            {order.deliveryType === 'shipping' && order.paymentStatus === 'approved' && (
+              <div style={{ marginTop: '1rem' }}>
+                <ShippingTracker order={order} />
               </div>
             )}
           </div>

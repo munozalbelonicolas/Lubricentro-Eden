@@ -4,10 +4,11 @@ import { useCart } from '../hooks/useCart';
 import { orderService, paymentService } from '../services/index';
 import { formatPrice, getImageUrl } from '../utils/formatters';
 import SEOHead from '../components/seo/SEOHead';
+import ShippingCalculator from '../components/common/ShippingCalculator';
 import toast from 'react-hot-toast';
 import {
   FiMapPin, FiPhone, FiCreditCard, FiShield,
-  FiTruck, FiPackage, FiTool, FiCalendar, FiClock,
+  FiTruck, FiPackage, FiTool, FiCalendar, FiClock, FiCheckCircle,
 } from 'react-icons/fi';
 import styles from './CheckoutPage.module.css';
 
@@ -30,6 +31,15 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart, removeItem, isEmpty } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // Recuperar opción de envío seleccionada en el carrito (persisted via sessionStorage)
+  const [shippingOption, setShippingOption] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('shippingOption');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [showShippingCalc, setShowShippingCalc] = useState(!shippingOption);
 
   // Tipo de entrega
   const [deliveryType, setDeliveryType] = useState('shipping');
@@ -109,6 +119,8 @@ export default function CheckoutPage() {
         workshopAppointment: deliveryType === 'workshop'
           ? { date: appointment.date, timeSlot: appointment.timeSlot, vehicle: appointment.vehicle }
           : null,
+        shippingCost: shippingOption?.cost ?? 0,
+        shippingType: shippingOption?.type ?? deliveryType,
       };
 
       const orderData = await orderService.create(orderPayload);
@@ -324,9 +336,67 @@ export default function CheckoutPage() {
                 {deliveryType === 'workshop' && !appointment.date && <span>🔧 Cambio en taller</span>}
               </div>
 
+              {/* ── Envio calculado / Andreani ── */}
+              {deliveryType === 'shipping' && (
+                <div className={styles.shippingSection}>
+                  {shippingOption && !showShippingCalc ? (
+                    <div className={styles.shippingSelected}>
+                      <div className={styles.shippingSelectedInfo}>
+                        <FiCheckCircle size={15} style={{ color: 'var(--color-success)', flexShrink: 0 }} />
+                        <div>
+                          <p className={styles.shippingSelectedLabel}>
+                            {shippingOption.type === 'pickup' ? 'Retiro en sucursal' : 'Envío a domicilio'}
+                          </p>
+                          <p className={styles.shippingSelectedMeta}>
+                            CP {shippingOption.cp} • Llega en {shippingOption.days} {shippingOption.days === 1 ? 'día hábil' : 'días hábiles'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={styles.shippingSelectedRight}>
+                        <span className={styles.shippingCost}>
+                          {shippingOption.cost === 0 ? <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>¡Gratis!</span> : formatPrice(shippingOption.cost)}
+                        </span>
+                        <button
+                          type="button"
+                          className={styles.shippingChangeBtn}
+                          onClick={() => setShowShippingCalc(true)}
+                        >
+                          Cambiar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <ShippingCalculator
+                      totalPrice={totalPrice}
+                      weightGrams={items.reduce((acc, i) => acc + (i.weight || 500) * i.quantity, 0) || 1000}
+                      onSelectOption={(opt) => {
+                        setShippingOption(opt);
+                        sessionStorage.setItem('shippingOption', JSON.stringify(opt));
+                        setShowShippingCalc(false);
+                      }}
+                      selectedType={shippingOption?.type}
+                    />
+                  )}
+                </div>
+              )}
+
               <div className={styles.summaryTotal}>
+                <span>Subtotal</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+              {shippingOption && deliveryType === 'shipping' && (
+                <div className={styles.summaryTotal} style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--color-border)' }}>
+                  <span style={{ fontSize: '0.9rem', color: 'var(--color-text-2)' }}>Envío</span>
+                  <span style={{ fontSize: '0.9rem', color: shippingOption.cost === 0 ? 'var(--color-success)' : 'var(--color-text)' }}>
+                    {shippingOption.cost === 0 ? '¡GRATIS!' : formatPrice(shippingOption.cost)}
+                  </span>
+                </div>
+              )}
+              <div className={styles.summaryTotal} style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '2px solid var(--color-border)' }}>
                 <span>Total</span>
-                <span className={styles.totalPrice}>{formatPrice(totalPrice)}</span>
+                <span className={styles.totalPrice}>
+                  {formatPrice(totalPrice + (deliveryType === 'shipping' ? (shippingOption?.cost || 0) : 0))}
+                </span>
               </div>
               <button type="submit" className="btn btn-primary btn-full btn-lg"
                 disabled={loading} style={{ marginTop: '1rem' }}>
