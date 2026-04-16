@@ -80,8 +80,11 @@ export function TenantProvider({ children }) {
         }
       } catch (error) {
         console.error('Error loading tenant context:', error);
+        
+        const status = error.response?.status || error.status;
+        
         // Fallback a configuración pública si falla getMe()
-        if (token && error.status === 401) {
+        if (token && (status === 401 || status === 403)) {
           try {
             const publicData = await tenantService.getPublic(tenantId);
             handleTenantResponse(publicData.data.tenant);

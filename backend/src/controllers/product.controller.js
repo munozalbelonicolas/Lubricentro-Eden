@@ -128,8 +128,8 @@ const createProduct = catchAsync(async (req, res, next) => {
     return next(new AppError('name, category y price son obligatorios.', 400));
   }
 
-  // Imágenes subidas
-  const images = req.files ? req.files.map((f) => `/uploads/${f.filename}`) : [];
+  // Imágenes subidas (Cloudinary devuelve la URL completa en f.path)
+  const images = req.files ? req.files.map((f) => f.path) : [];
 
   const product = await Product.create({
     tenantId: req.tenantId,
@@ -174,7 +174,7 @@ const updateProduct = catchAsync(async (req, res, next) => {
 
   // Si se subieron nuevas imágenes, añadirlas
   if (req.files && req.files.length > 0) {
-    const newImages = req.files.map((f) => `/uploads/${f.filename}`);
+    const newImages = req.files.map((f) => f.path);
     product.images = [...product.images, ...newImages];
   }
 
@@ -209,19 +209,10 @@ const deleteProductImage = catchAsync(async (req, res, next) => {
   }
 
   const imagePath = product.images[index];
-  if (imagePath) {
-    const fs = require('fs');
-    const path = require('path');
-    const physicalPath = path.join(__dirname, '../../', imagePath);
-    try {
-      if (fs.existsSync(physicalPath)) {
-        fs.unlinkSync(physicalPath);
-      }
-    } catch (err) {
-      console.error('Error al eliminar archivo fisico:', err);
-    }
-  }
-
+  
+  // Como usamos Cloudinary, evitamos borrado físico local:
+  // Se podría incluir llamada a cloudinary.uploader.destroy(publicId) aquí.
+  
   product.images.splice(index, 1);
   await product.save();
   sendSuccess(res, { product });

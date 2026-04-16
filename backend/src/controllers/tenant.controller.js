@@ -61,7 +61,7 @@ const updateMyTenant = catchAsync(async (req, res, next) => {
 const uploadLogo = catchAsync(async (req, res, next) => {
   if (!req.file) return next(new AppError('No se subió ningún archivo.', 400));
 
-  let logoUrl = `/uploads/logos/${req.file.filename}`;
+  let logoUrl = req.file.path;
   const tenant = await Tenant.findByIdAndUpdate(
     req.tenantId,
     { 'config.logo': logoUrl },

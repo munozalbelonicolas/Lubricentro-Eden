@@ -1,28 +1,33 @@
 'use strict';
 
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const path = require('path');
-const fs = require('fs');
 const AppError = require('../utils/AppError');
 
-// Asegurar que las carpetas de subidas existan
-const uploadDir = path.join(__dirname, '../../uploads');
-const logosDir = path.join(uploadDir, 'logos');
-
-[uploadDir, logosDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+// Configuramos Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Si la ruta fue marcada como upload de logo, guardar en uploads/logos/
-    const dest = req.uploadType === 'logo' ? logosDir : uploadDir;
-    cb(null, dest);
-  },
-  filename: (req, file, cb) => {
+// Configuración de Storage para Multer con Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    // Determinar la carpeta según el tipo de subida
+    const folder = req.uploadType === 'logo' ? 'lubricentro_eden/logos' : 'lubricentro_eden/products';
+    
+    // Generar prefijo único para nombre
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${req.tenantId || 'general'}-${uniqueSuffix}${ext}`);
+    const publicId = `${req.tenantId || 'general'}-${uniqueSuffix}`;
+    
+    return {
+      folder: folder,
+      public_id: publicId,
+    };
   },
 });
 
@@ -38,7 +43,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage,
+  storage: storage,
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 5 * 1024 * 1024, // 5MB
   },
