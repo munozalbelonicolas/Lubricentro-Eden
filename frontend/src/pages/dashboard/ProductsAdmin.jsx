@@ -118,6 +118,26 @@ export default function ProductsAdmin() {
     } catch (err) { toast.error(err.message); }
   };
 
+  const handleDeleteImage = async (productId, index) => {
+    if (!window.confirm('¿Eliminar esta imagen de forma permanente?')) return;
+    setSaving(true);
+    try {
+      await productService.deleteImage(productId, index);
+      toast.success('Imagen eliminada.');
+      setEditing(prev => {
+        const updated = { ...prev };
+        updated.images = [...(updated.images || [])];
+        updated.images.splice(index, 1);
+        return updated;
+      });
+      load();
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar imagen.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="page">
       <div className="container">
@@ -291,6 +311,47 @@ export default function ProductsAdmin() {
                     </label>
                   )}
                 </div>
+
+                {/* Previsualización y eliminación de imágenes actuales */}
+                {editing && editing.images && editing.images.length > 0 && (
+                  <div style={{ marginBottom: '1rem', marginTop: '1rem' }}>
+                    <label className="input-label" style={{ marginBottom: '0.75rem' }}>Imágenes almacenadas</label>
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      {editing.images.map((imgUrl, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: 80, height: 80, backgroundColor: 'var(--color-bg)' }}>
+                          <img 
+                            src={getImageUrl(imgUrl)} 
+                            alt={`Imagen ${idx + 1}`} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
+                            onError={(e) => { 
+                              e.target.style.display = 'none'; 
+                              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'; 
+                            }}
+                          />
+                          {/* Placeholder para error de carga */}
+                          <div style={{ display: 'none', width: '100%', height: '100%', borderRadius: '8px', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9f9f9', border: '1px dashed #ccc' }}>
+                            <span style={{ fontSize: '24px' }}>⚠️</span>
+                          </div>
+                          
+                          <button 
+                            type="button" 
+                            onClick={(e) => { e.preventDefault(); handleDeleteImage(editing._id, idx); }}
+                            style={{ 
+                              position: 'absolute', top: -6, right: -6, background: 'var(--color-error)', 
+                              color: 'white', borderRadius: '50%', padding: '0.3rem', border: 'none', 
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                            title="Eliminar esta imagen"
+                            disabled={saving}
+                          >
+                            <FiTrash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Upload */}
                 <div className={styles.uploadArea} onClick={() => fileRef.current?.click()}>
