@@ -38,7 +38,7 @@
   position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
   color: var(--color-text-3);
 }
-.searchInput { padding-left: 2.5rem; padding-right: 2.5rem; }
+.searchInput { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 .clearSearch {
   position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
   color: var(--color-text-3);
