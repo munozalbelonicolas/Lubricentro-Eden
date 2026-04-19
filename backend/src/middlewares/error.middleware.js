@@ -39,9 +39,10 @@ const sendErrorProd = (err, res) => {
     });
   } else {
     console.error('💥 Error no operacional:', err);
+    // Para depuración de Cloudinary, enviamos el mensaje si existe.
     res.status(500).json({
       status: 'error',
-      message: 'Ocurrió un error interno. Intenta nuevamente.',
+      message: err.message || 'Ocurrió un error interno. Intenta nuevamente.',
     });
   }
 };

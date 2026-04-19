@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { financeService } from '../../services/finance.service';
+import { productService } from '../../services/product.service';
 import { formatPrice, formatDateTime } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import { 
   FiDollarSign, FiPlus, FiTrash2, FiArrowUpCircle, FiArrowDownCircle, 
-  FiFilter, FiPackage, FiTool, FiCalendar, FiX 
+  FiFilter, FiPackage, FiTool, FiCalendar, FiX, FiSearch, FiShoppingCart
 } from 'react-icons/fi';
 
 export default function FinancePage() {
@@ -12,6 +13,7 @@ export default function FinancePage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showSaleModal, setShowSaleModal] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, ingreso, egreso
 
@@ -32,13 +34,13 @@ export default function FinancePage() {
 
   // Bloquear el scroll del background si el modal está abierto
   useEffect(() => {
-    if (showModal) {
+    if (showModal || showSaleModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
     }
     return () => { document.body.style.overflow = 'auto'; };
-  }, [showModal]);
+  }, [showModal, showSaleModal]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -72,12 +74,16 @@ export default function FinancePage() {
     }
   };
 
-  const handleDeleteExpense = async (id) => {
-    if (!window.confirm('¿Eliminar este registro?')) return;
-    setDeletingId(id);
+  const handleDeleteTransaction = async (t) => {
+    if (!window.confirm('¿Eliminar este registro? Tene en cuenta que si es una venta local o un egreso se restaurará el stock si corresponde.')) return;
+    setDeletingId(t.id);
     try {
-      await financeService.deleteExpense(id);
-      toast.success('Gasto eliminado');
+      if (t.source === 'venta_local') {
+        await financeService.deleteLocalSale(t.id);
+      } else {
+        await financeService.deleteExpense(t.id);
+      }
+      toast.success('Registro eliminado');
       fetchData();
     } catch (err) {
       toast.error('Error al eliminar');
@@ -137,6 +143,10 @@ export default function FinancePage() {
               </select>
             </div>
 
+            <button onClick={() => setShowSaleModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#22c55e', borderColor: '#22c55e' }}>
+              <FiShoppingCart /> Venta Local
+            </button>
+
             <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FiPlus /> Cargar Egreso
             </button>
@@ -150,7 +160,7 @@ export default function FinancePage() {
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#22c55e', marginTop: '0.5rem' }}>
               {formatPrice(stats.totalIncome)}
             </h2>
-            <p style={{ fontSize: '0.75rem', marginTop: '0.4rem', opacity: 0.7 }}>Ventas web y servicios realizados</p>
+            <p style={{ fontSize: '0.75rem', marginTop: '0.4rem', opacity: 0.7 }}>Ventas web, local y servicios</p>
           </div>
           <div className="card" style={{ borderLeft: '4px solid #ef4444' }}>
             <p style={{ fontSize: '0.85rem', color: 'var(--color-text-3)', fontWeight: 600 }}>Egresos Totales</p>
@@ -215,16 +225,16 @@ export default function FinancePage() {
                         padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600,
                         background: 'var(--color-bg-2)', color: 'var(--color-text-2)'
                       }}>
-                        {t.source === 'venta_web' ? '🛒 Web' : t.source === 'taller' ? '🔧 Taller' : `📉 ${t.source}`}
+                        {t.source === 'venta_web' ? '🛒 Web' : t.source === 'taller' ? '🔧 Taller' : t.source === 'venta_local' ? '🏠 Local' : `📉 ${t.source}`}
                       </span>
                     </td>
                     <td style={{ fontWeight: 800, color: t.type === 'ingreso' ? '#22c55e' : '#ef4444' }}>
                       {t.type === 'ingreso' ? '+' : '-'}{formatPrice(t.amount)}
                     </td>
                     <td>
-                      {t.type === 'egreso' && (
+                      {(t.type === 'egreso' || t.source === 'venta_local') && (
                         <button 
-                          onClick={() => handleDeleteExpense(t.id)} 
+                          onClick={() => handleDeleteTransaction(t)} 
                           style={{ color: '#ef4444', opacity: deletingId === t.id ? 0.3 : 0.7 }}
                           disabled={deletingId === t.id}
                         >
@@ -295,6 +305,211 @@ export default function FinancePage() {
           </div>
         </div>
       )}
+
+      {/* Modal Venta Local */}
+      {showSaleModal && (
+        <LocalSaleModal 
+          onClose={() => setShowSaleModal(false)}
+          onSuccess={() => {
+            setShowSaleModal(false);
+            fetchData();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Sub-componente Modal Venta Local ─── */
+function LocalSaleModal({ onClose, onSuccess }) {
+  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [fetchingProducts, setFetchingProducts] = useState(false);
+  
+  const [form, setForm] = useState({
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    items: []
+  });
+
+  useEffect(() => {
+    if (productSearch.length > 2) {
+      const delayDebounceFn = setTimeout(() => {
+        searchProducts();
+      }, 300);
+      return () => clearTimeout(delayDebounceFn);
+    } else {
+      setProducts([]);
+    }
+  }, [productSearch]);
+
+  const searchProducts = async () => {
+    setFetchingProducts(true);
+    try {
+      const res = await productService.getAll({ search: productSearch, limit: 10 });
+      setProducts(res.data.products || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFetchingProducts(false);
+    }
+  };
+
+  const addItem = (p) => {
+    const existing = form.items.find(i => i.productId === p._id);
+    if (existing) return toast.error('El producto ya está en la lista');
+
+    setForm({
+      ...form,
+      items: [...form.items, {
+        productId: p._id,
+        name: p.name,
+        price: p.price,
+        quantity: 1
+      }]
+    });
+    setProductSearch('');
+    setProducts([]);
+  };
+
+  const removeItem = (id) => {
+    setForm({ ...form, items: form.items.filter(i => i.productId !== id) });
+  };
+
+  const updateItem = (id, field, value) => {
+    setForm({
+      ...form,
+      items: form.items.map(i => i.productId === id ? { ...i, [field]: Number(value) } : i)
+    });
+  };
+
+  const total = form.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (form.items.length === 0) return toast.error('Agregá al menos un producto');
+    
+    setLoading(true);
+    try {
+      await financeService.createLocalSale(form);
+      toast.success('Venta registrada con éxito');
+      onSuccess();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al registrar venta');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Registrar Venta Local</h2>
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-3)' }}>Se descontará stock automáticamente</p>
+          </div>
+          <button onClick={onClose}><FiX size={24}/></button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          
+          <div className="input-group" style={{ position: 'relative' }}>
+            <label className="input-label">Buscar Productos</label>
+            <div style={{ position: 'relative' }}>
+              <FiSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}/>
+              <input 
+                className="input" placeholder="Nombre o marca del producto..."
+                style={{ paddingLeft: '2.5rem' }}
+                value={productSearch} onChange={e => setProductSearch(e.target.value)}
+              />
+            </div>
+            
+            {/* Resultados de búsqueda */}
+            {products.length > 0 && (
+              <div style={{ 
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                background: 'var(--color-bg-1)', border: '1px solid var(--color-border)',
+                borderRadius: '8px', marginTop: '0.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                maxHeight: '200px', overflowY: 'auto'
+              }}>
+                {products.map(p => (
+                  <div 
+                    key={p._id} onClick={() => addItem(p)}
+                    style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid var(--color-bg-2)', display: 'flex', justifyContent: 'space-between' }}
+                  >
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{p.name}</p>
+                      <p style={{ fontSize: '0.75rem', opacity: 0.6 }}>Stock: {p.stock}</p>
+                    </div>
+                    <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{formatPrice(p.price)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {fetchingProducts && <div style={{ fontSize: '0.75rem', marginTop: '0.4rem', opacity: 0.5 }}>Buscando...</div>}
+          </div>
+
+          {/* Tabla de Items */}
+          <div style={{ background: 'var(--color-bg-2)', borderRadius: '12px', padding: '1rem' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FiPackage size={16}/> Productos en Venta
+            </h3>
+            
+            {form.items.length === 0 ? (
+              <p style={{ textAlign: 'center', padding: '1rem', fontSize: '0.85rem', opacity: 0.5 }}>Sin productos seleccionados</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {form.items.map(item => (
+                  <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 120px 30px', gap: '0.5rem', alignItems: 'center' }}>
+                    <p style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</p>
+                    <input 
+                      type="number" className="input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                      value={item.quantity} onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
+                      min="1"
+                    />
+                    <input 
+                      type="number" className="input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
+                      value={item.price} onChange={e => updateItem(item.productId, 'price', e.target.value)}
+                    />
+                    <button type="button" onClick={() => removeItem(item.productId)} style={{ color: '#ef4444' }}><FiTrash2/></button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Descripción / Notas (Opcional)</label>
+            <input 
+              className="input" placeholder="Ej: Cliente ocasional, descuento por bulto..."
+              value={form.description} onChange={e => setForm({...form, description: e.target.value})}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Fecha</label>
+            <input 
+              type="date" className="input" required
+              value={form.date} onChange={e => setForm({...form, date: e.target.value})}
+            />
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>Total Venta</p>
+              <p style={{ fontSize: '1.25rem', fontWeight: 800, color: '#22c55e' }}>{formatPrice(total)}</p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button type="button" className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancelar</button>
+              <button type="submit" className="btn btn-primary" disabled={loading || form.items.length === 0} style={{ background: '#22c55e', borderColor: '#22c55e' }}>
+                {loading ? 'Procesando...' : 'Finalizar Venta'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

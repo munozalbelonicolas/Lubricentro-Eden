@@ -39,5 +39,15 @@ export const financeService = {
   deleteExpense: async (id) => {
     const res = await API.delete(`/finance/expenses/${id}`);
     return res.data;
+  },
+
+  createLocalSale: async (data) => {
+    const res = await API.post('/finance/sales', data);
+    return res.data;
+  },
+
+  deleteLocalSale: async (id) => {
+    const res = await API.delete(`/finance/sales/${id}`);
+    return res.data;
   }
 };

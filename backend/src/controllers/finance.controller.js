@@ -1,8 +1,10 @@
 'use strict';
 
+const LocalSale = require('../models/LocalSale.model');
 const Expense = require('../models/Expense.model');
 const Order = require('../models/Order.model');
 const Task = require('../models/Task.model');
+const StockService = require('../services/stockService');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 
@@ -28,22 +30,29 @@ exports.getFinanceStats = catchAsync(async (req, res, next) => {
       end = new Date(y, 11, 31, 23, 59, 59, 999);
     }
     filter.createdAt = { $gte: start, $lte: end };
+    filter.date = { $gte: start, $lte: end }; // Para LocalSale que usa .date
   }
 
   const expenseFilter = { ...filter };
+  const localSaleFilter = { ...filter };
   const taskFilter = { ...filter, status: 'done' };
+  
   if (filter.createdAt) {
     const startStr = filter.createdAt.$gte.toISOString().split('T')[0];
     const endStr = filter.createdAt.$lte.toISOString().split('T')[0];
     
     taskFilter.date = { $gte: startStr, $lte: endStr };
     expenseFilter.date = { $gte: filter.createdAt.$gte, $lte: filter.createdAt.$lte };
+    localSaleFilter.date = { $gte: filter.createdAt.$gte, $lte: filter.createdAt.$lte };
     
     delete taskFilter.createdAt;
     delete expenseFilter.createdAt;
+    delete localSaleFilter.createdAt;
   }
+  
+  delete filter.date; // Limpiar para Order que usa createdAt
 
-  const [incomeOrders, incomeTasks, totalExpenses] = await Promise.all([
+  const [incomeOrders, incomeTasks, incomeLocalSales, totalExpenses] = await Promise.all([
     Order.aggregate([
       { $match: { ...filter, paymentStatus: 'approved' } },
       { $group: { _id: null, total: { $sum: '$total' } } }
@@ -52,13 +61,17 @@ exports.getFinanceStats = catchAsync(async (req, res, next) => {
       { $match: taskFilter },
       { $group: { _id: null, total: { $sum: '$totalValue' } } }
     ]),
+    LocalSale.aggregate([
+      { $match: localSaleFilter },
+      { $group: { _id: null, total: { $sum: '$total' } } }
+    ]),
     Expense.aggregate([
       { $match: expenseFilter },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ])
   ]);
 
-  const totalIn = (incomeOrders[0]?.total || 0) + (incomeTasks[0]?.total || 0);
+  const totalIn = (incomeOrders[0]?.total || 0) + (incomeTasks[0]?.total || 0) + (incomeLocalSales[0]?.total || 0);
   const totalOut = totalExpenses[0]?.total || 0;
 
   res.json({
@@ -108,13 +121,15 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
     const endStr = end.toISOString().split('T')[0];
     taskFilter.date = { $gte: startStr, $lte: endStr };
     expenseFilter.date = range;
+    localSaleFilter = { ...localSaleFilter, date: range };
   }
 
   // Buscamos todo lo que genera movimiento de dinero
-  const [orders, tasks, expenses] = await Promise.all([
+  const [orders, tasks, expenses, localSales] = await Promise.all([
     Order.find(orderFilter).lean(),
     Task.find(taskFilter).lean(),
-    Expense.find(expenseFilter).lean()
+    Expense.find(expenseFilter).lean(),
+    LocalSale.find(localSaleFilter || { tenantId }).lean()
   ]);
 
   // Normalizamos para unificar en un solo listado
@@ -134,6 +149,14 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
       source: 'taller',
       description: `Servicio: ${t.title}`,
       amount: t.totalValue
+    })),
+    ...localSales.map(s => ({
+      id: s._id,
+      date: s.date,
+      type: 'ingreso',
+      source: 'venta_local',
+      description: s.description || 'Venta Local',
+      amount: s.total
     })),
     ...expenses.map(e => ({
       id: e._id,
@@ -176,6 +199,59 @@ exports.deleteExpense = catchAsync(async (req, res, next) => {
   if (!expense) {
     return next(new AppError('No se encontró el gasto o no tienes permiso.', 404));
   }
+
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});
+
+/**
+ * CRUD Ventas Locales
+ */
+exports.createLocalSale = catchAsync(async (req, res, next) => {
+  const { items, description, date } = req.body;
+  const tenantId = req.user.tenantId;
+
+  if (!items || items.length === 0) {
+    return next(new AppError('La venta debe tener al menos un producto.', 400));
+  }
+
+  // Calcular total
+  const total = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+  // Descontar stock
+  await StockService.deductStock(tenantId, items);
+
+  const sale = await LocalSale.create({
+    tenantId,
+    items,
+    total,
+    description,
+    date: date || new Date(),
+    createdBy: req.user._id
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: { sale }
+  });
+});
+
+exports.deleteLocalSale = catchAsync(async (req, res, next) => {
+  const sale = await LocalSale.findOne({
+    _id: req.params.id,
+    tenantId: req.user.tenantId
+  });
+
+  if (!sale) {
+    return next(new AppError('No se encontró la venta o no tienes permiso.', 404));
+  }
+
+  // Restaurar stock
+  await StockService.restoreStock(req.user.tenantId, sale.items);
+
+  await LocalSale.findByIdAndDelete(req.params.id);
 
   res.status(204).json({
     status: 'success',
