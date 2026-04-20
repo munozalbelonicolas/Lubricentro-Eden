@@ -26,22 +26,13 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   const pipeline = [];
 
-  // 1. Fase de Búsqueda Atlas Search (Debe ser la primera etapa)
-  if (search) {
-    pipeline.push({
-      $search: {
-        index: 'default', // Nombre del índice configurado en Atlas
-        text: {
-          query: search,
-          path: ['name', 'description', 'brand'],
-          fuzzy: { maxEdits: 1 } // Tolerancia a errores tipográficos
-        }
-      }
-    });
-  }
-
-  // 2. Fase de Filtros Standard ($match)
+  // 1. Filtros Standard ($match)
   const matchStage = { tenantId: req.tenantId, isActive: true };
+
+  // Búsqueda full-text usando el índice $text de MongoDB (más robusto que Atlas Search)
+  if (search) {
+    matchStage.$text = { $search: search };
+  }
 
   if (category) {
     if (Array.isArray(category)) {
@@ -51,7 +42,7 @@ const getProducts = catchAsync(async (req, res, next) => {
     }
   }
   
-  if (brand && !search) matchStage.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (brand) matchStage.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   if (viscosity) matchStage.viscosity = new RegExp(viscosity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   if (vehicleCompatibility) matchStage.vehicleCompatibility = { $in: [vehicleCompatibility] };
   if (featured === 'true') matchStage.featured = true;
@@ -64,15 +55,15 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   pipeline.push({ $match: matchStage });
 
-  // 3. Fase de Procesamiento Global (Paginación + Conteo)
+  // 2. Fase de Procesamiento Global (Paginación + Conteo)
   const skip = (Number(page) - 1) * Number(limit);
   
   // Determinamos el sort
   let sortStage = {};
   if (search && !req.query.sort) {
-    // Si hay búsqueda y no se especificó orden, usamos relevancia
-    sortStage = { score: { $meta: 'searchScore' } };
-    pipeline.push({ $addFields: { score: { $meta: 'searchScore' } } });
+    // Ordenar por relevancia de texto cuando hay búsqueda
+    sortStage = { score: { $meta: 'textScore' } };
+    pipeline.push({ $addFields: { score: { $meta: 'textScore' } } });
   } else {
     const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
     const sortOrder = sort.startsWith('-') ? -1 : 1;
