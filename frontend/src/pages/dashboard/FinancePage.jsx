@@ -6,7 +6,8 @@ import { formatPrice, formatDateTime } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import { 
   FiDollarSign, FiPlus, FiTrash2, FiArrowUpCircle, FiArrowDownCircle, 
-  FiFilter, FiPackage, FiTool, FiCalendar, FiX, FiSearch, FiShoppingCart
+  FiFilter, FiPackage, FiTool, FiCalendar, FiX, FiSearch, FiShoppingCart,
+  FiFileText
 } from 'react-icons/fi';
 
 export default function FinancePage() {
