@@ -23,6 +23,7 @@ router.get('/stats/visits', statsController.getSiteVisits);
 router.post('/expenses', financeController.createExpense);
 router.delete('/expenses/:id', financeController.deleteExpense);
 
+router.get('/sales', financeController.getLocalSales);
 router.post('/sales', financeController.createLocalSale);
 router.delete('/sales/:id', financeController.deleteLocalSale);
 

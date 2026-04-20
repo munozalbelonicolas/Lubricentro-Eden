@@ -147,6 +147,10 @@ export default function FinancePage() {
               <FiShoppingCart /> Venta Local
             </button>
 
+            <Link to="/dashboard/local-sales" className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+              <FiFileText /> Ver Historial
+            </Link>
+
             <button onClick={() => setShowModal(true)} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FiPlus /> Cargar Egreso
             </button>

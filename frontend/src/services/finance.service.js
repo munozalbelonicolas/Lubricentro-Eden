@@ -45,6 +45,11 @@ export const financeService = {
     const res = await API.post('/finance/sales', data);
     return res.data;
   },
+  
+  getLocalSales: async (params = {}) => {
+    const res = await API.get('/finance/sales', { params });
+    return res.data;
+  },
 
   deleteLocalSale: async (id) => {
     const res = await API.delete(`/finance/sales/${id}`);

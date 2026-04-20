@@ -40,7 +40,8 @@ export default function DashboardPage() {
     { icon: <FiDollarSign size={22} />, label: 'Finanzas', value: stats ? formatPrice(stats.totalRevenue) : '-', color: '#22C55E', link: '/dashboard/finance' },
     { icon: <FiClock size={22} />,      label: 'Órdenes Pendientes', value: stats?.pendingOrders  ?? '-', color: '#FBBF24', link: '/dashboard/orders?status=pending' },
     { icon: <FiTool size={22} />,       label: 'Turnos Taller',     value: stats?.workshopOrders ?? '-', color: '#F59E0B', link: '/dashboard/workshop' },
-    { icon: <FiShoppingBag size={22}/>, label: 'Productos',         value: `${prodCount} / ${planLimit}`,  color: '#CB1A20', link: '/dashboard/products' },
+    { icon: <FiTrendingUp size={22} />, label: 'Ventas Locales',    value: '-', color: '#10B981', link: '/dashboard/local-sales' },
+    { icon: <FiShoppingBag size={22} />, label: 'Productos',        value: `${prodCount} / ${planLimit}`,  color: '#CB1A20', link: '/dashboard/products' },
   ];
 
   return (
@@ -104,6 +105,11 @@ export default function DashboardPage() {
             <FiActivity size={28} style={{ color: '#3b82f6' }} />
             <p className={styles.quickTitle} style={{ color: '#3b82f6' }}>Historial Clínico</p>
             <p className={styles.quickDesc}>Consulta por patente</p>
+          </Link>
+          <Link to="/dashboard/local-sales" className={styles.quickCard} style={{ borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.06)' }}>
+            <FiTrendingUp size={28} style={{ color: '#10b981' }} />
+            <p className={styles.quickTitle} style={{ color: '#10b981' }}>Historial Ventas</p>
+            <p className={styles.quickDesc}>Ventas manuales del local</p>
           </Link>
           <Link to="/dashboard/users" className={styles.quickCard} style={{ borderColor: 'rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.06)' }}>
             <FiUser size={28} style={{ color: '#a855f7' }} />

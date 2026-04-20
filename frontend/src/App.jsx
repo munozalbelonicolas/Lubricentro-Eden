@@ -33,6 +33,7 @@ const VehicleHistory = lazy(() => import('./pages/dashboard/VehicleHistory'));
 const FinancePage    = lazy(() => import('./pages/dashboard/FinancePage'));
 const UsersAdmin     = lazy(() => import('./pages/dashboard/UsersAdmin'));
 const StatsPage      = lazy(() => import('./pages/dashboard/StatsPage'));
+const LocalSalesAdmin = lazy(() => import('./pages/dashboard/LocalSalesAdmin'));
 
 // ── Rutas protegidas ──
 const PrivateRoute = ({ children }) => {
@@ -92,6 +93,7 @@ export default function App() {
               <Route path="/dashboard/workshop"     element={<AdminRoute><WorkshopAdmin /></AdminRoute>} />
               <Route path="/dashboard/history"      element={<AdminRoute><VehicleHistory /></AdminRoute>} />
               <Route path="/dashboard/finance"      element={<AdminRoute><FinancePage /></AdminRoute>} />
+              <Route path="/dashboard/local-sales"  element={<AdminRoute><LocalSalesAdmin /></AdminRoute>} />
               <Route path="/dashboard/users"        element={<AdminRoute><UsersAdmin /></AdminRoute>} />
               <Route path="/dashboard/stats"        element={<AdminRoute><StatsPage /></AdminRoute>} />
 

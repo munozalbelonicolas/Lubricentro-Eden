@@ -213,6 +213,50 @@ exports.deleteExpense = catchAsync(async (req, res, next) => {
 /**
  * CRUD Ventas Locales
  */
+exports.getLocalSales = catchAsync(async (req, res, next) => {
+  const tenantId = req.user.tenantId;
+  const { page = 1, limit = 20, search, startDate, endDate } = req.query;
+
+  const filter = { tenantId };
+
+  if (startDate || endDate) {
+    const start = startDate ? new Date(startDate) : new Date(2000, 0, 1);
+    const end = endDate ? new Date(endDate) : new Date();
+    if (endDate) end.setHours(23, 59, 59, 999);
+    filter.date = { $gte: start, $lte: end };
+  }
+
+  if (search) {
+    // Buscar por descripción o por nombre de producto dentro de los items
+    filter.$or = [
+      { description: new RegExp(search, 'i') },
+      { 'items.name': new RegExp(search, 'i') }
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [sales, total] = await Promise.all([
+    LocalSale.find(filter)
+      .sort({ date: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean(),
+    LocalSale.countDocuments(filter)
+  ]);
+
+  res.json({
+    status: 'success',
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      pages: Math.ceil(total / limit)
+    },
+    data: { sales }
+  });
+});
+
 exports.createLocalSale = catchAsync(async (req, res, next) => {
   const { items, description, date } = req.body;
   const tenantId = req.user.tenantId;
