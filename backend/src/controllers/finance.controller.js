@@ -45,6 +45,7 @@ exports.getFinanceStats = catchAsync(async (req, res, next) => {
     expenseFilter.date = { $gte: filter.createdAt.$gte, $lte: filter.createdAt.$lte };
     localSaleFilter.date = { $gte: filter.createdAt.$gte, $lte: filter.createdAt.$lte };
     
+    // Si filtramos por rango, no queremos filtrar por createdAt en estos modelos que usan 'date'
     delete taskFilter.createdAt;
     delete expenseFilter.createdAt;
     delete localSaleFilter.createdAt;
@@ -94,6 +95,7 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
   const orderFilter = { tenantId, paymentStatus: 'approved' };
   const taskFilter = { tenantId, status: 'done' };
   const expenseFilter = { tenantId };
+  const localSaleFilter = { tenantId };
 
   if (year) {
     const y = parseInt(year);
@@ -106,9 +108,11 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
       start = new Date(y, 0, 1);
       end = new Date(y, 11, 31, 23, 59, 59, 999);
     }
-    orderFilter.createdAt = { $gte: start, $lte: end };
+    const range = { $gte: start, $lte: end };
+    orderFilter.createdAt = range;
     taskFilter.date = { $gte: start.toISOString().split('T')[0], $lte: end.toISOString().split('T')[0] };
-    expenseFilter.date = { $gte: start, $lte: end };
+    expenseFilter.date = range;
+    localSaleFilter.date = range;
   } else if (startDate || endDate) {
     const start = startDate ? new Date(startDate) : new Date(2000, 0, 1);
     const end = endDate ? new Date(endDate) : new Date();
@@ -121,7 +125,7 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
     const endStr = end.toISOString().split('T')[0];
     taskFilter.date = { $gte: startStr, $lte: endStr };
     expenseFilter.date = range;
-    localSaleFilter = { ...localSaleFilter, date: range };
+    localSaleFilter.date = range;
   }
 
   // Buscamos todo lo que genera movimiento de dinero
@@ -129,7 +133,7 @@ exports.getTransactions = catchAsync(async (req, res, next) => {
     Order.find(orderFilter).lean(),
     Task.find(taskFilter).lean(),
     Expense.find(expenseFilter).lean(),
-    LocalSale.find(localSaleFilter || { tenantId }).lean()
+    LocalSale.find(localSaleFilter).lean()
   ]);
 
   // Normalizamos para unificar en un solo listado
