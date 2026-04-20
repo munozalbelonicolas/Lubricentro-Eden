@@ -88,6 +88,7 @@ export default function BudgetPage() {
       return;
     }
     const total = items.reduce((acc, curr) => acc + curr.price, 0);
+    const doc = new jsPDF();
 
     // Header decorativo
     doc.setFillColor(203, 26, 32); 
