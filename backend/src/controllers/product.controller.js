@@ -29,9 +29,15 @@ const getProducts = catchAsync(async (req, res, next) => {
   // 1. Filtros Standard ($match)
   const matchStage = { tenantId: req.tenantId, isActive: true };
 
-  // Búsqueda full-text usando el índice $text de MongoDB (más robusto que Atlas Search)
+  // Búsqueda flexible (Regex) para soportar coincidencia parcial (ej: "a" -> "aceite")
   if (search) {
-    matchStage.$text = { $search: search };
+    const searchRegex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    matchStage.$or = [
+      { name: searchRegex },
+      { description: searchRegex },
+      { brand: searchRegex },
+      { sku: searchRegex }
+    ];
   }
 
   if (category) {
@@ -42,7 +48,16 @@ const getProducts = catchAsync(async (req, res, next) => {
     }
   }
   
-  if (brand) matchStage.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (brand) {
+    const brandRegex = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    if (matchStage.$or) {
+      // Si ya hay búsqueda, filtramos por marca adicionalmente
+      matchStage.brand = brandRegex;
+    } else {
+      matchStage.brand = brandRegex;
+    }
+  }
+
   if (viscosity) matchStage.viscosity = new RegExp(viscosity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   if (vehicleCompatibility) matchStage.vehicleCompatibility = { $in: [vehicleCompatibility] };
   if (featured === 'true') matchStage.featured = true;
@@ -61,9 +76,8 @@ const getProducts = catchAsync(async (req, res, next) => {
   // Determinamos el sort
   let sortStage = {};
   if (search && !req.query.sort) {
-    // Ordenar por relevancia de texto cuando hay búsqueda
-    sortStage = { score: { $meta: 'textScore' } };
-    pipeline.push({ $addFields: { score: { $meta: 'textScore' } } });
+    // Si hay búsqueda y no hay sort, ordenamos por nombre alfabéticamente
+    sortStage = { name: 1 };
   } else {
     const sortField = sort.startsWith('-') ? sort.substring(1) : sort;
     const sortOrder = sort.startsWith('-') ? -1 : 1;
