@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { financeService } from '../../services/finance.service';
 import { productService } from '../../services/product.service';
 import { formatPrice, formatDateTime } from '../../utils/formatters';
