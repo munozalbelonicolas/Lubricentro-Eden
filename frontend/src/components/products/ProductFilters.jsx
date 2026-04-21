@@ -7,31 +7,9 @@ import styles from './ProductFilters.module.css';
 const CATEGORIES = Object.entries(categoryLabel);
 const VISCOSITIES = ['5W30', '5W40', '10W40', '15W40', '20W50', '0W20', '0W30'];
 
-export default function ProductFilters({ brands = [], onClose }) {
-  const [params, setParams] = useSearchParams();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const current = {
-    search:   params.get('search') || '',
-    category: params.get('category') || '',
-    brand:    params.get('brand') || '',
-    viscosity:params.get('viscosity') || '',
-    minPrice: params.get('minPrice') || '',
-    maxPrice: params.get('maxPrice') || '',
-  };
-
-  const set = (key, value) => {
-    const next = new URLSearchParams(params);
-    if (value) next.set(key, value);
-    else next.delete(key);
-    next.delete('page'); // Resetear paginación
-    setParams(next);
-  };
-
-  const clearAll = () => setParams({});
-  const hasFilters = Object.values(current).some(Boolean);
-
-  const FiltersContent = () => (
+// Separated component to avoid re-mounting on parent render
+function FiltersContent({ current, set, brands, hasFilters, clearAll }) {
+  return (
     <div className={styles.filters}>
       {/* Búsqueda */}
       <div className={styles.section}>
@@ -146,6 +124,33 @@ export default function ProductFilters({ brands = [], onClose }) {
       )}
     </div>
   );
+}
+
+export default function ProductFilters({ brands = [], onClose }) {
+  const [params, setParams] = useSearchParams();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const current = {
+    search:   params.get('search') || '',
+    category: params.get('category') || '',
+    brand:    params.get('brand') || '',
+    viscosity:params.get('viscosity') || '',
+    minPrice: params.get('minPrice') || '',
+    maxPrice: params.get('maxPrice') || '',
+  };
+
+  const set = (key, value) => {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    next.delete('page'); // Resetear paginación
+    setParams(next);
+  };
+
+  const clearAll = () => setParams({});
+  const hasFilters = Object.values(current).some(Boolean);
+
+  const filterProps = { current, set, brands, hasFilters, clearAll };
 
   return (
     <>
@@ -157,7 +162,7 @@ export default function ProductFilters({ brands = [], onClose }) {
             <button className={styles.clearBtn} onClick={clearAll}>Limpiar</button>
           )}
         </div>
-        <FiltersContent />
+        <FiltersContent {...filterProps} />
       </aside>
 
       {/* Mobile toggle */}
@@ -175,7 +180,7 @@ export default function ProductFilters({ brands = [], onClose }) {
               <p className={styles.title}><FiSliders size={16} /> Filtros</p>
               <button className={styles.closeBtn} onClick={() => setMobileOpen(false)}><FiX size={20} /></button>
             </div>
-            <FiltersContent />
+            <FiltersContent {...filterProps} />
             <button className="btn btn-primary btn-full" onClick={() => setMobileOpen(false)} style={{ marginTop: '1rem' }}>
               Ver resultados
             </button>
