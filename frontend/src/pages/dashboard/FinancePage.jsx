@@ -435,10 +435,10 @@ function LocalSaleModal({ onClose, onSuccess }) {
             {/* Resultados de búsqueda */}
             {products.length > 0 && (
               <div style={{ 
-                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                background: 'var(--color-bg-1)', border: '1px solid var(--color-border)',
-                borderRadius: '8px', marginTop: '0.5rem', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                maxHeight: '200px', overflowY: 'auto'
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20,
+                background: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                borderRadius: '8px', marginTop: '0.5rem', boxShadow: 'var(--shadow-lg)',
+                maxHeight: '200px', overflowY: 'auto', backdropFilter: 'blur(10px)'
               }}>
                 {products.map(p => (
                   <div 
@@ -466,10 +466,10 @@ function LocalSaleModal({ onClose, onSuccess }) {
             {form.items.length === 0 ? (
               <p style={{ textAlign: 'center', padding: '1rem', fontSize: '0.85rem', opacity: 0.5 }}>Sin productos seleccionados</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '280px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                 {form.items.map(item => (
-                  <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 120px 30px', gap: '0.5rem', alignItems: 'center' }}>
-                    <p style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</p>
+                  <div key={item.productId} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 100px 30px', gap: '0.5rem', alignItems: 'center' }}>
+                    <p style={{ fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }} title={item.name}>{item.name}</p>
                     <input 
                       type="number" className="input" style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
                       value={item.quantity} onChange={e => updateItem(item.productId, 'quantity', e.target.value)}
