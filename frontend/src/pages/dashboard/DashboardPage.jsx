@@ -8,8 +8,9 @@ import { useTenant } from '../../hooks/useTenant';
 import { formatPrice, formatDateTime } from '../../utils/formatters';
 import {
   FiPackage, FiDollarSign, FiClock, FiTrendingUp,
-  FiShoppingBag, FiGrid, FiStar, FiTool, FiActivity, FiUser, FiBarChart2
+  FiShoppingBag, FiGrid, FiStar, FiTool, FiActivity, FiUser, FiBarChart2, FiPlus
 } from 'react-icons/fi';
+import DirectServiceModal from '../../components/dashboard/DirectServiceModal';
 import styles from './DashboardPage.module.css';
 
 export default function DashboardPage() {
@@ -19,8 +20,10 @@ export default function DashboardPage() {
   const [sub,    setSub]    = useState(null);
   const [prodCount, setProdCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
     Promise.all([
       orderService.getStats(),
       subscriptionService.getMine(),
@@ -31,6 +34,10 @@ export default function DashboardPage() {
       setProdCount(prodData.pagination?.total || 0);
     }).catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const planLimit = sub?.plan === 'premium' ? '∞' : '20';
@@ -55,6 +62,13 @@ export default function DashboardPage() {
             </h1>
             <p className={styles.storeName}>{tenant?.name}</p>
           </div>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setIsServiceModalOpen(true)}
+            style={{ display:'flex', alignItems:'center', gap:'0.5rem', boxShadow: '0 4px 15px rgba(203, 26, 32, 0.3)' }}
+          >
+            <FiPlus size={18} /> Service
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -158,6 +172,14 @@ export default function DashboardPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {isServiceModalOpen && (
+          <DirectServiceModal
+            isOpen={isServiceModalOpen}
+            onClose={() => setIsServiceModalOpen(false)}
+            onSuccess={loadData}
+          />
         )}
       </div>
     </div>
