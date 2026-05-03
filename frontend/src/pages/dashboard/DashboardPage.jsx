@@ -62,13 +62,6 @@ export default function DashboardPage() {
             </h1>
             <p className={styles.storeName}>{tenant?.name}</p>
           </div>
-          <button 
-            className="btn btn-primary" 
-            onClick={() => setIsServiceModalOpen(true)}
-            style={{ display:'flex', alignItems:'center', gap:'0.5rem', boxShadow: '0 4px 15px rgba(203, 26, 32, 0.3)' }}
-          >
-            <FiPlus size={18} /> Service
-          </button>
         </div>
 
         {/* Stats Cards */}
@@ -88,6 +81,15 @@ export default function DashboardPage() {
 
         {/* Quick Links */}
         <div className={styles.quickLinks}>
+          <button 
+            onClick={() => setIsServiceModalOpen(true)} 
+            className={styles.quickCard} 
+            style={{ borderColor: 'rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.06)', cursor: 'pointer', width: '100%' }}
+          >
+            <FiPlus size={28} style={{ color: '#3b82f6' }} />
+            <p className={styles.quickTitle} style={{ color: '#3b82f6' }}>Service Rápido</p>
+            <p className={styles.quickDesc}>Cargar servicio manual</p>
+          </button>
           <Link to="/dashboard/products" className={styles.quickCard}>
             <FiPackage size={28} />
             <p className={styles.quickTitle}>Productos</p>
