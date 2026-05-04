@@ -3,25 +3,43 @@
 
   <url>
     <loc>https://lubricentro-eden.com.ar/</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
     <loc>https://lubricentro-eden.com.ar/store</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://lubricentro-eden.com.ar/presupuesto</loc>
-    <lastmod>2026-05-03</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
+  <url>
+    <loc>https://lubricentro-eden.com.ar/store/sirena-marcha-atras</loc>
+    <lastmod>2026-05-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lubricentro-eden.com.ar/store/lampara-hb4</loc>
+    <lastmod>2026-05-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lubricentro-eden.com.ar/store/filtro-aceite-w71180-hilux</loc>
+    <lastmod>2026-05-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/filtro-aceite-ph977-perkins-dodge-f350-f250-f7000</loc>
     <lastmod>2026-04-30</lastmod>
@@ -66,7 +84,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/aceite-traxium-gear-7-80w90</loc>
-    <lastmod>2026-05-01</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -414,7 +432,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/kit-wega-kl3004-focus-iii-16-20-16v</loc>
-    <lastmod>2026-04-23</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -498,7 +516,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/agua-desmineralizada-x-5-litros</loc>
-    <lastmod>2026-05-01</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -654,7 +672,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/perfume-spray-x-150ml</loc>
-    <lastmod>2026-04-20</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1062,7 +1080,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/escobilla-28-tridon-flx280</loc>
-    <lastmod>2026-04-20</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1338,7 +1356,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/aceite-quartz-7000-10w-40-sn-1</loc>
-    <lastmod>2026-04-30</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1974,7 +1992,7 @@
   </url>
   <url>
     <loc>https://lubricentro-eden.com.ar/store/escobilla-limpiaparabrisas-tridon-usa-flex-multiple-28</loc>
-    <lastmod>2026-04-16</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

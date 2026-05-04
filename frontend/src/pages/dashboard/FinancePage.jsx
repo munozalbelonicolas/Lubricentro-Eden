@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { financeService } from '../../services/finance.service';
 import { productService } from '../../services/product.service';
-import { formatPrice, formatDateTime } from '../../utils/formatters';
+import { formatPrice, formatDateTime, formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 import { 
   FiDollarSign, FiPlus, FiTrash2, FiArrowUpCircle, FiArrowDownCircle, 
@@ -23,11 +23,19 @@ export default function FinancePage() {
   const [month, setMonth] = useState(''); // '' es todos
   const [year, setYear] = useState(currentYear.toString());
 
+  const getLocalDate = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const [expenseForm, setExpenseForm] = useState({
     description: '',
     amount: '',
     category: 'otros',
-    date: new Date().toISOString().split('T')[0]
+    date: getLocalDate()
   });
 
   useEffect(() => {
@@ -69,7 +77,7 @@ export default function FinancePage() {
       await financeService.createExpense(expenseForm);
       toast.success('Gasto registrado con éxito');
       setShowModal(false);
-      setExpenseForm({ description: '', amount: '', category: 'otros', date: new Date().toISOString().split('T')[0] });
+      setExpenseForm({ description: '', amount: '', category: 'otros', date: getLocalDate() });
       fetchData();
     } catch (err) {
       toast.error('Error al registrar gasto');
@@ -214,7 +222,7 @@ export default function FinancePage() {
                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '3rem', opacity: 0.5 }}>No se encontraron transacciones.</td></tr>
                 ) : filteredTransactions.map((t) => (
                   <tr key={`${t.id}-${t.type}`}>
-                    <td style={{ fontSize: '0.85rem' }}>{new Date(t.date).toLocaleDateString('es-AR')}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{formatDate(t.date)}</td>
                     <td>
                       <span style={{ 
                         display: 'flex', alignItems: 'center', gap: '0.4rem', 
@@ -333,9 +341,17 @@ function LocalSaleModal({ onClose, onSuccess }) {
   const [productSearch, setProductSearch] = useState('');
   const [fetchingProducts, setFetchingProducts] = useState(false);
   
+  const getLocalDate = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const [form, setForm] = useState({
     description: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDate(),
     items: []
   });
 

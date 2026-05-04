@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { financeService } from '../../services/finance.service';
-import { formatPrice, formatDateTime } from '../../utils/formatters';
+import { formatPrice, formatDateTime, formatDate } from '../../utils/formatters';
 import { FiArrowLeft, FiSearch, FiCalendar, FiTrash2, FiPackage, FiFileText } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -60,8 +60,8 @@ export default function LocalSalesAdmin() {
           <Link to="/dashboard/finance" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 600 }}>
             <FiArrowLeft /> Volver a Finanzas
           </Link>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Historial de Ventas Locales</h1>
-          <p style={{ color: 'var(--color-text-3)' }}>Consulta detallada de todas las ventas realizadas en el local</p>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800 }}>Historial General de Ventas</h1>
+          <p style={{ color: 'var(--color-text-3)' }}>Consulta detallada de todas las ventas realizadas (Local, Taller, Portal)</p>
         </div>
 
         {/* Filtros */}
@@ -108,11 +108,16 @@ export default function LocalSalesAdmin() {
               ) : sales.map((sale) => (
                 <tr key={sale._id}>
                   <td style={{ fontSize: '0.85rem' }}>
-                    <div style={{ fontWeight: 600 }}>{new Date(sale.date).toLocaleDateString('es-AR')}</div>
+                    <div style={{ fontWeight: 600 }}>{formatDate(sale.date)}</div>
                     <div style={{ fontSize: '0.75rem', opacity: 0.5 }}>{formatDateTime(sale.createdAt).split(' ')[1]} hs</div>
                   </td>
                   <td>
                     <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{sale.description || <span style={{ opacity: 0.4 }}>Sin notas</span>}</div>
+                    <div style={{ marginTop: '0.35rem', display: 'flex', gap: '0.5rem' }}>
+                      {sale.saleType === 'local' && <span className="badge" style={{ fontSize: '0.65rem', background: 'var(--color-bg-2)' }}>🏠 Local</span>}
+                      {sale.saleType === 'task' && <span className="badge badge-warning" style={{ fontSize: '0.65rem' }}>🔧 Taller</span>}
+                      {sale.saleType === 'order' && <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>🛒 Web</span>}
+                    </div>
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -128,13 +133,18 @@ export default function LocalSalesAdmin() {
                     <div style={{ fontWeight: 800, color: '#22c55e', fontSize: '1.1rem' }}>{formatPrice(sale.total)}</div>
                   </td>
                   <td>
-                    <button 
-                      className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }}
-                      onClick={() => handleDelete(sale._id)}
-                      disabled={deletingId === sale._id}
-                    >
-                      {deletingId === sale._id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <FiTrash2 />}
-                    </button>
+                    {sale.saleType === 'local' ? (
+                      <button 
+                        className="btn btn-ghost btn-sm" style={{ color: '#ef4444' }}
+                        onClick={() => handleDelete(sale._id)}
+                        disabled={deletingId === sale._id}
+                        title="Eliminar Venta Local"
+                      >
+                        {deletingId === sale._id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <FiTrash2 />}
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>No borrable aquí</span>
+                    )}
                   </td>
                 </tr>
               ))}

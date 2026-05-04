@@ -217,33 +217,81 @@ exports.getLocalSales = catchAsync(async (req, res, next) => {
   const tenantId = req.user.tenantId;
   const { page = 1, limit = 20, search, startDate, endDate } = req.query;
 
-  const filter = { tenantId };
+  const localFilter = { tenantId };
+  const taskFilter = { tenantId, status: 'done' };
+  const orderFilter = { tenantId, paymentStatus: 'approved' };
 
   if (startDate || endDate) {
     const start = startDate ? new Date(startDate) : new Date(2000, 0, 1);
     const end = endDate ? new Date(endDate) : new Date();
     if (endDate) end.setHours(23, 59, 59, 999);
-    filter.date = { $gte: start, $lte: end };
+    
+    localFilter.date = { $gte: start, $lte: end };
+    orderFilter.createdAt = { $gte: start, $lte: end };
+    
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+    taskFilter.date = { $gte: startStr, $lte: endStr };
   }
 
   if (search) {
-    // Buscar por descripción o por nombre de producto dentro de los items
-    filter.$or = [
-      { description: new RegExp(search, 'i') },
-      { 'items.name': new RegExp(search, 'i') }
+    const regex = new RegExp(search, 'i');
+    localFilter.$or = [
+      { description: regex },
+      { 'items.name': regex }
+    ];
+    taskFilter.$or = [
+      { title: regex },
+      { plate: regex },
+      { 'items.name': regex }
+    ];
+    orderFilter.$or = [
+      { orderNumber: regex },
+      { 'items.name': regex }
     ];
   }
 
-  const skip = (page - 1) * limit;
-
-  const [sales, total] = await Promise.all([
-    LocalSale.find(filter)
-      .sort({ date: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(Number(limit))
-      .lean(),
-    LocalSale.countDocuments(filter)
+  const [localSales, tasks, orders] = await Promise.all([
+    LocalSale.find(localFilter).lean(),
+    Task.find(taskFilter).lean(),
+    Order.find(orderFilter).lean()
   ]);
+
+  const combined = [
+    ...localSales.map(s => ({
+      _id: s._id,
+      date: s.date,
+      createdAt: s.createdAt,
+      description: s.description || 'Venta Local',
+      items: s.items || [],
+      total: s.total,
+      saleType: 'local'
+    })),
+    ...tasks.map(t => ({
+      _id: t._id,
+      date: t.date,
+      createdAt: t.createdAt,
+      description: `Service: ${t.title} ${t.plate ? `(${t.plate})` : ''}`,
+      items: t.items || [],
+      total: t.totalValue,
+      saleType: 'task'
+    })),
+    ...orders.map(o => ({
+      _id: o._id,
+      date: o.createdAt,
+      createdAt: o.createdAt,
+      description: `Venta Web (#${o.orderNumber || o._id.toString().slice(-6)})`,
+      items: o.items || [],
+      total: o.total,
+      saleType: 'order'
+    }))
+  ];
+
+  combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const total = combined.length;
+  const skip = (page - 1) * limit;
+  const sales = combined.slice(skip, skip + Number(limit));
 
   res.json({
     status: 'success',

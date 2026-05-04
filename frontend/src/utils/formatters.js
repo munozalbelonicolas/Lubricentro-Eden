@@ -11,7 +11,12 @@ export const formatPrice = (amount) => {
  */
 export const formatDate = (date) => {
   if (!date) return 'N/A';
-  const d = new Date(date);
+  let d;
+  if (typeof date === 'string' && (date.endsWith('T00:00:00.000Z') || date.length === 10)) {
+    d = new Date(date.substring(0, 10) + 'T12:00:00');
+  } else {
+    d = new Date(date);
+  }
   if (isNaN(d.getTime())) return 'Fecha inválida';
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 };
