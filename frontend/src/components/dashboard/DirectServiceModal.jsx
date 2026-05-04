@@ -43,7 +43,7 @@ export default function DirectServiceModal({ isOpen, onClose, onSuccess }) {
   useEffect(() => {
     if (isOpen) {
       setFetchingProducts(true);
-      productService.getAll({ category: ['aceite', 'filtro'], limit: 100 })
+      productService.getAll({ limit: 500 })
         .then(res => setProducts(res.data.products || []))
         .catch(err => console.error('Error cargando productos:', err))
         .finally(() => setFetchingProducts(false));
@@ -96,7 +96,7 @@ export default function DirectServiceModal({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth:'600px', maxHeight:'90vh', overflowY:'auto' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' }}>
           <div>
@@ -208,7 +208,7 @@ export default function DirectServiceModal({ isOpen, onClose, onSuccess }) {
                 }}
                 disabled={fetchingProducts}
               >
-                <option value="">{fetchingProducts ? 'Cargando stock...' : '++ Seleccionar Aceite o Filtro'}</option>
+                <option value="">{fetchingProducts ? 'Cargando stock...' : '++ Seleccionar Insumo/Producto'}</option>
                 {products.filter(p => !form.items.some(i => i.productId === p._id))
                          .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
                          .map(p => (

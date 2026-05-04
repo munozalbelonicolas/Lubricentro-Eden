@@ -258,7 +258,7 @@ export default function FinancePage() {
 
       {/* Modal Egreso */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay">
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Registrar Nuevo Egreso</h2>
@@ -353,7 +353,7 @@ function LocalSaleModal({ onClose, onSuccess }) {
   const searchProducts = async () => {
     setFetchingProducts(true);
     try {
-      const res = await productService.getAll({ search: productSearch, limit: 10 });
+      const res = await productService.getAll({ search: productSearch, limit: 50 });
       setProducts(res.data.products || []);
     } catch (err) {
       console.error(err);
@@ -409,7 +409,7 @@ function LocalSaleModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay">
       <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
           <div>
