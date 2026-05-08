@@ -22,9 +22,12 @@ router.get('/stats/visits', statsController.getSiteVisits);
 
 router.post('/expenses', financeController.createExpense);
 router.delete('/expenses/:id', financeController.deleteExpense);
+router.patch('/expenses/:id', financeController.updateExpense);
 
 router.get('/sales', financeController.getLocalSales);
 router.post('/sales', financeController.createLocalSale);
+router.get('/sales/:id', financeController.getLocalSale);
+router.patch('/sales/:id', financeController.updateLocalSale);
 router.delete('/sales/:id', financeController.deleteLocalSale);
 
 module.exports = router;

@@ -19,6 +19,7 @@ router.get('/history', taskController.getVehicleHistory);
 
 router
   .route('/:id')
+  .get(taskController.getTask)
   .patch(taskController.updateTask)
   .delete(taskController.deleteTask);
 

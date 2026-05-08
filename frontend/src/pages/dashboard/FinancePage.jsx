@@ -453,8 +453,8 @@ function LocalSaleModal({ onClose, onSuccess, editSaleId }) {
     setLoading(true);
     try {
       // Necesitamos los detalles de la venta (especialmente los items)
-      const res = await financeService.getLocalSales({ search: editSaleId });
-      const sale = res.data.sales.find(s => s._id === editSaleId);
+      const res = await financeService.getLocalSale(editSaleId);
+      const sale = res.data.sale;
       if (sale) {
         setForm({
           description: sale.description,

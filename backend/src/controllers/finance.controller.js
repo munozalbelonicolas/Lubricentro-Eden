@@ -404,3 +404,19 @@ exports.updateLocalSale = catchAsync(async (req, res, next) => {
     data: { sale }
   });
 });
+
+exports.getLocalSale = catchAsync(async (req, res, next) => {
+  const sale = await LocalSale.findOne({
+    _id: req.params.id,
+    tenantId: req.user.tenantId
+  });
+
+  if (!sale) {
+    return next(new AppError('No se encontró la venta.', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: { sale }
+  });
+});
