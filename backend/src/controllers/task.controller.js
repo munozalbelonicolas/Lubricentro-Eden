@@ -230,6 +230,8 @@ exports.getVehicleHistory = catchAsync(async (req, res) => {
     _id: o._id,
     title: `Pedido Web #${o.orderNumber?.slice(-6) || o._id.toString().slice(-6)}`,
     date: o.createdAt,
+    plate: o.workshopAppointment?.vehicle || '',
+    customerName: o.shipping ? `${o.shipping.firstName} ${o.shipping.lastName}` : 'Cliente Web',
     currentKm: o.workshopAppointment?.km || 0,
     items: (o.items || []).map(i => ({
       name: i.name,

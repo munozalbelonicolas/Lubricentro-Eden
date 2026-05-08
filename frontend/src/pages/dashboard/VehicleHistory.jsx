@@ -136,6 +136,18 @@ export default function VehicleHistory() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                         <h3 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--color-text)' }}>{service.title || 'Servicio de Taller'}</h3>
                         <span style={{ 
+                          fontSize: '0.9rem', 
+                          padding: '0.25rem 0.6rem', 
+                          borderRadius: '6px', 
+                          fontWeight: 800,
+                          background: 'var(--color-bg-3)',
+                          color: 'var(--color-text)',
+                          border: '1px solid var(--color-border)',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {service.plate || 'S/P'}
+                        </span>
+                        <span style={{ 
                           fontSize: '0.7rem', 
                           padding: '0.2rem 0.5rem', 
                           borderRadius: '4px', 
@@ -147,9 +159,16 @@ export default function VehicleHistory() {
                           {service._type === 'task' ? 'Taller' : 'Tienda Web'}
                         </span>
                       </div>
-                      <p style={{ color: 'var(--color-text-2)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FiCheckCircle style={{ color: 'var(--color-success)' }} /> Completado el {formatDate(service.date)}
-                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <p style={{ color: 'var(--color-text-2)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                          <FiCheckCircle style={{ color: 'var(--color-success)' }} /> Completado el {formatDate(service.date)}
+                        </p>
+                        {service.customerName && (
+                          <p style={{ color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>
+                            <FiActivity size={14} /> Propietario: {service.customerName}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <p style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-text)' }}>
