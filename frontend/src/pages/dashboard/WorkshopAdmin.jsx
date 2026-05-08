@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   FiRefreshCw, FiCalendar, FiClock, FiTool,
   FiChevronLeft, FiChevronRight, FiUser, FiCheckCircle,
-  FiAlertCircle, FiList, FiPlus, FiX, FiTrash2, FiPrinter, FiPackage
+  FiAlertCircle, FiList, FiPlus, FiX, FiTrash2, FiPrinter, FiPackage, FiEdit
 } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -78,6 +78,7 @@ export default function WorkshopAdmin() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState(null);
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
   const weekDays = useMemo(() => getWeekDays(anchor), [anchor]);
   const todayKey = toLocalDate(new Date());
@@ -122,6 +123,16 @@ export default function WorkshopAdmin() {
       toast.success('Estado actualizado.');
       load();
     } catch (err) { toast.error(err.message); }
+  };
+
+  const handleEditTask = (task) => {
+    if (task.status === 'done') {
+      setTaskToComplete(task);
+      setIsServiceModalOpen(true);
+    } else {
+      setTaskToEdit(task);
+      setIsModalOpen(true);
+    }
   };
 
   const handleDeleteTask = async (id) => {
@@ -336,6 +347,7 @@ export default function WorkshopAdmin() {
             todayKey={todayKey}
             onStatusChange={handleStatusChange}
             onDeleteTask={handleDeleteTask}
+            onEdit={handleEditTask}
             onPrint={generateTaskPDF}
           />
         ) : (
@@ -352,8 +364,12 @@ export default function WorkshopAdmin() {
         {isModalOpen && (
           <TaskModal 
             isOpen={isModalOpen} 
-            onClose={() => setIsModalOpen(false)} 
+            onClose={() => {
+              setIsModalOpen(false);
+              setTaskToEdit(null);
+            }} 
             selectedDay={selectedDay}
+            taskToEdit={taskToEdit}
             onSuccess={load}
           />
         )}
@@ -379,7 +395,7 @@ export default function WorkshopAdmin() {
 /* ═══════════════════════════════════════════════════════════
    Vista del día
 ═══════════════════════════════════════════════════════════ */
-function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, onDeleteTask, onPrint }) {
+function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, onDeleteTask, onEdit, onPrint }) {
   const isToday = selectedDay === todayKey;
 
   if (loading) return <div className="flex-center" style={{ padding:'3rem' }}><div className="spinner"/></div>;
@@ -429,6 +445,7 @@ function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, on
                   event={ev} 
                   onStatusChange={onStatusChange} 
                   onDeleteTask={onDeleteTask} 
+                  onEdit={onEdit}
                   onPrint={onPrint}
                 />
               ))}
@@ -468,6 +485,7 @@ function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, on
                   event={ev} 
                   onStatusChange={onStatusChange} 
                   onDeleteTask={onDeleteTask} 
+                  onEdit={onEdit}
                   onPrint={onPrint}
                 />
               ))}
@@ -480,7 +498,7 @@ function DayView({ selectedDay, dayEvents, loading, todayKey, onStatusChange, on
 }
 
 /* ─── Tarjeta de Evento (Pedido o Tarea) ────────────────── */
-function EventCard({ event, onStatusChange, onDeleteTask, onPrint }) {
+function EventCard({ event, onStatusChange, onDeleteTask, onEdit, onPrint }) {
   const isOrder = event._type === 'order';
   const status = event.status || 'pending';
   const chip   = STATUS_CHIP[status] || { bg:'#e2e8f0', color:'#475569', text: status };
@@ -560,6 +578,9 @@ function EventCard({ event, onStatusChange, onDeleteTask, onPrint }) {
               <>
                 <button className="btn btn-ghost btn-sm" onClick={() => onPrint(event)} title="Imprimir Comprobante">
                   <FiPrinter size={14} color="var(--color-primary)"/>
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => onEdit(event)} title="Editar">
+                  <FiEdit size={14} color="var(--color-primary)"/>
                 </button>
                 <button className="btn btn-ghost btn-sm" onClick={() => onDeleteTask(event._id)} title="Eliminar tarea">
                   <FiTrash2 size={14} color="#ef4444"/>
@@ -646,28 +667,25 @@ function WeekView({ weekDays, orders, tasks, todayKey, onSelect }) {
 /* ═══════════════════════════════════════════════════════════
    Modal de Nueva Tarea Manual
 ═══════════════════════════════════════════════════════════ */
-function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
+function TaskModal({ isOpen, onClose, selectedDay, onSuccess, taskToEdit }) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [fetchingProducts, setFetchingProducts] = useState(false);
   const [productSearch, setProductSearch] = useState('');
 
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    plate: '',
-    currentKm: '',
-    nextChangeKm: '',
-    date: selectedDay,
-    timeSlot: '08:00',
-    priority: 'medium',
-    status: 'pending',
-    items: [],
-    totalValue: 0,
-    customerName: '',
-    customerEmail: '',
     customerPhone: ''
   });
+
+  useEffect(() => {
+    if (isOpen && taskToEdit) {
+      setForm({
+        ...taskToEdit,
+        items: taskToEdit.items || [],
+        totalValue: taskToEdit.totalValue || 0,
+        date: taskToEdit.date || selectedDay
+      });
+    }
+  }, [isOpen, taskToEdit]);
 
   useEffect(() => {
     if (isOpen) {
@@ -702,6 +720,17 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
     updateItems(newItems);
   };
 
+  const updateQuantity = (prodId, delta) => {
+    const newItems = form.items.map(i => {
+      if (i.productId === prodId) {
+        const newQty = Math.max(1, i.quantity + delta);
+        return { ...i, quantity: newQty };
+      }
+      return i;
+    });
+    updateItems(newItems);
+  };
+
   const updateItems = (newItems) => {
     const total = newItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
     setForm(prev => ({ ...prev, items: newItems, totalValue: total }));
@@ -720,8 +749,13 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
 
     setLoading(true);
     try {
-      await taskService.create({ ...form, status: 'pending' });
-      toast.success('Tarea agendada con éxito');
+      if (taskToEdit) {
+        await taskService.update(taskToEdit._id, form);
+        toast.success('Tarea actualizada');
+      } else {
+        await taskService.create({ ...form, status: 'pending' });
+        toast.success('Tarea agendada con éxito');
+      }
       onSuccess();
       onClose();
     } catch (err) {
@@ -870,6 +904,11 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess }) {
                   <div key={item.productId} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', fontSize:'0.85rem', background:'rgba(255,255,255,0.03)', padding:'0.4rem 0.6rem', borderRadius:'8px' }}>
                     <span>{item.name} <span style={{ opacity:0.6 }}>x{item.quantity}</span></span>
                     <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                      <div style={{ display:'flex', alignItems:'center', background:'rgba(0,0,0,0.05)', borderRadius:'4px', padding:'0.05rem' }}>
+                        <button type="button" onClick={() => updateQuantity(item.productId, -1)} style={{ width:'20px', height:'20px', border:'none', background:'none', cursor:'pointer' }}>-</button>
+                        <span style={{ width:'25px', textAlign:'center', fontSize:'0.75rem' }}>{item.quantity}</span>
+                        <button type="button" onClick={() => updateQuantity(item.productId, 1)} style={{ width:'20px', height:'20px', border:'none', background:'none', cursor:'pointer' }}>+</button>
+                      </div>
                       <span style={{ fontWeight:700 }}>{formatPrice(item.price * item.quantity)}</span>
                       <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444' }}>
                         <FiTrash2 size={14}/>
@@ -927,6 +966,28 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
   const [fetchingProducts, setFetchingProducts] = useState(false);
 
   useEffect(() => {
+    if (isOpen && task) {
+      setForm({
+        status: 'done',
+        currentKm: task.currentKm || '',
+        nextChangeKm: task.nextChangeKm || '',
+        serviceData: {
+          oilBrand: task.serviceData?.oilBrand || '',
+          oilType:  task.serviceData?.oilType || '',
+          filterOil:  task.serviceData?.filterOil || false,
+          filterAir:  task.serviceData?.filterAir || false,
+          filterFuel: task.serviceData?.filterFuel || false,
+          filterCabin: task.serviceData?.filterCabin || false,
+          observations: task.serviceData?.observations || '',
+          photos: task.serviceData?.photos || []
+        },
+        items: task.items || [],
+        totalValue: task.totalValue || 0
+      });
+    }
+  }, [isOpen, task]);
+
+  useEffect(() => {
     if (form.currentKm) {
       const current = parseInt(form.currentKm);
       if (!isNaN(current) && !form.nextChangeKm) {
@@ -965,6 +1026,17 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
 
   const removeItem = (prodId) => {
     const newItems = form.items.filter(i => i.productId !== prodId);
+    updateItems(newItems);
+  };
+
+  const updateQuantity = (prodId, delta) => {
+    const newItems = form.items.map(i => {
+      if (i.productId === prodId) {
+        const newQty = Math.max(1, i.quantity + delta);
+        return { ...i, quantity: newQty };
+      }
+      return i;
+    });
     updateItems(newItems);
   };
 
@@ -1054,7 +1126,12 @@ function ServiceModal({ isOpen, onClose, task, onSuccess }) {
                       <p style={{ fontSize:'0.75rem', opacity:0.7 }}>{formatPrice(item.price)} x {item.quantity}</p>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-                      <span style={{ fontWeight:700 }}>{formatPrice(item.price * item.quantity)}</span>
+                      <div style={{ display:'flex', alignItems:'center', background:'rgba(0,0,0,0.05)', borderRadius:'6px', padding:'0.1rem' }}>
+                        <button type="button" onClick={() => updateQuantity(item.productId, -1)} style={{ width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer' }}>-</button>
+                        <span style={{ width:'25px', textAlign:'center', fontSize:'0.85rem', fontWeight:700 }}>{item.quantity}</span>
+                        <button type="button" onClick={() => updateQuantity(item.productId, 1)} style={{ width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer' }}>+</button>
+                      </div>
+                      <span style={{ fontWeight:700, minWidth:'60px', textAlign:'right' }}>{formatPrice(item.price * item.quantity)}</span>
                       <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444' }}>
                         <FiTrash2 size={14}/>
                       </button>

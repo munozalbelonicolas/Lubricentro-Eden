@@ -97,7 +97,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   );
 
   // --- Lógica de Stock e Ingresos ---
-  // SOLO descontamos stock si está pasando de 'pending' a 'done'
+  // 1. Caso: Pasa de 'pending' a 'done' -> Descontar stock
   if (currentTask.status === 'pending' && req.body.status === 'done') {
     if (task.items && task.items.length > 0) {
       const calculatedTotal = await StockService.deductStock(req.user.tenantId, task.items);
@@ -122,11 +122,20 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     }
   }
 
-  // RESTAURAR stock si pasamos de 'done' a 'pending' (Corrigiendo error humano)
-  if (currentTask.status === 'done' && req.body.status === 'pending') {
-    if (task.items && task.items.length > 0) {
-      await StockService.restoreStock(req.user.tenantId, task.items);
-      // Opcional: resetear totalValue si queremos que se re-calcule después
+  // 2. Caso: Ya estaba 'done' y sigue 'done' -> Ajustar stock si cambiaron los items
+  else if (currentTask.status === 'done' && (req.body.status === 'done' || !req.body.status)) {
+    // Si se enviaron items en el body, comparamos o simplemente re-procesamos
+    // Para simplificar y evitar bugs de comparación compleja, restauramos viejo y descontamos nuevo
+    if (req.body.items) {
+      await StockService.restoreStock(req.user.tenantId, currentTask.items);
+      await StockService.deductStock(req.user.tenantId, task.items);
+    }
+  }
+
+  // 3. Caso: Pasa de 'done' a 'pending' -> Restaurar stock (Corrigiendo error humano)
+  else if (currentTask.status === 'done' && req.body.status === 'pending') {
+    if (currentTask.items && currentTask.items.length > 0) {
+      await StockService.restoreStock(req.user.tenantId, currentTask.items);
     }
   }
 

@@ -81,6 +81,17 @@ export default function DirectServiceModal({ isOpen, onClose, onSuccess }) {
     updateItems(newItems);
   };
 
+  const updateQuantity = (prodId, delta) => {
+    const newItems = form.items.map(i => {
+      if (i.productId === prodId) {
+        const newQty = Math.max(1, i.quantity + delta);
+        return { ...i, quantity: newQty };
+      }
+      return i;
+    });
+    updateItems(newItems);
+  };
+
   const updateItems = (newItems) => {
     const total = newItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
     setForm(prev => ({ ...prev, items: newItems, totalValue: total }));
@@ -236,8 +247,22 @@ export default function DirectServiceModal({ isOpen, onClose, onSuccess }) {
                       <p style={{ fontSize:'0.75rem', opacity:0.7 }}>{formatPrice(item.price)} x {item.quantity}</p>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
-                      <span style={{ fontWeight:700 }}>{formatPrice(item.price * item.quantity)}</span>
-                      <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444' }}>
+                      <div style={{ display:'flex', alignItems:'center', background:'rgba(0,0,0,0.05)', borderRadius:'6px', padding:'0.1rem' }}>
+                        <button type="button" onClick={() => updateQuantity(item.productId, -1)} style={{ width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer' }}>-</button>
+                        <input 
+                          type="number" 
+                          value={item.quantity} 
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            const newItems = form.items.map(i => i.productId === item.productId ? { ...i, quantity: val } : i);
+                            updateItems(newItems);
+                          }}
+                          style={{ width:'30px', textAlign:'center', border:'none', background:'transparent', fontSize:'0.85rem', fontWeight:700, padding:0 }}
+                        />
+                        <button type="button" onClick={() => updateQuantity(item.productId, 1)} style={{ width:'24px', height:'24px', display:'flex', alignItems:'center', justifyContent:'center', border:'none', background:'none', cursor:'pointer' }}>+</button>
+                      </div>
+                      <span style={{ fontWeight:700, minWidth:'60px', textAlign:'right' }}>{formatPrice(item.price * item.quantity)}</span>
+                      <button type="button" onClick={() => removeItem(item.productId)} style={{ color:'#ef4444', marginLeft:'0.5rem' }}>
                         <FiTrash2 size={14}/>
                       </button>
                     </div>
