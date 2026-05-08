@@ -108,6 +108,10 @@ export const taskService = {
     const { data } = await api.delete(`/tasks/${id}`);
     return data;
   },
+  get: async (id) => {
+    const { data } = await api.get(`/tasks/${id}`);
+    return data;
+  },
   getHistory: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.plate) params.append('plate', filters.plate);

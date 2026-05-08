@@ -210,6 +210,23 @@ exports.deleteExpense = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.updateExpense = catchAsync(async (req, res, next) => {
+  const expense = await Expense.findOneAndUpdate(
+    { _id: req.params.id, tenantId: req.user.tenantId },
+    req.body,
+    { new: true, runValidators: true }
+  );
+
+  if (!expense) {
+    return next(new AppError('No se encontró el gasto o no tienes permiso.', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: { expense }
+  });
+});
+
 /**
  * CRUD Ventas Locales
  */
@@ -352,5 +369,38 @@ exports.deleteLocalSale = catchAsync(async (req, res, next) => {
   res.status(204).json({
     status: 'success',
     data: null
+  });
+});
+
+exports.updateLocalSale = catchAsync(async (req, res, next) => {
+  const oldSale = await LocalSale.findOne({
+    _id: req.params.id,
+    tenantId: req.user.tenantId
+  });
+
+  if (!oldSale) {
+    return next(new AppError('No se encontró la venta o no tienes permiso.', 404));
+  }
+
+  // Si se envían nuevos items, ajustamos stock
+  if (req.body.items) {
+    await StockService.restoreStock(req.user.tenantId, oldSale.items);
+    await StockService.deductStock(req.user.tenantId, req.body.items);
+    
+    // Recalcular total si no viene uno manual
+    if (!req.body.total) {
+      req.body.total = req.body.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    }
+  }
+
+  const sale = await LocalSale.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: { sale }
   });
 });

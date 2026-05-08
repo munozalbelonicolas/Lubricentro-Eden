@@ -7,8 +7,11 @@ import toast from 'react-hot-toast';
 import { 
   FiDollarSign, FiPlus, FiTrash2, FiArrowUpCircle, FiArrowDownCircle, 
   FiFilter, FiPackage, FiTool, FiCalendar, FiX, FiSearch, FiShoppingCart,
-  FiFileText
+  FiFileText, FiEdit
 } from 'react-icons/fi';
+import TaskModal from '../../components/workshop/TaskModal';
+import ServiceModal from '../../components/workshop/ServiceModal';
+import { taskService } from '../../services/index';
 
 export default function FinancePage() {
   const [stats, setStats] = useState({ totalIncome: 0, totalExpenses: 0, balance: 0 });
@@ -16,6 +19,10 @@ export default function FinancePage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showSaleModal, setShowSaleModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
+  const [showTaskEditModal, setShowTaskEditModal] = useState(false);
+  const [showServiceEditModal, setShowServiceEditModal] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [filterType, setFilterType] = useState('all'); // all, ingreso, egreso
 
@@ -74,13 +81,50 @@ export default function FinancePage() {
   const handleCreateExpense = async (e) => {
     e.preventDefault();
     try {
-      await financeService.createExpense(expenseForm);
-      toast.success('Gasto registrado con éxito');
+      if (editingTransaction) {
+        await financeService.updateExpense(editingTransaction.id, expenseForm);
+        toast.success('Gasto actualizado');
+      } else {
+        await financeService.createExpense(expenseForm);
+        toast.success('Gasto registrado con éxito');
+      }
       setShowModal(false);
+      setEditingTransaction(null);
       setExpenseForm({ description: '', amount: '', category: 'otros', date: getLocalDate() });
       fetchData();
     } catch (err) {
-      toast.error('Error al registrar gasto');
+      toast.error('Error al procesar gasto');
+    }
+  };
+
+  const handleEditTransaction = async (t) => {
+    if (t.source === 'taller') {
+      try {
+        const res = await taskService.get(t.id);
+        setEditingTask(res.data.task);
+        if (res.data.task.status === 'done') {
+          setShowServiceEditModal(true);
+        } else {
+          setShowTaskEditModal(true);
+        }
+      } catch (err) {
+        toast.error('Error al cargar datos de la tarea');
+      }
+    } else if (t.source === 'venta_local') {
+      setEditingTransaction(t);
+      setShowSaleModal(true);
+    } else if (t.source === 'venta_web') {
+      toast.error('Las ventas web se gestionan desde el módulo de Pedidos');
+    } else {
+      // Gastos (egresos)
+      setEditingTransaction(t);
+      setExpenseForm({
+        description: t.description,
+        amount: t.amount,
+        category: t.source,
+        date: t.date.split('T')[0]
+      });
+      setShowModal(true);
     }
   };
 
@@ -90,6 +134,8 @@ export default function FinancePage() {
     try {
       if (t.source === 'venta_local') {
         await financeService.deleteLocalSale(t.id);
+      } else if (t.source === 'taller') {
+        await taskService.delete(t.id);
       } else {
         await financeService.deleteExpense(t.id);
       }
@@ -246,7 +292,13 @@ export default function FinancePage() {
                       {t.type === 'ingreso' ? '+' : '-'}{formatPrice(t.amount)}
                     </td>
                     <td>
-                      {(t.type === 'egreso' || t.source === 'venta_local') && (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button 
+                          onClick={() => handleEditTransaction(t)} 
+                          style={{ color: 'var(--color-primary)', opacity: 0.7 }}
+                        >
+                          <FiEdit size={16}/>
+                        </button>
                         <button 
                           onClick={() => handleDeleteTransaction(t)} 
                           style={{ color: '#ef4444', opacity: deletingId === t.id ? 0.3 : 0.7 }}
@@ -254,7 +306,7 @@ export default function FinancePage() {
                         >
                           {deletingId === t.id ? <div className="spinner" style={{ width: 16, height: 16 }}/> : <FiTrash2 size={16}/>}
                         </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -312,8 +364,14 @@ export default function FinancePage() {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" className="btn btn-ghost btn-full" onClick={() => setShowModal(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary btn-full">Guardar Egreso</button>
+                <button type="button" className="btn btn-ghost btn-full" onClick={() => {
+                  setShowModal(false);
+                  setEditingTransaction(null);
+                  setExpenseForm({ description: '', amount: '', category: 'otros', date: getLocalDate() });
+                }}>Cancelar</button>
+                <button type="submit" className="btn btn-primary btn-full">
+                  {editingTransaction ? 'Guardar Cambios' : 'Guardar Egreso'}
+                </button>
               </div>
             </form>
           </div>
@@ -323,11 +381,41 @@ export default function FinancePage() {
       {/* Modal Venta Local */}
       {showSaleModal && (
         <LocalSaleModal 
-          onClose={() => setShowSaleModal(false)}
+          onClose={() => {
+            setShowSaleModal(false);
+            setEditingTransaction(null);
+          }}
+          editSaleId={editingTransaction?.id}
           onSuccess={() => {
             setShowSaleModal(false);
+            setEditingTransaction(null);
             fetchData();
           }}
+        />
+      )}
+
+      {/* Modales de Taller (para editar servicios/agenda) */}
+      {showTaskEditModal && (
+        <TaskModal
+          isOpen={showTaskEditModal}
+          onClose={() => {
+            setShowTaskEditModal(false);
+            setEditingTask(null);
+          }}
+          taskToEdit={editingTask}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {showServiceEditModal && (
+        <ServiceModal
+          isOpen={showServiceEditModal}
+          onClose={() => {
+            setShowServiceEditModal(false);
+            setEditingTask(null);
+          }}
+          task={editingTask}
+          onSuccess={fetchData}
         />
       )}
     </div>
@@ -335,7 +423,7 @@ export default function FinancePage() {
 }
 
 /* ─── Sub-componente Modal Venta Local ─── */
-function LocalSaleModal({ onClose, onSuccess }) {
+function LocalSaleModal({ onClose, onSuccess, editSaleId }) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState([]);
   const [productSearch, setProductSearch] = useState('');
@@ -354,6 +442,32 @@ function LocalSaleModal({ onClose, onSuccess }) {
     date: getLocalDate(),
     items: []
   });
+
+  useEffect(() => {
+    if (editSaleId) {
+      loadSaleDetails();
+    }
+  }, [editSaleId]);
+
+  const loadSaleDetails = async () => {
+    setLoading(true);
+    try {
+      // Necesitamos los detalles de la venta (especialmente los items)
+      const res = await financeService.getLocalSales({ search: editSaleId });
+      const sale = res.data.sales.find(s => s._id === editSaleId);
+      if (sale) {
+        setForm({
+          description: sale.description,
+          date: sale.date.split('T')[0],
+          items: sale.items
+        });
+      }
+    } catch (err) {
+      toast.error('Error al cargar detalles de la venta');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (productSearch.length > 2) {
@@ -414,11 +528,16 @@ function LocalSaleModal({ onClose, onSuccess }) {
     
     setLoading(true);
     try {
-      await financeService.createLocalSale(form);
-      toast.success('Venta registrada con éxito');
+      if (editSaleId) {
+        await financeService.updateLocalSale(editSaleId, form);
+        toast.success('Venta actualizada con éxito');
+      } else {
+        await financeService.createLocalSale(form);
+        toast.success('Venta registrada con éxito');
+      }
       onSuccess();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error al registrar venta');
+      toast.error(err.response?.data?.message || 'Error al procesar venta');
     } finally {
       setLoading(false);
     }

@@ -54,5 +54,15 @@ export const financeService = {
   deleteLocalSale: async (id) => {
     const res = await API.delete(`/finance/sales/${id}`);
     return res.data;
+  },
+
+  updateLocalSale: async (id, data) => {
+    const res = await API.patch(`/finance/sales/${id}`, data);
+    return res.data;
+  },
+
+  updateExpense: async (id, data) => {
+    const res = await API.patch(`/finance/expenses/${id}`, data);
+    return res.data;
   }
 };
