@@ -672,7 +672,20 @@ function TaskModal({ isOpen, onClose, selectedDay, onSuccess, taskToEdit }) {
   const [products, setProducts] = useState([]);
   const [fetchingProducts, setFetchingProducts] = useState(false);
   const [productSearch, setProductSearch] = useState('');
-
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    plate: '',
+    currentKm: '',
+    nextChangeKm: '',
+    date: selectedDay,
+    timeSlot: '08:00',
+    priority: 'medium',
+    status: 'pending',
+    items: [],
+    totalValue: 0,
+    customerName: '',
+    customerEmail: '',
     customerPhone: ''
   });
 
